@@ -1,13 +1,4 @@
-import {
-  canAttackCity,
-  getFactionById,
-  isEnemyCity,
-  isPlayerCity,
-  isWorldUnified,
-} from "../core/world_rules.js";
-
-const MAP_WIDTH = 840;
-const MAP_HEIGHT = 560;
+import { canAttackCity, getFactionById, isEnemyCity, isPlayerCity, isWorldUnified } from "../core/world_rules.js";
 
 function buildCityMap(cities) {
   return new Map(cities.map((city) => [city.id, city]));
@@ -65,6 +56,21 @@ function getStatusText(cities, selectedCity) {
   return "전투 시스템은 다음 버전에서 구현 예정입니다.";
 }
 
+function getCityLabelClass(cityId) {
+  switch (cityId) {
+    case "luoyang":
+      return "label-east";
+    case "pyeongyang":
+      return "label-east label-north";
+    case "hanseong":
+      return "label-east label-south";
+    case "kyoto":
+      return "label-west label-north";
+    default:
+      return "label-east";
+  }
+}
+
 export function renderWorldMap(rootElement, appState, handlers = {}) {
   const { meta, world } = appState;
   const { onCitySelect, onAttackCity } = handlers;
@@ -77,126 +83,122 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
 
   rootElement.innerHTML = `
     <main class="map-screen">
-      <section class="world-layout" aria-labelledby="samwar-title">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">${meta.phase}</p>
-            <h1 id="samwar-title" class="title">${meta.title}</h1>
-          </div>
-          <div class="turn-card" aria-label="Current turn status">
+      <section class="world-stage" aria-labelledby="samwar-title">
+        <div class="map-image" aria-hidden="true"></div>
+        <div class="map-overlay" aria-hidden="true"></div>
+
+        <svg class="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          ${cityEdges
+            .map(([fromId, toId]) => {
+              const fromCity = world.cities.find((city) => city.id === fromId);
+              const toCity = world.cities.find((city) => city.id === toId);
+
+              if (!fromCity || !toCity) {
+                return "";
+              }
+
+              return `
+                <line
+                  class="route-line"
+                  x1="${fromCity.x}"
+                  y1="${fromCity.y}"
+                  x2="${toCity.x}"
+                  y2="${toCity.y}"
+                ></line>
+              `;
+            })
+            .join("")}
+        </svg>
+
+        <header class="title-panel">
+          <p class="eyebrow">${meta.phase}</p>
+          <h1 id="samwar-title" class="title">${meta.title}</h1>
+          <p class="title-copy">임시 풀스크린 세계지도 위에서 성곽 랜드마크 기준 4도시 전선을 검증하는 MVP 화면</p>
+        </header>
+
+        <div class="city-layer" aria-label="World map city anchors">
+          ${world.cities
+            .map((city) => {
+              const faction = getFactionById(world.factions, city.ownerFactionId);
+              const isSelected = city.id === selectedCity.id;
+              const statusLabel = isPlayerCity(city) ? "아군" : "적군";
+              const labelClass = getCityLabelClass(city.id);
+
+              return `
+                <button
+                  class="city-node ${labelClass} ${isSelected ? "is-selected" : ""} ${isPlayerCity(city) ? "is-friendly" : "is-hostile"}"
+                  type="button"
+                  data-city-id="${city.id}"
+                  style="left: ${city.x}%; top: ${city.y}%; --city-color: ${faction?.color ?? "#d3b273"};"
+                  aria-pressed="${isSelected}"
+                >
+                  <span class="city-pip"></span>
+                  <span class="city-label">
+                    <span class="city-name">${city.name}</span>
+                    <span class="city-meta">${statusLabel}</span>
+                  </span>
+                </button>
+              `;
+            })
+            .join("")}
+        </div>
+
+        <aside class="hud-stack" aria-label="Selected city details">
+          <section class="turn-card hud-panel">
             <span class="turn-label">Turn</span>
             <strong class="turn-value">${meta.turn}</strong>
             <span class="turn-copy">${unified ? "천하통일 달성" : meta.status}</span>
-          </div>
-        </header>
+          </section>
 
-        <section class="content-grid">
-          <article class="map-panel" aria-label="World map">
-            <div class="map-frame">
-              <svg class="route-layer" viewBox="0 0 ${MAP_WIDTH} ${MAP_HEIGHT}" aria-hidden="true">
-                ${cityEdges
-                  .map(([fromId, toId]) => {
-                    const fromCity = world.cities.find((city) => city.id === fromId);
-                    const toCity = world.cities.find((city) => city.id === toId);
+          <section class="detail-card hud-panel">
+            <p class="eyebrow">Selected City</p>
+            <h2 class="city-detail-name">${selectedCity.name}</h2>
+            <p class="city-detail-meta">
+              ${selectedCity.region} · ${selectedFaction?.name ?? "중립"}
+            </p>
+            <p class="city-detail-copy">${getStatusText(world.cities, selectedCity)}</p>
+            ${
+              attackable
+                ? `
+                  <button class="attack-button" type="button" data-attack-city-id="${selectedCity.id}">
+                    공격 테스트
+                  </button>
+                  <p class="attack-note">전투 시스템은 다음 버전에서 구현 예정입니다.</p>
+                `
+                : `
+                  <p class="attack-note">전투 시스템은 다음 버전에서 구현 예정입니다.</p>
+                `
+            }
+          </section>
 
-                    if (!fromCity || !toCity) {
-                      return "";
-                    }
-
-                    return `
-                      <line
-                        class="route-line"
-                        x1="${fromCity.x}"
-                        y1="${fromCity.y}"
-                        x2="${toCity.x}"
-                        y2="${toCity.y}"
-                      ></line>
-                    `;
-                  })
-                  .join("")}
-              </svg>
-
-              <div class="map-backdrop">
-                <div class="landmass landmass-west" aria-hidden="true"></div>
-                <div class="landmass landmass-korea" aria-hidden="true"></div>
-                <div class="landmass landmass-japan" aria-hidden="true"></div>
-              </div>
-
-              ${world.cities
+          <section class="detail-card hud-panel">
+            <h3 class="detail-heading">연결 도시</h3>
+            <div class="linked-city-list">
+              ${linkedCities
                 .map((city) => {
                   const faction = getFactionById(world.factions, city.ownerFactionId);
-                  const isSelected = city.id === selectedCity.id;
-                  const statusLabel = isPlayerCity(city) ? "아군" : "적군";
-
                   return `
-                    <button
-                      class="city-node ${isSelected ? "is-selected" : ""} ${isPlayerCity(city) ? "is-friendly" : "is-hostile"}"
-                      type="button"
-                      data-city-id="${city.id}"
-                      style="left: ${(city.x / MAP_WIDTH) * 100}%; top: ${(city.y / MAP_HEIGHT) * 100}%; --city-color: ${faction?.color ?? "#d3b273"};"
-                      aria-pressed="${isSelected}"
-                    >
-                      <span class="city-pip"></span>
-                      <span class="city-name">${city.name}</span>
-                      <span class="city-meta">${statusLabel} · ${city.region}</span>
+                    <button class="linked-city-item" type="button" data-city-id="${city.id}">
+                      <span>${city.name}</span>
+                      <span style="color: ${faction?.color ?? "#d3b273"};">
+                        ${faction?.name ?? "미상"}
+                      </span>
                     </button>
                   `;
                 })
                 .join("")}
             </div>
-          </article>
+          </section>
 
-          <aside class="side-panel" aria-label="Selected city details">
-            <section class="detail-card">
-              <p class="eyebrow">Selected City</p>
-              <h2 class="city-detail-name">${selectedCity.name}</h2>
-              <p class="city-detail-meta">
-                ${selectedCity.region} · ${selectedFaction?.name ?? "중립"}
-              </p>
-              <p class="city-detail-copy">${getStatusText(world.cities, selectedCity)}</p>
-              ${
-                attackable
-                  ? `
-                    <button class="attack-button" type="button" data-attack-city-id="${selectedCity.id}">
-                      공격 테스트
-                    </button>
-                    <p class="attack-note">전투 시스템은 다음 버전에서 구현 예정입니다.</p>
-                  `
-                  : `
-                    <p class="attack-note">전투 시스템은 다음 버전에서 구현 예정입니다.</p>
-                  `
-              }
-            </section>
-
-            <section class="detail-card">
-              <h3 class="detail-heading">연결 도시</h3>
-              <div class="linked-city-list">
-                ${linkedCities
-                  .map((city) => {
-                    const faction = getFactionById(world.factions, city.ownerFactionId);
-                    return `
-                      <button class="linked-city-item" type="button" data-city-id="${city.id}">
-                        <span>${city.name}</span>
-                        <span style="color: ${faction?.color ?? "#d3b273"};">
-                          ${faction?.name ?? "미상"}
-                        </span>
-                      </button>
-                    `;
-                  })
-                  .join("")}
-              </div>
-            </section>
-
-            <section class="detail-card">
-              <h3 class="detail-heading">MVP 목표</h3>
-              <ul class="goal-list">
-                <li>도시 선택 시 우측 패널이 즉시 갱신됩니다.</li>
-                <li>접경 적 도시는 공격 테스트로 아군 점령 상태를 확인할 수 있습니다.</li>
-                <li>전투 장면은 아직 없고 상태 메시지만 표시합니다.</li>
-              </ul>
-            </section>
-          </aside>
-        </section>
+          <section class="detail-card hud-panel">
+            <h3 class="detail-heading">MVP 목표</h3>
+            <ul class="goal-list">
+              <li>배경 맵의 성곽 랜드마크에 4개 도시 앵커를 맞춰 전선을 검증합니다.</li>
+              <li>도시 선택과 공격 테스트, 점령, 통일 메시지까지 현재 월드맵 루프만 확인합니다.</li>
+              <li>전투 장면은 아직 없고 상태 메시지만 표시합니다.</li>
+            </ul>
+          </section>
+        </aside>
       </section>
     </main>
   `;
