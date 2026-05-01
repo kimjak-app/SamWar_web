@@ -1,0 +1,158 @@
+[gd_scene format=3 uid="uid://dyokne04l6ue3"]
+
+[ext_resource type="Script" uid="uid://d4j8nuilb46lo" path="res://scripts/battle_scene.gd" id="1_battle"]
+[ext_resource type="Script" uid="uid://cfgfdnd3khtd6" path="res://scripts/grid_manager.gd" id="2_grid"]
+[ext_resource type="Script" uid="uid://c4f64swbihcg0" path="res://scripts/battle_ui.gd" id="3_ui"]
+[ext_resource type="Script" uid="uid://c5um84yndnrb5" path="res://scripts/turn_manager.gd" id="4_turn"]
+[ext_resource type="Script" uid="uid://dv47ei3ovkn0e" path="res://scripts/ai_controller.gd" id="5_ai"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.07, 0.08, 0.1, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.32, 0.34, 0.4, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="BattleScene" type="Node2D" unique_id=436241969]
+script = ExtResource("1_battle")
+
+[node name="Grid" type="Node2D" parent="." unique_id=792091507]
+script = ExtResource("2_grid")
+
+[node name="Units" type="Node2D" parent="." unique_id=839794615]
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1223636707]
+script = ExtResource("3_ui")
+
+[node name="TurnLabel" type="Label" parent="UI" unique_id=210789785]
+offset_left = 40.0
+offset_top = 30.0
+offset_right = 420.0
+offset_bottom = 80.0
+theme_override_font_sizes/font_size = 28
+text = "현재 턴: 아군"
+
+[node name="ResultLabel" type="Label" parent="UI" unique_id=1806292103]
+visible = false
+offset_left = 800.0
+offset_top = 30.0
+offset_right = 1120.0
+offset_bottom = 90.0
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+
+[node name="DebugWinButton" type="Button" parent="UI" unique_id=1069892458]
+offset_left = 1620.0
+offset_top = 30.0
+offset_right = 1860.0
+offset_bottom = 90.0
+text = "전투 승리 테스트"
+
+[node name="BottomPanel" type="Panel" parent="UI" unique_id=1776237836]
+offset_left = 40.0
+offset_top = 800.0
+offset_right = 1880.0
+offset_bottom = 1040.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="SelectedInfoLabel" type="Label" parent="UI/BottomPanel" unique_id=336973240]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 1120.0
+offset_bottom = 52.0
+theme_override_font_sizes/font_size = 22
+text = "선택 유닛: 없음"
+
+[node name="SkillDescriptionLabel" type="Label" parent="UI/BottomPanel" unique_id=952761495]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 56.0
+offset_right = 1120.0
+offset_bottom = 116.0
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 2
+
+[node name="AttackButton" type="Button" parent="UI/BottomPanel" unique_id=554958547]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 136.0
+offset_right = 194.0
+offset_bottom = 196.0
+text = "기본 공격"
+
+[node name="SkillButton" type="Button" parent="UI/BottomPanel" unique_id=767837688]
+layout_mode = 0
+offset_left = 214.0
+offset_top = 136.0
+offset_right = 384.0
+offset_bottom = 196.0
+text = "스킬"
+
+[node name="StrategyButton" type="Button" parent="UI/BottomPanel" unique_id=1396474546]
+layout_mode = 0
+offset_left = 404.0
+offset_top = 136.0
+offset_right = 574.0
+offset_bottom = 196.0
+text = "책략"
+
+[node name="WaitButton" type="Button" parent="UI/BottomPanel" unique_id=190047111]
+layout_mode = 0
+offset_left = 594.0
+offset_top = 136.0
+offset_right = 764.0
+offset_bottom = 196.0
+text = "대기"
+
+[node name="DefendButton" type="Button" parent="UI/BottomPanel" unique_id=190047112]
+layout_mode = 0
+offset_left = 784.0
+offset_top = 136.0
+offset_right = 954.0
+offset_bottom = 196.0
+text = "방어"
+
+[node name="EndTurnButton" type="Button" parent="UI/BottomPanel" unique_id=940860763]
+layout_mode = 0
+offset_left = 974.0
+offset_top = 136.0
+offset_right = 1144.0
+offset_bottom = 196.0
+text = "턴 종료"
+
+[node name="RetreatButton" type="Button" parent="UI/BottomPanel" unique_id=1024962831]
+layout_mode = 0
+offset_left = 1164.0
+offset_top = 136.0
+offset_right = 1334.0
+offset_bottom = 196.0
+text = "퇴각"
+
+[node name="AutoBattleButton" type="Button" parent="UI/BottomPanel" unique_id=1526728848]
+layout_mode = 0
+offset_left = 1354.0
+offset_top = 136.0
+offset_right = 1524.0
+offset_bottom = 196.0
+text = "자동전투"
+
+[node name="LogLabel" type="RichTextLabel" parent="UI/BottomPanel" unique_id=720824423]
+layout_mode = 0
+offset_left = 1548.0
+offset_top = 20.0
+offset_right = 1810.0
+offset_bottom = 200.0
+fit_content = true
+scroll_active = false
+
+[node name="TurnManager" type="Node" parent="." unique_id=1312871021]
+script = ExtResource("4_turn")
+
+[node name="AIController" type="Node" parent="." unique_id=1046389491]
+script = ExtResource("5_ai")
