@@ -113,3 +113,13 @@
 - Preserved fallback circle markers and added a safe console warning path if the token images are unavailable so the battle remains playable without crashing.
 - Repositioned unit labels, facing arrows, HP bars, and status/buff badges around the new image tokens so readability survives the larger visual footprint.
 - Re-ran `node --check` on the touched Phaser/UI modules and a static asset presence check for both required token PNGs.
+- Updated `js/phaser/battle_scene.js` to preload and render `assets/battle/battlefield_mvp.png` behind the tactical board area with a subtle dark readability overlay.
+- Adjusted Phaser draw order so the battlefield image sits below the grid, highlights, unit tokens, labels, and floating text instead of competing with tactical information.
+- Slightly strengthened grid-line and highlight visibility in the renderer so the new background image does not wash out move/attack/skill/strategy/facing cues.
+- Preserved the dark board fallback path and added a safe console warning if the battlefield background texture is unavailable.
+- Re-ran `node --check` on `js/phaser/battle_scene.js` and a static asset presence check for `assets/battle/battlefield_mvp.png`.
+- Reworked `js/ui/battle_ui.js` so the battle screen now uses a dedicated top bar, left battle-log panel, center Phaser board panel, right unit/status info panel, and a bottom command bar that stays visible.
+- Moved battle-log rendering into a dedicated left-side scroll container and separated command controls from the right-side info stack so logs and unit cards no longer push commands below the viewport.
+- Updated `js/main.js` with a lightweight `onBattleEnterAttackMode` handler so the new `기본 공격` command bar button has a stable UI entry point without changing battle rules.
+- Replaced the old stacked battle HUD CSS in `css/main.css` with a viewport-safe grid layout, fixed internal scroll zones, and a persistent footer command bar tuned for 100% zoom playability.
+- Re-ran `node --check` on `js/ui/battle_ui.js` and `js/main.js` after the layout restructure.

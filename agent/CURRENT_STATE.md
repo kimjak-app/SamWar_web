@@ -9,8 +9,8 @@ GitHub is used for backup and version control.
 Each completed Codex task now ends with a ChatCoach handoff report.
 
 ## Current Phase
-Phaser-based v0.2-6 hero battle now uses MVP unit image tokens on top of the existing persistent Phaser mount and AI/auto-battle tactical baseline while staying connected to the fullscreen world map loop.
-The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skills, cooldowns, visible battlefield feedback, facing direction, angle-based damage, basic counterattack, defend/wait commands, intelligence/probability-based strategy actions with random status outcomes, optional player auto battle, a non-flickering persistent Phaser mount, and side-specific unit token images, but it is still intentionally far smaller than the full Godot battle engine.
+Phaser-based v0.2-6b hero battle now uses a viewport-safe left log / center board / right info / bottom command-bar layout on top of the existing persistent Phaser mount and tactical baseline while staying connected to the fullscreen world map loop.
+The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skills, cooldowns, visible battlefield feedback, facing direction, angle-based damage, basic counterattack, defend/wait commands, intelligence/probability-based strategy actions with random status outcomes, optional player auto battle, a non-flickering persistent Phaser mount, side-specific unit token images, a common battlefield backdrop, and a command bar that remains visible at 100% zoom, but it is still intentionally far smaller than the full Godot battle engine.
 
 ## Implemented Structure
 - `index.html` bootstraps the browser MVP, keeps the favicon link, and still loads Phaser 3.86.0 from CDN before the app module.
@@ -28,9 +28,9 @@ The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skil
 - `js/core/battle_rules.js` owns the pure tactical rule helpers for selection, movement, choose-facing flow, basic attack resolution, angle bonuses, basic counterattack, defend/wait commands, skill mode/skill use, generic strategy mode/strategy use, enemy turns, auto-battle stepping, outcome checks, cooldown/buff/status turn handling, and Korean battle logs.
 - `js/ui/layout_ui.js` routes rendering between the fullscreen world map UI and the battle UI, and only destroys Phaser when leaving battle mode.
 - `js/ui/world_map_ui.js` keeps the fullscreen map stage stable while changing the attack CTA to enter battle mode instead of direct occupation.
-- `js/ui/battle_ui.js` renders the SamWar hero battle shell in a way that preserves the existing Phaser host during same-battle rerenders while still refreshing HUD/log/button content around it.
+- `js/ui/battle_ui.js` renders the SamWar hero battle shell in a way that preserves the existing Phaser host during same-battle rerenders while splitting the battle layout into a left log panel, center board, right info panel, and bottom command bar.
 - `js/phaser/phaser_battle_mount.js` now keeps one contained Phaser instance alive per active battle, syncs scene state for same-battle updates, and destroys the game only when leaving battle mode or starting a different battle.
-- `js/phaser/battle_scene.js` visualizes the 10x6 battle board, move/attack/skill/facing/strategy highlights, facing arrows, status markers, defend markers, clickable unit/tile input, floating skill/damage/angle/counter/status feedback, and side-specific MVP unit image tokens with safe fallback markers.
+- `js/phaser/battle_scene.js` visualizes the 10x6 battle board, move/attack/skill/facing/strategy highlights, facing arrows, status markers, defend markers, clickable unit/tile input, floating skill/damage/angle/counter/status feedback, side-specific MVP unit image tokens with safe fallback markers, and the common `assets/battle/battlefield_mvp.png` backdrop with a readability overlay.
 - `data/heroes.js`, `data/skills.js`, `data/strategies.js`, and `data/battle_rosters.js` now define the fixed MVP hero roster, Godot-inspired hero baseline stats, owner-locked unique skills, a generic strategy action plus random outcome pool, and spawn points instead of placeholder data.
 - `agent/HANDOFF_TO_CHATCOACH.md` records the short end-of-task handoff.
 
@@ -78,3 +78,15 @@ The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skil
 - Enemy units use `assets/units/unit_enemy_mvp.png`.
 - Hero portrait overlay is intentionally deferred to a later version.
 - Gameplay rules and v0.2-5a persistent Phaser behavior were preserved.
+
+## v0.2-6a Notes
+- v0.2-6a added `assets/battle/battlefield_mvp.png` as the common MVP battle background.
+- This is a visual-only patch.
+- Terrain effects and region-based battlefields are intentionally deferred.
+- Gameplay rules and v0.2-5a persistent Phaser behavior were preserved.
+
+## v0.2-6b Notes
+- v0.2-6b reorganized battle UI into left log / center board / right info / bottom command bar.
+- Command buttons are now always visible at 100% zoom.
+- Battle logs are scroll-contained and no longer expand the page.
+- Gameplay rules and persistent Phaser behavior were preserved.

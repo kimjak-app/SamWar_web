@@ -145,6 +145,14 @@ function rerender() {
       appState = updateBattleState(appState, setSelectedUnitFacing(appState.battle, direction));
       rerender();
     },
+    onBattleEnterAttackMode: () => {
+      if (!canUseManualBattleControls() || !appState.battle?.selectedUnitId) {
+        return;
+      }
+
+      appState = updateBattleState(appState, selectBattleUnit(appState.battle, appState.battle.selectedUnitId));
+      rerender();
+    },
     onBattleUseSkill: (targetUnitId) => {
       if (!canUseManualBattleControls() || !appState.battle.selectedUnitId) {
         return;

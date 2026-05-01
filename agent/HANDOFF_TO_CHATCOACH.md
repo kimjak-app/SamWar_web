@@ -1,56 +1,56 @@
 # Handoff to ChatCoach
 
 ## Completed Task
-SamWar_web v0.2-6 Battle Unit Token Visual Patch
+SamWar_web v0.2-6b Battle Command Bar + Side Info Layout Patch
 
 ## Changed Files
-- `js/phaser/battle_scene.js`
+- `js/ui/battle_ui.js`
+- `js/main.js`
+- `css/main.css`
 - `agent/CURRENT_STATE.md`
 - `agent/SESSION_LOG.md`
 - `agent/HANDOFF_TO_CHATCOACH.md`
 
 ## Verification Result
 - `node --check` passed for:
-  - `js/phaser/battle_scene.js`
-  - `js/phaser/phaser_battle_mount.js`
   - `js/ui/battle_ui.js`
-- Static asset presence check passed for:
-  - `assets/units/unit_player_mvp.png`
-  - `assets/units/unit_enemy_mvp.png`
-- Static inspection confirms the token patch stayed in the Phaser render layer and did not modify battle rules, AI, or balance modules.
+  - `js/main.js`
+- Static inspection confirms the same-battle `.battle-phaser-host` preservation path from v0.2-5a remains in place.
+- Static inspection confirms the patch stayed in layout/UI files and did not modify core battle rules, AI, balance constants, or world-map files.
 - Static inspection confirms `_reference/godot_battle/` files were not modified.
 - Browser/manual QA was not run in this environment.
 
 ## Known Issues
-- Browser-side manual validation is still required to confirm image scaling, click feel, and overlap readability with the new token sprites.
-- Fallback circle markers are still present for missing-texture safety, but the missing-texture path was not exercised here because both PNGs exist locally.
-- No portrait overlay or richer unit art UI was added in this patch; this remains intentionally deferred.
+- Browser-side manual validation is still required for true 100% zoom usability, especially the center board size versus side-panel widths.
+- A lightweight `기본 공격` command bar button entry point was added through existing selection flow, but no new underlying attack mode was introduced.
+- Narrow-screen/mobile battle layout is still intentionally deferred beyond the basic responsive fallback.
 
 ## Kimjak Check Items
 - Confirm Live Server opens without console errors.
 - Confirm `Phaser.VERSION` returns `3.86.0`.
-- Confirm the fullscreen world map and laptop-safe HUD still render correctly.
-- Confirm battle opens from an attackable city.
-- Confirm player units render using `assets/units/unit_player_mvp.png`.
-- Confirm enemy units render using `assets/units/unit_enemy_mvp.png`.
-- Confirm token images are neither too large nor too small on the 10x6 grid.
-- Confirm player-unit click/select still works.
-- Confirm move-tile click still works.
-- Confirm enemy click attack still works.
-- Confirm skill-target click still works.
-- Confirm strategy-target click still works.
-- Confirm HP bars remain readable.
-- Confirm unit names remain readable.
-- Confirm facing arrows remain readable.
-- Confirm status labels remain readable.
-- Confirm selection highlight remains obvious.
-- Confirm floating text appears above the unit images.
-- Confirm auto battle still works.
-- Confirm auto battle still does not flicker.
-- Confirm victory still returns to the world map and occupies the city.
-- Confirm retreat still returns without occupation.
+- Confirm battle opens normally.
+- Confirm at 100% zoom the battle board is visible without page scrolling.
+- Confirm at 100% zoom the bottom command bar is visible without page scrolling.
+- Confirm command buttons no longer require scrolling the page.
+- Confirm the left battle log panel appears.
+- Confirm long battle logs scroll inside the left panel.
+- Confirm logs do not push the layout downward.
+- Confirm the right info panel appears.
+- Confirm the right panel scrolls internally if content overflows.
+- Confirm unit cards no longer push the command bar below the viewport.
+- Confirm manual movement still works.
+- Confirm facing choice still works.
+- Confirm basic attack still works.
+- Confirm skills still work.
+- Confirm strategy still works.
+- Confirm defend and wait still work.
+- Confirm auto-battle toggle remains visible and usable.
+- Confirm auto battle still works without flicker.
+- Confirm victory return still works.
+- Confirm retreat still works.
 - Confirm re-entering battle does not duplicate Phaser canvases.
-- Confirm fallback markers still appear if the token images are manually removed or unavailable.
+- Confirm the battle background and unit token visuals remain visible.
+- Confirm the fullscreen world map layout is unchanged outside battle mode.
 
 ## Suggested Next Task
-- v0.2-6a should likely focus on lightweight battle readability polish around the new token art, such as tighter badge placement or optional portrait-adjacent commander UI, while preserving the current battle rules and persistent Phaser behavior.
+- v0.2-6c should likely focus on battle readability polish inside the new stable layout, such as denser right-panel summaries or clearer command-state cues, while preserving gameplay and the persistent Phaser mount.

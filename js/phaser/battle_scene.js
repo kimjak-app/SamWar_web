@@ -54,6 +54,7 @@ function buildActionSignature(lastAction) {
 export function createBattleSceneDefinition({ battleState, callbacks = {}, onSceneReady } = {}) {
   const PhaserLib = window.Phaser;
   const sceneKey = `samwar-battle-${battleState.id}`;
+  const BATTLEFIELD_KEY = "battlefield-mvp";
   const PLAYER_TOKEN_KEY = "unit-player-mvp";
   const ENEMY_TOKEN_KEY = "unit-enemy-mvp";
 
@@ -70,6 +71,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.headerStatusText = null;
       this.lastRenderedActionSignature = null;
       this.missingTokenWarnings = new Set();
+      this.missingBackgroundWarningShown = false;
     }
 
     getUnitPoint(unit) {
@@ -80,6 +82,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
     }
 
     preload() {
+      if (!this.textures.exists(BATTLEFIELD_KEY)) {
+        this.load.image(BATTLEFIELD_KEY, "assets/battle/battlefield_mvp.png");
+      }
+
       if (!this.textures.exists(PLAYER_TOKEN_KEY)) {
         this.load.image(PLAYER_TOKEN_KEY, "assets/units/unit_player_mvp.png");
       }
@@ -147,11 +153,39 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
       this.dynamicLayer.removeAll(true);
       this.headerStatusText?.setText(`${this.battleState.defenderCityName} 전장`);
-      this.renderHighlights();
+      this.renderBattlefieldBackdrop();
       this.renderGrid();
+      this.renderHighlights();
       this.renderUnits();
       this.renderInstructionText();
       this.renderFloatingEffects();
+    }
+
+    renderBattlefieldBackdrop() {
+      if (this.textures.exists(BATTLEFIELD_KEY)) {
+        const battlefieldImage = this.add.image(
+          this.board.x + this.board.width / 2,
+          this.board.y + this.board.height / 2,
+          BATTLEFIELD_KEY,
+        ).setOrigin(0.5, 0.5);
+        battlefieldImage.displayWidth = this.board.width;
+        battlefieldImage.displayHeight = this.board.height;
+        battlefieldImage.setAlpha(0.78);
+        this.dynamicLayer.add(battlefieldImage);
+      } else if (!this.missingBackgroundWarningShown) {
+        this.missingBackgroundWarningShown = true;
+        console.warn("Battlefield background image missing, using dark fallback background.");
+      }
+
+      const readabilityOverlay = this.add.rectangle(
+        this.board.x + this.board.width / 2,
+        this.board.y + this.board.height / 2,
+        this.board.width,
+        this.board.height,
+        0x081018,
+        0.3,
+      );
+      this.dynamicLayer.add(readabilityOverlay);
     }
 
     renderHighlights() {
@@ -164,8 +198,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           this.cellWidth - 8,
           this.cellHeight - 8,
           0x2c9fff,
-          0.26,
-        ).setStrokeStyle(2, 0x5bb8ff, 0.7);
+          0.3,
+        ).setStrokeStyle(2, 0x5bb8ff, 0.82);
         rect.setInteractive({ useHandCursor: true });
         rect.on("pointerdown", () => this.callbacks.onMoveUnit?.(position));
         this.dynamicLayer.add(rect);
@@ -178,8 +212,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           this.cellWidth - 10,
           this.cellHeight - 10,
           0xff7b7b,
-          0.18,
-        ).setStrokeStyle(2, 0xff7b7b, 0.72);
+          0.22,
+        ).setStrokeStyle(2, 0xff7b7b, 0.8);
         this.dynamicLayer.add(rect);
       });
 
@@ -190,8 +224,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           this.cellWidth - 14,
           this.cellHeight - 14,
           0x8b5cf6,
-          0.24,
-        ).setStrokeStyle(2, 0xd8b4fe, 0.8);
+          0.28,
+        ).setStrokeStyle(2, 0xd8b4fe, 0.86);
         this.dynamicLayer.add(rect);
       });
 
@@ -202,8 +236,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           this.cellWidth - 12,
           this.cellHeight - 12,
           0x7dd3fc,
-          0.2,
-        ).setStrokeStyle(2, 0xa5f3fc, 0.8);
+          0.24,
+        ).setStrokeStyle(2, 0xa5f3fc, 0.86);
         this.dynamicLayer.add(rect);
       });
 
@@ -214,8 +248,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           this.cellWidth - 12,
           this.cellHeight - 12,
           0xf8d798,
-          0.18,
-        ).setStrokeStyle(2, 0xf8d798, 0.8);
+          0.22,
+        ).setStrokeStyle(2, 0xf8d798, 0.88);
         const label = this.add.text(rect.x, rect.y, getDirectionLabel(position.direction), {
           color: "#f8d798",
           fontFamily: "Segoe UI, sans-serif",
@@ -233,17 +267,17 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
     renderGrid() {
       for (let x = 0; x <= this.battleState.grid.width; x += 1) {
         const lineX = this.board.x + this.cellWidth * x;
-        const line = this.add.line(0, 0, lineX, this.board.y, lineX, this.board.y + this.board.height, 0xf8d798, 0.16)
+        const line = this.add.line(0, 0, lineX, this.board.y, lineX, this.board.y + this.board.height, 0xf8d798, 0.22)
           .setOrigin(0, 0)
-          .setLineWidth(1);
+          .setLineWidth(1.5);
         this.dynamicLayer.add(line);
       }
 
       for (let y = 0; y <= this.battleState.grid.height; y += 1) {
         const lineY = this.board.y + this.cellHeight * y;
-        const line = this.add.line(0, 0, this.board.x, lineY, this.board.x + this.board.width, lineY, 0xf8d798, 0.16)
+        const line = this.add.line(0, 0, this.board.x, lineY, this.board.x + this.board.width, lineY, 0xf8d798, 0.22)
           .setOrigin(0, 0)
-          .setLineWidth(1);
+          .setLineWidth(1.5);
         this.dynamicLayer.add(line);
       }
     }
