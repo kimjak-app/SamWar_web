@@ -27,3 +27,9 @@
 - Applied a final micro polish by moving 평양 slightly upward and 교토 slightly downward while keeping 낙양 and 한성 unchanged.
 - Applied a Y-axis-only final polish by moving 평양 upward again and 교토 downward again while keeping all X coordinates fixed.
 - Applied one final Kyoto-only downward micro nudge on the Y-axis while keeping 낙양, 평양, 한성 unchanged.
+
+## 2026-05-01
+
+- Updated `index.html` to load Phaser 3.86.0 from the jsDelivr CDN before `./js/main.js` for the v0.2 battle-scene bootstrap check.
+- Preserved the existing world map, city data, world rules, and gameplay behavior without additional implementation changes.
+- Updated agent state, session log, and ChatCoach handoff documents for the Phaser CDN bootstrap task.

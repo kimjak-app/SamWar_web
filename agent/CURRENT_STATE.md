@@ -9,11 +9,11 @@ GitHub is used for backup and version control.
 Each completed Codex task now ends with a ChatCoach handoff report.
 
 ## Current Phase
-Kyoto final downward micro nudge patch completed on the temporary fullscreen 4-city MVP map.
+Phaser CDN bootstrap for the upcoming v0.2 Battle Scene MVP has been added to the browser entry HTML.
 Battle scene is still intentionally unimplemented.
 
 ## Implemented Structure
-- `index.html` bootstraps the browser MVP.
+- `index.html` bootstraps the browser MVP and now loads Phaser 3.86.0 from CDN before the app module.
 - `css/main.css` styles the temporary fullscreen world map stage, overlay HUD, castle-anchor labels, and attack test state.
 - `js/main.js` initializes the app entry point and wires city selection plus attack test rerendering.
 - `js/core/app_state.js` owns initial app state assembly and immutable city occupation updates.
