@@ -38,31 +38,61 @@ function getEffectStyle(kind) {
   return { color: "#f8d798", stroke: "#4a2c0f", size: "24px" };
 }
 
-export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
+function buildActionSignature(lastAction) {
+  if (!lastAction) {
+    return null;
+  }
+
+  const targetIds = lastAction.targetUnitIds?.join(",") ?? "";
+  const effectTexts = (lastAction.effects ?? [])
+    .map((effect) => `${effect.unitId ?? "none"}:${effect.kind}:${effect.text}`)
+    .join("|");
+
+  return `${lastAction.type}:${lastAction.actorUnitId ?? "none"}:${targetIds}:${effectTexts}`;
+}
+
+export function createBattleSceneDefinition({ battleState, callbacks = {}, onSceneReady } = {}) {
   const PhaserLib = window.Phaser;
   const sceneKey = `samwar-battle-${battleState.id}`;
 
   return class BattleScene extends PhaserLib.Scene {
     constructor() {
       super(sceneKey);
+      this.battleState = battleState;
+      this.callbacks = callbacks;
+      this.board = null;
+      this.cellWidth = 0;
+      this.cellHeight = 0;
+      this.dynamicLayer = null;
+      this.headerTitleText = null;
+      this.headerStatusText = null;
+      this.lastRenderedActionSignature = null;
+    }
+
+    getUnitPoint(unit) {
+      return {
+        x: this.board.x + this.cellWidth * unit.x + this.cellWidth / 2,
+        y: this.board.y + this.cellHeight * unit.y + this.cellHeight / 2,
+      };
+    }
+
+    syncBattleState(nextBattleState, nextCallbacks = {}) {
+      this.battleState = nextBattleState;
+      this.callbacks = nextCallbacks;
+      this.redrawBattle();
     }
 
     create() {
       const width = this.scale.width;
       const height = this.scale.height;
-      const board = {
+      this.board = {
         x: 92,
         y: 118,
         width: width - 184,
         height: height - 210,
       };
-      const cellWidth = board.width / battleState.grid.width;
-      const cellHeight = board.height / battleState.grid.height;
-      const selectedUnitId = battleState.selectedUnitId;
-      const getUnitPoint = (unit) => ({
-        x: board.x + cellWidth * unit.x + cellWidth / 2,
-        y: board.y + cellHeight * unit.y + cellHeight / 2,
-      });
+      this.cellWidth = this.board.width / this.battleState.grid.width;
+      this.cellHeight = this.board.height / this.battleState.grid.height;
 
       this.cameras.main.setBackgroundColor("#081018");
 
@@ -70,80 +100,106 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
       this.add.rectangle(width / 2, height / 2, width - 44, height - 44, 0x0d1622, 1)
         .setStrokeStyle(2, 0xd1b075, 0.24);
 
-      this.add.text(96, 40, "전투 테스트", {
+      this.headerTitleText = this.add.text(96, 40, "전투 테스트", {
         color: "#f3ead9",
         fontFamily: "Georgia, serif",
         fontSize: "34px",
         fontStyle: "bold",
       });
-      this.add.text(96, 82, `${battleState.defenderCityName} 전장`, {
+      this.headerStatusText = this.add.text(96, 82, "", {
         color: "#d1b075",
         fontFamily: "Segoe UI, sans-serif",
         fontSize: "18px",
       });
 
       const boardBackground = this.add.rectangle(
-        board.x + board.width / 2,
-        board.y + board.height / 2,
-        board.width,
-        board.height,
+        this.board.x + this.board.width / 2,
+        this.board.y + this.board.height / 2,
+        this.board.width,
+        this.board.height,
         0x122031,
         0.9,
       );
       boardBackground.setStrokeStyle(2, 0xf8d798, 0.26);
 
-      battleState.highlights.move.forEach((position) => {
+      this.dynamicLayer = this.add.container(0, 0);
+      this.redrawBattle();
+      onSceneReady?.(this);
+    }
+
+    redrawBattle() {
+      if (!this.dynamicLayer) {
+        return;
+      }
+
+      this.dynamicLayer.removeAll(true);
+      this.headerStatusText?.setText(`${this.battleState.defenderCityName} 전장`);
+      this.renderHighlights();
+      this.renderGrid();
+      this.renderUnits();
+      this.renderInstructionText();
+      this.renderFloatingEffects();
+    }
+
+    renderHighlights() {
+      const highlights = this.battleState.highlights ?? {};
+
+      (highlights.move ?? []).forEach((position) => {
         const rect = this.add.rectangle(
-          board.x + cellWidth * position.x + cellWidth / 2,
-          board.y + cellHeight * position.y + cellHeight / 2,
-          cellWidth - 8,
-          cellHeight - 8,
+          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
+          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
+          this.cellWidth - 8,
+          this.cellHeight - 8,
           0x2c9fff,
           0.26,
         ).setStrokeStyle(2, 0x5bb8ff, 0.7);
         rect.setInteractive({ useHandCursor: true });
-        rect.on("pointerdown", () => callbacks.onMoveUnit?.(position));
+        rect.on("pointerdown", () => this.callbacks.onMoveUnit?.(position));
+        this.dynamicLayer.add(rect);
       });
 
-      battleState.highlights.attack.forEach((position) => {
-        this.add.rectangle(
-          board.x + cellWidth * position.x + cellWidth / 2,
-          board.y + cellHeight * position.y + cellHeight / 2,
-          cellWidth - 10,
-          cellHeight - 10,
+      (highlights.attack ?? []).forEach((position) => {
+        const rect = this.add.rectangle(
+          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
+          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
+          this.cellWidth - 10,
+          this.cellHeight - 10,
           0xff7b7b,
           0.18,
         ).setStrokeStyle(2, 0xff7b7b, 0.72);
+        this.dynamicLayer.add(rect);
       });
 
-      battleState.highlights.skill.forEach((position) => {
-        this.add.rectangle(
-          board.x + cellWidth * position.x + cellWidth / 2,
-          board.y + cellHeight * position.y + cellHeight / 2,
-          cellWidth - 14,
-          cellHeight - 14,
+      (highlights.skill ?? []).forEach((position) => {
+        const rect = this.add.rectangle(
+          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
+          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
+          this.cellWidth - 14,
+          this.cellHeight - 14,
           0x8b5cf6,
           0.24,
         ).setStrokeStyle(2, 0xd8b4fe, 0.8);
+        this.dynamicLayer.add(rect);
       });
 
-      battleState.highlights.strategy.forEach((position) => {
-        this.add.rectangle(
-          board.x + cellWidth * position.x + cellWidth / 2,
-          board.y + cellHeight * position.y + cellHeight / 2,
-          cellWidth - 12,
-          cellHeight - 12,
+      (highlights.strategy ?? []).forEach((position) => {
+        const rect = this.add.rectangle(
+          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
+          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
+          this.cellWidth - 12,
+          this.cellHeight - 12,
           0x7dd3fc,
           0.2,
         ).setStrokeStyle(2, 0xa5f3fc, 0.8);
+        this.dynamicLayer.add(rect);
       });
 
-      battleState.highlights.facing.forEach((position) => {
+      (highlights.facing ?? []).forEach((position) => {
         const rect = this.add.rectangle(
-          board.x + cellWidth * position.x + cellWidth / 2,
-          board.y + cellHeight * position.y + cellHeight / 2,
-          cellWidth - 12,
-          cellHeight - 12,
+          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
+          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
+          this.cellWidth - 12,
+          this.cellHeight - 12,
           0xf8d798,
           0.18,
         ).setStrokeStyle(2, 0xf8d798, 0.8);
@@ -154,33 +210,42 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
           fontStyle: "bold",
         }).setOrigin(0.5, 0.5);
         rect.setInteractive({ useHandCursor: true });
-        rect.on("pointerdown", () => callbacks.onSetFacing?.(position.direction));
+        rect.on("pointerdown", () => this.callbacks.onSetFacing?.(position.direction));
         label.setInteractive({ useHandCursor: true });
-        label.on("pointerdown", () => callbacks.onSetFacing?.(position.direction));
+        label.on("pointerdown", () => this.callbacks.onSetFacing?.(position.direction));
+        this.dynamicLayer.add([rect, label]);
       });
+    }
 
-      for (let x = 0; x <= battleState.grid.width; x += 1) {
-        const lineX = board.x + cellWidth * x;
-        this.add.line(0, 0, lineX, board.y, lineX, board.y + board.height, 0xf8d798, 0.16)
+    renderGrid() {
+      for (let x = 0; x <= this.battleState.grid.width; x += 1) {
+        const lineX = this.board.x + this.cellWidth * x;
+        const line = this.add.line(0, 0, lineX, this.board.y, lineX, this.board.y + this.board.height, 0xf8d798, 0.16)
           .setOrigin(0, 0)
           .setLineWidth(1);
+        this.dynamicLayer.add(line);
       }
 
-      for (let y = 0; y <= battleState.grid.height; y += 1) {
-        const lineY = board.y + cellHeight * y;
-        this.add.line(0, 0, board.x, lineY, board.x + board.width, lineY, 0xf8d798, 0.16)
+      for (let y = 0; y <= this.battleState.grid.height; y += 1) {
+        const lineY = this.board.y + this.cellHeight * y;
+        const line = this.add.line(0, 0, this.board.x, lineY, this.board.x + this.board.width, lineY, 0xf8d798, 0.16)
           .setOrigin(0, 0)
           .setLineWidth(1);
+        this.dynamicLayer.add(line);
       }
+    }
 
-      battleState.units.forEach((unit) => {
+    renderUnits() {
+      const selectedUnitId = this.battleState.selectedUnitId;
+
+      this.battleState.units.forEach((unit) => {
         if (!unit.isAlive) {
           return;
         }
 
-        const unitPoint = getUnitPoint(unit);
+        const unitPoint = this.getUnitPoint(unit);
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
-        const skill = getSkillById(battleState.skills, unit.skillId);
+        const skill = getSkillById(this.battleState.skills, unit.skillId);
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
         const selectionRing = this.add.circle(0, 0, 34, 0xf8d798, unit.id === selectedUnitId ? 0.22 : 0);
         const badge = this.add.circle(0, 0, 26, fillColor, 0.96).setStrokeStyle(4, 0xf3ead9, 0.92);
@@ -224,47 +289,43 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
         unitGroup.add([selectionRing, badge, label, facingText, hpText, cooldownText, hpBarTrack, hpBarFill]);
 
         if (unit.isDefending) {
-          const defendChip = this.add.text(0, -84, "방어", {
+          unitGroup.add(this.add.text(0, -84, "방어", {
             color: "#c7d2fe",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
             fontStyle: "bold",
             align: "center",
-          }).setOrigin(0.5, 0.5);
-          unitGroup.add(defendChip);
+          }).setOrigin(0.5, 0.5));
         }
 
         if (hasStatus(unit, "confusion")) {
-          const confusionChip = this.add.text(0, -120, `혼란 ${unit.statusEffects.confusion}`, {
+          unitGroup.add(this.add.text(0, -120, `혼란 ${unit.statusEffects.confusion}`, {
             color: "#f9e27d",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
             fontStyle: "bold",
             align: "center",
-          }).setOrigin(0.5, 0.5);
-          unitGroup.add(confusionChip);
+          }).setOrigin(0.5, 0.5));
         }
 
         if (hasStatus(unit, "shake")) {
-          const shakeChip = this.add.text(0, -138, `동요 ${unit.statusEffects.shake}`, {
+          unitGroup.add(this.add.text(0, -138, `동요 ${unit.statusEffects.shake}`, {
             color: "#9dd6ff",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
             fontStyle: "bold",
             align: "center",
-          }).setOrigin(0.5, 0.5);
-          unitGroup.add(shakeChip);
+          }).setOrigin(0.5, 0.5));
         }
 
         if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
-          const buffChip = this.add.text(0, -102, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
+          unitGroup.add(this.add.text(0, -102, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
             color: "#9ef3b0",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
             fontStyle: "bold",
             align: "center",
-          }).setOrigin(0.5, 0.5);
-          unitGroup.add(buffChip);
+          }).setOrigin(0.5, 0.5));
         }
 
         this.tweens.add({
@@ -287,88 +348,44 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
         }
 
         if (unit.side === "player") {
-          badge.setInteractive({ useHandCursor: battleState.turnOwner === "player" });
-          badge.on("pointerdown", () => callbacks.onSelectUnit?.(unit.id));
+          badge.setInteractive({ useHandCursor: this.battleState.turnOwner === "player" });
+          badge.on("pointerdown", () => this.callbacks.onSelectUnit?.(unit.id));
         }
 
         if (unit.side === "enemy") {
           badge.setInteractive({ useHandCursor: true });
           badge.on("pointerdown", () => {
-            if (battleState.phase === "skill") {
-              callbacks.onUseSkill?.(unit.id);
+            if (this.battleState.phase === "skill") {
+              this.callbacks.onUseSkill?.(unit.id);
               return;
             }
 
-            if (battleState.phase === "strategy") {
-              callbacks.onUseStrategy?.(unit.id);
+            if (this.battleState.phase === "strategy") {
+              this.callbacks.onUseStrategy?.(unit.id);
               return;
             }
 
-            callbacks.onAttackUnit?.(unit.id);
+            this.callbacks.onAttackUnit?.(unit.id);
           });
         }
+
+        this.dynamicLayer.add(unitGroup);
       });
+    }
 
-      if (battleState.lastAction?.effects?.length) {
-        const targetUnits = battleState.units.filter((unit) => battleState.lastAction.targetUnitIds?.includes(unit.id));
-
-        targetUnits.forEach((unit) => {
-          const point = getUnitPoint(unit);
-          const flashColor = battleState.lastAction.type === "buff" ? 0x86efac : 0xffd166;
-          const flash = this.add.circle(point.x, point.y, 42, flashColor, 0.2);
-          this.cameras.main.shake(90, 0.0018, true);
-
-          this.tweens.add({
-            targets: flash,
-            alpha: 0,
-            scale: 1.45,
-            duration: 280,
-            onComplete: () => flash.destroy(),
-          });
-        });
-
-        battleState.lastAction.effects.forEach((effect, index) => {
-          const unit = battleState.units.find((entry) => entry.id === effect.unitId);
-
-          if (!unit) {
-            return;
-          }
-
-          const point = getUnitPoint(unit);
-          const style = getEffectStyle(effect.kind);
-          const floatingText = this.add.text(point.x, point.y - 30 - index * 6, effect.text, {
-            color: style.color,
-            fontFamily: "Segoe UI, sans-serif",
-            fontSize: style.size,
-            fontStyle: "bold",
-            stroke: style.stroke,
-            strokeThickness: 4,
-            align: "center",
-          }).setOrigin(0.5, 0.5);
-
-          this.tweens.add({
-            targets: floatingText,
-            y: floatingText.y - 34,
-            alpha: 0,
-            duration: 820,
-            ease: "Sine.easeOut",
-            onComplete: () => floatingText.destroy(),
-          });
-        });
-      }
-
-      this.add.text(
-        width - 96,
+    renderInstructionText() {
+      const instructionText = this.add.text(
+        this.scale.width - 96,
         54,
-        battleState.phase === "facing"
+        this.battleState.phase === "facing"
           ? "이동 후 방향 선택"
-          : battleState.phase === "skill"
+          : this.battleState.phase === "skill"
             ? "특기 대상 적 유닛 선택"
-            : battleState.phase === "strategy"
+            : this.battleState.phase === "strategy"
               ? "책략 대상 적 유닛 선택"
-            : battleState.turnOwner === "player"
-              ? "유닛 선택 · 이동 · 방향 · 공격 · 특기 · 책략 · 방어 · 대기"
-              : "적군 행동 중",
+              : this.battleState.turnOwner === "player"
+                ? "유닛 선택 · 이동 · 방향 · 공격 · 특기 · 책략 · 방어 · 대기"
+                : "적군 행동 중",
         {
           color: "#aeb7c3",
           fontFamily: "Segoe UI, sans-serif",
@@ -376,34 +393,59 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
         },
       ).setOrigin(1, 0.5);
 
-      this.input.keyboard?.on("keydown-S", () => {
-        if (battleState.status === "active") {
-          callbacks.onUseSkill?.(null);
-        }
+      this.dynamicLayer.add(instructionText);
+    }
+
+    renderFloatingEffects() {
+      const lastAction = this.battleState.lastAction;
+      const actionSignature = buildActionSignature(lastAction);
+
+      if (!lastAction || !lastAction.effects?.length || actionSignature === this.lastRenderedActionSignature) {
+        return;
+      }
+
+      this.lastRenderedActionSignature = actionSignature;
+      const targetUnits = this.battleState.units.filter((unit) => lastAction.targetUnitIds?.includes(unit.id));
+
+      targetUnits.forEach((unit) => {
+        const point = this.getUnitPoint(unit);
+        const flashColor = lastAction.type === "buff" ? 0x86efac : 0xffd166;
+        const flash = this.add.circle(point.x, point.y, 42, flashColor, 0.2);
+        this.dynamicLayer.add(flash);
+        this.cameras.main.shake(90, 0.0018, true);
+
+        this.tweens.add({
+          targets: flash,
+          alpha: 0,
+          scale: 1.45,
+          duration: 280,
+          onComplete: () => flash.destroy(),
+        });
       });
 
-      this.input.keyboard?.on("keydown-D", () => {
-        if (battleState.status === "active") {
-          callbacks.onDefend?.();
-        }
-      });
+      lastAction.effects.forEach((effect, index) => {
+        const unit = this.battleState.units.find((entry) => entry.id === effect.unitId);
+        const point = unit ? this.getUnitPoint(unit) : { x: this.scale.width / 2, y: 110 };
+        const style = getEffectStyle(effect.kind);
+        const floatingText = this.add.text(point.x, point.y - 30 - index * 6, effect.text, {
+          color: style.color,
+          fontFamily: "Segoe UI, sans-serif",
+          fontSize: style.size,
+          fontStyle: "bold",
+          stroke: style.stroke,
+          strokeThickness: 4,
+          align: "center",
+        }).setOrigin(0.5, 0.5);
 
-      this.input.keyboard?.on("keydown-W", () => {
-        if (battleState.status === "active") {
-          callbacks.onWait?.();
-        }
-      });
-
-      this.input.keyboard?.on("keydown-ENTER", () => {
-        if (battleState.status === "active") {
-          callbacks.onEndTurn?.();
-        }
-      });
-
-      this.input.keyboard?.on("keydown-ESC", () => {
-        if (battleState.status === "active") {
-          callbacks.onRetreat?.();
-        }
+        this.dynamicLayer.add(floatingText);
+        this.tweens.add({
+          targets: floatingText,
+          y: floatingText.y - 34,
+          alpha: 0,
+          duration: 820,
+          ease: "Sine.easeOut",
+          onComplete: () => floatingText.destroy(),
+        });
       });
     }
   };

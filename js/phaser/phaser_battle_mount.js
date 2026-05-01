@@ -1,28 +1,36 @@
 import { createBattleSceneDefinition } from "./battle_scene.js";
 
-let activeGame = null;
-let activeContainer = null;
+let currentGame = null;
+let currentBattleId = null;
+let currentScene = null;
+let currentContainer = null;
+let pendingBattleState = null;
+let pendingCallbacks = null;
 
-export function destroyBattleScene() {
-  if (activeGame) {
-    activeGame.destroy(true);
-    activeGame = null;
-  }
-
-  if (activeContainer) {
-    activeContainer.innerHTML = "";
-    activeContainer = null;
+function clearContainer(container) {
+  if (container) {
+    container.innerHTML = "";
   }
 }
 
-export function mountBattleScene(containerElement, battleState, callbacks = {}) {
-  destroyBattleScene();
-
-  if (!containerElement) {
-    return;
+export function destroyBattleScene() {
+  if (currentGame) {
+    currentGame.destroy(true);
   }
 
-  activeContainer = containerElement;
+  clearContainer(currentContainer);
+  currentGame = null;
+  currentBattleId = null;
+  currentScene = null;
+  currentContainer = null;
+  pendingBattleState = null;
+  pendingCallbacks = null;
+}
+
+export function mountBattleScene(containerElement, battleState, callbacks = {}) {
+  if (!containerElement || !battleState) {
+    return;
+  }
 
   if (!window.Phaser) {
     containerElement.innerHTML = `
@@ -34,9 +42,36 @@ export function mountBattleScene(containerElement, battleState, callbacks = {}) 
   }
 
   const PhaserLib = window.Phaser;
-  const BattleScene = createBattleSceneDefinition({ battleState, callbacks });
+  const sameBattle = currentBattleId === battleState.id;
+  const sameContainer = currentContainer === containerElement;
 
-  activeGame = new PhaserLib.Game({
+  if (currentGame && sameBattle && sameContainer) {
+    pendingBattleState = battleState;
+    pendingCallbacks = callbacks;
+    currentScene?.syncBattleState?.(battleState, callbacks);
+    return;
+  }
+
+  if (currentGame && (!sameBattle || !sameContainer)) {
+    destroyBattleScene();
+  }
+
+  currentBattleId = battleState.id;
+  currentContainer = containerElement;
+  pendingBattleState = battleState;
+  pendingCallbacks = callbacks;
+  clearContainer(containerElement);
+
+  const BattleScene = createBattleSceneDefinition({
+    battleState,
+    callbacks,
+    onSceneReady: (sceneInstance) => {
+      currentScene = sceneInstance;
+      currentScene.syncBattleState?.(pendingBattleState ?? battleState, pendingCallbacks ?? callbacks);
+    },
+  });
+
+  currentGame = new PhaserLib.Game({
     type: PhaserLib.AUTO,
     parent: containerElement,
     width: 1200,

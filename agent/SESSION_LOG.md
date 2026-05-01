@@ -103,3 +103,8 @@
 - Reworked `js/ui/battle_ui.js` so the battle HUD now shows compact balance/debug values, a dedicated auto-battle toggle, and disabled manual buttons while auto battle is running.
 - Extended `css/main.css` with auto-battle button styling and a third battle action row while preserving the fullscreen world map and laptop-safe HUD layout.
 - Re-ran `node --check` on the updated AI/rules/UI modules and a deterministic runtime sanity script covering `개혁령` effective-attack increase, `동요` effective stat reduction, enemy turn return flow, and player auto-battle step advancement.
+- Reworked `js/phaser/phaser_battle_mount.js` so the Phaser game now persists for the same `battle.id`, syncs scene state on battle updates, and only destroys the canvas when leaving battle mode or starting a different battle.
+- Rebuilt `js/phaser/battle_scene.js` around an in-place `syncBattleState` redraw flow so highlights, units, HP/status markers, and floating text update without recreating the Phaser game.
+- Reworked `js/ui/battle_ui.js` so same-battle rerenders preserve the existing `.battle-phaser-host` DOM node and only refresh the stage header and HUD/log sections.
+- Preserved `js/ui/layout_ui.js` world-map cleanup behavior so Phaser still gets destroyed correctly on victory return, retreat, defeat return, or any other exit from battle mode.
+- Re-ran `node --check` on the updated Phaser/UI modules and a mocked mount-lifecycle sanity script covering same-battle reuse, new-battle remount, container swap remount, and explicit destroy cleanup.

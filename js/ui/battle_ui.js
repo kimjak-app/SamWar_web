@@ -158,6 +158,182 @@ function renderUnitCard(unit, sideLabel) {
   `;
 }
 
+function renderBattleShell(battleState) {
+  return `
+    <main class="battle-screen" data-battle-id="${battleState.id}">
+      <section class="battle-shell" aria-labelledby="battle-title">
+        <div class="battle-stage-panel battle-panel">
+          <div class="battle-stage-header" data-battle-stage-header></div>
+          <div class="battle-phaser-shell">
+            <div class="battle-phaser-host" data-battle-mount></div>
+          </div>
+        </div>
+
+        <aside class="battle-hud" aria-label="Battle status" data-battle-hud></aside>
+      </section>
+    </main>
+  `;
+}
+
+function renderBattleStageHeader(battleState) {
+  return `
+    <div>
+      <p class="eyebrow">Persistent Phaser Mount</p>
+      <h1 id="battle-title" class="battle-screen-title">전투 테스트</h1>
+      <p class="battle-screen-copy">
+        ${battleState.attackerCityName} 군이 ${battleState.defenderCityName} 공략을 시도하고 있습니다.
+      </p>
+    </div>
+    <div class="battle-city-chip">${battleState.defenderCityName}</div>
+  `;
+}
+
+function renderBattleHud(battleState, playerUnits, enemyUnits, selectedUnit, selectedSkill, options) {
+  const {
+    isActive,
+    isFacingPhase,
+    canUseSelectedSkill,
+    canUsePostureCommand,
+    manualControlsLocked,
+    canUseSelectedStrategy,
+    skillButtonLabel,
+    selectedUnitSummary,
+    selectedUnitStats,
+    selectedUnitRanges,
+    strategyRangeText,
+  } = options;
+
+  return `
+    <section class="battle-panel battle-status-panel">
+      <p class="eyebrow">Status</p>
+      <h2 class="detail-heading">전황 보고</h2>
+      <p class="battle-status-copy">${getBattleStatusCopy(battleState)}</p>
+      <div class="battle-turn-banner">
+        ${battleState.turnOwner === "player" ? "아군 턴" : "적군 턴"}
+        <span class="battle-turn-subcopy">
+          ${battleState.turnOwner === "player" ? "유닛 선택 · 이동 · 방향 · 공격 · 특기 · 책략 · 방어 · 대기" : "적군 행동 중"}
+        </span>
+      </div>
+      <div class="battle-selected-card">
+        <span class="battle-unit-side">선택 유닛</span>
+        <strong class="battle-unit-name">${selectedUnit?.name ?? "없음"}</strong>
+        <span class="battle-unit-hp">${selectedUnitSummary}</span>
+        <span class="battle-unit-hp">${selectedUnitStats}</span>
+        <span class="battle-unit-cooldown">${selectedUnitRanges}</span>
+        ${selectedUnit ? `<span class="battle-unit-buff">방향: ${getDirectionLabel(selectedUnit.facing)}</span>` : ""}
+        ${selectedUnit ? `<span class="battle-unit-buff">${formatBuffStatus(selectedUnit)}</span>` : ""}
+        ${selectedUnit ? `<span class="battle-unit-buff">${formatStatusList(selectedUnit)}</span>` : ""}
+        ${selectedUnit ? `<span class="battle-unit-cooldown">${getAttackAngleHint(battleState, selectedUnit)}</span>` : ""}
+        ${selectedUnit ? `<span class="battle-unit-cooldown">${strategyRangeText}</span>` : ""}
+        ${selectedUnit ? `<span class="battle-unit-buff">${getStrategyInfo(selectedUnit)}</span>` : ""}
+      </div>
+      <div class="battle-skill-card">
+        <span class="battle-unit-side">고유 특기</span>
+        <strong class="battle-unit-name">${selectedSkill?.name ?? "없음"}</strong>
+        <span class="battle-unit-hp">
+          ${
+            selectedSkill
+              ? `재사용 대기: ${selectedUnit?.currentSkillCooldown ?? 0}턴 · ${getSkillHelpCopy(selectedSkill)}`
+              : "영웅을 선택하면 고유 특기 정보가 표시됩니다."
+          }
+        </span>
+        ${
+          selectedSkill
+            ? `<span class="battle-unit-buff">${selectedSkill.description}</span>`
+            : ""
+        }
+      </div>
+      <div class="battle-skill-card">
+        <span class="battle-unit-side">책략</span>
+        <strong class="battle-unit-name">${battleState.phase === "strategy" ? "대상 선택 중" : "가능 효과"}</strong>
+        <span class="battle-unit-hp">
+          ${selectedUnit ? getStrategyInfo(selectedUnit) : "유닛을 선택하면 책략 정보를 표시합니다."}
+        </span>
+      </div>
+      ${
+        isFacingPhase && selectedUnit
+          ? `
+            <div class="battle-facing-panel">
+              <span class="battle-unit-side">방향 선택</span>
+              <div class="battle-direction-grid">
+                ${renderDirectionButton("up")}
+                ${renderDirectionButton("left")}
+                ${renderDirectionButton("down")}
+                ${renderDirectionButton("right")}
+              </div>
+            </div>
+          `
+          : ""
+      }
+      <div class="battle-unit-stats">
+        ${playerUnits.map((unit) => renderUnitCard(unit, "아군")).join("")}
+        ${enemyUnits.map((unit) => renderUnitCard(unit, "적군")).join("")}
+      </div>
+      <div class="battle-action-row battle-action-row-main">
+        <button
+          class="battle-action-button battle-action-button-skill ${battleState.phase === "skill" ? "is-active" : ""}"
+          type="button"
+          data-battle-action="skill"
+          ${isActive && canUseSelectedSkill && !manualControlsLocked ? "" : "disabled"}
+        >
+          ${skillButtonLabel}
+        </button>
+        <button
+          class="battle-action-button ${battleState.phase === "strategy" ? "battle-action-button-skill is-active" : ""}"
+          type="button"
+          data-battle-action="strategy"
+          ${isActive && canUseSelectedStrategy && !manualControlsLocked ? "" : "disabled"}
+        >
+          책략
+        </button>
+        <button class="battle-action-button" type="button" data-battle-action="defend" ${canUsePostureCommand && !manualControlsLocked ? "" : "disabled"}>
+          방어
+        </button>
+      </div>
+      <div class="battle-action-row battle-action-row-skill">
+        <button class="battle-action-button" type="button" data-battle-action="wait" ${canUsePostureCommand && !manualControlsLocked ? "" : "disabled"}>
+          대기
+        </button>
+        <button class="battle-action-button" type="button" data-battle-action="end-turn" ${isActive && !manualControlsLocked ? "" : "disabled"}>
+          턴 종료
+        </button>
+        <button class="battle-action-button battle-action-button-auto ${battleState.autoBattleEnabled ? "is-active" : ""}" type="button" data-battle-action="auto" ${isActive ? "" : "disabled"}>
+          ${battleState.autoBattleEnabled ? "자동전투 중지" : "자동전투"}
+        </button>
+      </div>
+      <div class="battle-action-row battle-action-row-tertiary">
+        <button class="battle-action-button battle-action-button-muted" type="button" data-battle-action="retreat" ${isActive ? "" : "disabled"}>
+          후퇴
+        </button>
+      </div>
+      ${
+        selectedUnit && selectedSkill && selectedUnit.currentSkillCooldown > 0
+          ? `<p class="battle-skill-help">재사용 대기: ${selectedUnit.currentSkillCooldown}턴</p>`
+          : selectedSkill
+            ? `<p class="battle-skill-help">${getSkillHelpCopy(selectedSkill)}</p>`
+            : ""
+      }
+      ${
+        !isActive
+          ? `
+            <button class="battle-action-button battle-action-button-return" type="button" data-battle-action="return">
+              월드맵으로 복귀
+            </button>
+          `
+          : ""
+      }
+    </section>
+
+    <section class="battle-panel battle-log-panel">
+      <p class="eyebrow">Battle Log</p>
+      <h2 class="detail-heading">전투 기록</h2>
+      <ol class="battle-log-list">
+        ${renderBattleLog(battleState.log)}
+      </ol>
+    </section>
+  `;
+}
+
 export function renderBattleUI(rootElement, appState, handlers = {}) {
   const battleState = appState.battle;
 
@@ -215,159 +391,48 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
     ? `책략 사거리 ${getStrategyRange(selectedUnit)}`
     : "지력 80 이상 장수만 책략 사용 가능";
 
-  rootElement.innerHTML = `
-    <main class="battle-screen">
-      <section class="battle-shell" aria-labelledby="battle-title">
-        <div class="battle-stage-panel battle-panel">
-          <div class="battle-stage-header">
-            <div>
-              <p class="eyebrow">Strategy Random Outcome Patch</p>
-              <h1 id="battle-title" class="battle-screen-title">전투 테스트</h1>
-              <p class="battle-screen-copy">
-                ${battleState.attackerCityName} 군이 ${battleState.defenderCityName} 공략을 시도하고 있습니다.
-              </p>
-            </div>
-            <div class="battle-city-chip">${battleState.defenderCityName}</div>
-          </div>
-          <div class="battle-phaser-shell">
-            <div class="battle-phaser-host" data-battle-mount></div>
-          </div>
-        </div>
+  const existingScreen = rootElement.querySelector(".battle-screen");
+  const currentBattleId = existingScreen?.getAttribute("data-battle-id");
 
-        <aside class="battle-hud" aria-label="Battle status">
-          <section class="battle-panel battle-status-panel">
-            <p class="eyebrow">Status</p>
-            <h2 class="detail-heading">전황 보고</h2>
-            <p class="battle-status-copy">${getBattleStatusCopy(battleState)}</p>
-            <div class="battle-turn-banner">
-              ${battleState.turnOwner === "player" ? "아군 턴" : "적군 턴"}
-              <span class="battle-turn-subcopy">
-                ${battleState.turnOwner === "player" ? "유닛 선택 · 이동 · 방향 · 공격 · 특기 · 책략 · 방어 · 대기" : "적군 행동 중"}
-              </span>
-            </div>
-            <div class="battle-selected-card">
-              <span class="battle-unit-side">선택 유닛</span>
-              <strong class="battle-unit-name">${selectedUnit?.name ?? "없음"}</strong>
-              <span class="battle-unit-hp">${selectedUnitSummary}</span>
-              <span class="battle-unit-hp">${selectedUnitStats}</span>
-              <span class="battle-unit-cooldown">${selectedUnitRanges}</span>
-              ${selectedUnit ? `<span class="battle-unit-buff">방향: ${getDirectionLabel(selectedUnit.facing)}</span>` : ""}
-              ${selectedUnit ? `<span class="battle-unit-buff">${formatBuffStatus(selectedUnit)}</span>` : ""}
-              ${selectedUnit ? `<span class="battle-unit-buff">${formatStatusList(selectedUnit)}</span>` : ""}
-              ${selectedUnit ? `<span class="battle-unit-cooldown">${getAttackAngleHint(battleState, selectedUnit)}</span>` : ""}
-              ${selectedUnit ? `<span class="battle-unit-cooldown">${strategyRangeText}</span>` : ""}
-              ${selectedUnit ? `<span class="battle-unit-buff">${getStrategyInfo(selectedUnit)}</span>` : ""}
-            </div>
-            <div class="battle-skill-card">
-              <span class="battle-unit-side">고유 특기</span>
-              <strong class="battle-unit-name">${selectedSkill?.name ?? "없음"}</strong>
-              <span class="battle-unit-hp">
-                ${
-                  selectedSkill
-                    ? `재사용 대기: ${selectedUnit?.currentSkillCooldown ?? 0}턴 · ${getSkillHelpCopy(selectedSkill)}`
-                    : "영웅을 선택하면 고유 특기 정보가 표시됩니다."
-                }
-              </span>
-              ${
-                selectedSkill
-                  ? `<span class="battle-unit-buff">${selectedSkill.description}</span>`
-                  : ""
-              }
-            </div>
-            <div class="battle-skill-card">
-              <span class="battle-unit-side">책략</span>
-              <strong class="battle-unit-name">${battleState.phase === "strategy" ? "대상 선택 중" : "가능 효과"}</strong>
-              <span class="battle-unit-hp">
-                ${selectedUnit ? getStrategyInfo(selectedUnit) : "유닛을 선택하면 책략 정보를 표시합니다."}
-              </span>
-            </div>
-            ${
-              isFacingPhase && selectedUnit
-                ? `
-                  <div class="battle-facing-panel">
-                    <span class="battle-unit-side">방향 선택</span>
-                    <div class="battle-direction-grid">
-                      ${renderDirectionButton("up")}
-                      ${renderDirectionButton("left")}
-                      ${renderDirectionButton("down")}
-                      ${renderDirectionButton("right")}
-                    </div>
-                  </div>
-                `
-                : ""
-            }
-            <div class="battle-unit-stats">
-              ${playerUnits.map((unit) => renderUnitCard(unit, "아군")).join("")}
-              ${enemyUnits.map((unit) => renderUnitCard(unit, "적군")).join("")}
-            </div>
-            <div class="battle-action-row battle-action-row-main">
-              <button
-                class="battle-action-button battle-action-button-skill ${battleState.phase === "skill" ? "is-active" : ""}"
-                type="button"
-                data-battle-action="skill"
-                ${isActive && canUseSelectedSkill && !manualControlsLocked ? "" : "disabled"}
-              >
-                ${skillButtonLabel}
-              </button>
-              <button
-                class="battle-action-button ${battleState.phase === "strategy" ? "battle-action-button-skill is-active" : ""}"
-                type="button"
-                data-battle-action="strategy"
-                ${isActive && canUseSelectedStrategy && !manualControlsLocked ? "" : "disabled"}
-              >
-                책략
-              </button>
-              <button class="battle-action-button" type="button" data-battle-action="defend" ${canUsePostureCommand && !manualControlsLocked ? "" : "disabled"}>
-                방어
-              </button>
-            </div>
-            <div class="battle-action-row battle-action-row-skill">
-              <button class="battle-action-button" type="button" data-battle-action="wait" ${canUsePostureCommand && !manualControlsLocked ? "" : "disabled"}>
-                대기
-              </button>
-              <button class="battle-action-button" type="button" data-battle-action="end-turn" ${isActive && !manualControlsLocked ? "" : "disabled"}>
-                턴 종료
-              </button>
-              <button class="battle-action-button battle-action-button-auto ${battleState.autoBattleEnabled ? "is-active" : ""}" type="button" data-battle-action="auto" ${isActive ? "" : "disabled"}>
-                ${battleState.autoBattleEnabled ? "자동전투 중지" : "자동전투"}
-              </button>
-            </div>
-            <div class="battle-action-row battle-action-row-tertiary">
-              <button class="battle-action-button battle-action-button-muted" type="button" data-battle-action="retreat" ${isActive ? "" : "disabled"}>
-                후퇴
-              </button>
-            </div>
-            ${
-              selectedUnit && selectedSkill && selectedUnit.currentSkillCooldown > 0
-                ? `<p class="battle-skill-help">재사용 대기: ${selectedUnit.currentSkillCooldown}턴</p>`
-                : selectedSkill
-                  ? `<p class="battle-skill-help">${getSkillHelpCopy(selectedSkill)}</p>`
-                  : ""
-            }
-            ${
-              !isActive
-                ? `
-                  <button class="battle-action-button battle-action-button-return" type="button" data-battle-action="return">
-                    월드맵으로 복귀
-                  </button>
-                `
-                : ""
-            }
-          </section>
+  if (currentBattleId !== battleState.id) {
+    rootElement.innerHTML = renderBattleShell(battleState);
+  }
 
-          <section class="battle-panel battle-log-panel">
-            <p class="eyebrow">Battle Log</p>
-            <h2 class="detail-heading">전투 기록</h2>
-            <ol class="battle-log-list">
-              ${renderBattleLog(battleState.log)}
-            </ol>
-          </section>
-        </aside>
-      </section>
-    </main>
-  `;
-
+  const battleScreen = rootElement.querySelector('.battle-screen[data-battle-id]');
+  const stageHeaderElement = rootElement.querySelector("[data-battle-stage-header]");
+  const hudElement = rootElement.querySelector("[data-battle-hud]");
   const mountElement = rootElement.querySelector("[data-battle-mount]");
+
+  if (battleScreen) {
+    battleScreen.setAttribute("data-battle-id", battleState.id);
+  }
+
+  if (stageHeaderElement) {
+    stageHeaderElement.innerHTML = renderBattleStageHeader(battleState);
+  }
+
+  if (hudElement) {
+    hudElement.innerHTML = renderBattleHud(
+      battleState,
+      playerUnits,
+      enemyUnits,
+      selectedUnit,
+      selectedSkill,
+      {
+        isActive,
+        isFacingPhase,
+        canUseSelectedSkill,
+        canUsePostureCommand,
+        manualControlsLocked,
+        canUseSelectedStrategy,
+        skillButtonLabel,
+        selectedUnitSummary,
+        selectedUnitStats,
+        selectedUnitRanges,
+        strategyRangeText,
+      },
+    );
+  }
 
   if (mountElement) {
     mountBattleScene(mountElement, battleState, {
