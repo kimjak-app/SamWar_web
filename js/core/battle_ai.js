@@ -1,6 +1,7 @@
 import { getDirectionFromPositions } from "./battle_direction.js";
 import { getAttackableUnits, getDistance, getWalkablePositions } from "./battle_grid.js";
 import { canUseSkill, getSkillById, getSkillTargets } from "./battle_skills.js";
+import { canUseStrategy, getStrategyTargets } from "./battle_strategy.js";
 
 function getClosestPlayerUnit(enemyUnit, playerUnits) {
   return playerUnits
@@ -11,6 +12,8 @@ function getClosestPlayerUnit(enemyUnit, playerUnits) {
 export function getEnemyTurnAction(battleState, enemyUnit, playerUnits) {
   const skill = getSkillById(battleState.skills, enemyUnit?.skillId);
   const skillTargets = skill && canUseSkill(enemyUnit, skill) ? getSkillTargets(battleState, enemyUnit, skill) : [];
+  const genericStrategy = (battleState.strategies ?? []).find((strategy) => strategy.id === "strategy") ?? null;
+  const strategyTargets = genericStrategy && canUseStrategy(enemyUnit) ? getStrategyTargets(battleState, enemyUnit) : [];
 
   if (
     enemyUnit?.heroId === "nobunaga"
@@ -46,6 +49,16 @@ export function getEnemyTurnAction(battleState, enemyUnit, playerUnits) {
       targetUnitId: attackTargets[0].id,
       movePosition: null,
       facingDirection: getDirectionFromPositions(enemyUnit, attackTargets[0]),
+    };
+  }
+
+  if (genericStrategy && strategyTargets.length > 0) {
+    return {
+      type: "strategy",
+      strategyId: genericStrategy.id,
+      targetUnitId: strategyTargets[0].id,
+      movePosition: null,
+      facingDirection: getDirectionFromPositions(enemyUnit, strategyTargets[0]),
     };
   }
 

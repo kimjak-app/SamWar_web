@@ -1,5 +1,6 @@
 import { getAttackAngleType, getDirectionLabel } from "../core/battle_direction.js";
 import { canUseSkill, getEffectiveAttack, getEffectiveDefense, getSkillById } from "../core/battle_skills.js";
+import { canUseStrategy, getStrategyRange, getStrategyTier, hasStatus } from "../core/battle_strategy.js";
 import { getEnemyUnits, getPlayerUnits, getSelectedUnit } from "../core/battle_rules.js";
 import { mountBattleScene } from "../phaser/phaser_battle_mount.js";
 
@@ -24,7 +25,11 @@ function getBattleStatusCopy(battleState) {
     return "스킬 대상이 되는 적 유닛을 선택하세요.";
   }
 
-  return "아군 유닛 선택 → 이동 → 방향 결정 → 기본 공격 또는 고유 특기 사용 순서로 전투를 진행합니다.";
+  if (battleState.phase === "strategy") {
+    return "책략 대상 선택";
+  }
+
+  return "아군 유닛 선택 → 이동 → 방향 결정 → 공격 / 특기 / 책략 / 방어 / 대기 순서로 전투를 진행합니다.";
 }
 
 function getSkillHelpCopy(skill) {
@@ -43,12 +48,48 @@ function getSkillHelpCopy(skill) {
   return skill.description;
 }
 
+function getStrategyInfo(unit) {
+  const tier = getStrategyTier(unit);
+
+  if (tier === "master") {
+    return "책략 가능: 혼란 2턴 / 동요 3턴";
+  }
+
+  if (tier === "advanced") {
+    return "책략 가능: 혼란 1턴 / 동요 2턴";
+  }
+
+  if (tier === "basic") {
+    return "책략 가능: 동요 1턴";
+  }
+
+  return "지력 80 이상 장수만 책략 사용 가능";
+}
+
 function formatBuffStatus(unit) {
   if (!unit || unit.buffTurns <= 0 || unit.buffAttackBonus <= 0) {
     return "버프 없음";
   }
 
   return `개혁령 효과: 공격력 +${Math.round(unit.buffAttackBonus * 100)}% / ${unit.buffTurns}턴`;
+}
+
+function formatStatusList(unit) {
+  const statuses = [];
+
+  if (hasStatus(unit, "confusion")) {
+    statuses.push(`혼란 ${unit.statusEffects.confusion}`);
+  }
+
+  if (hasStatus(unit, "shake")) {
+    statuses.push(`동요 ${unit.statusEffects.shake}`);
+  }
+
+  if (unit?.isDefending) {
+    statuses.push("방어 태세");
+  }
+
+  return statuses.length > 0 ? statuses.join(" · ") : "상태 이상 없음";
 }
 
 function getAttackAngleHint(battleState, selectedUnit) {
@@ -94,9 +135,9 @@ function renderUnitCard(unit, sideLabel) {
       <span class="battle-unit-side">${sideLabel}</span>
       <strong class="battle-unit-name">${unit.name}</strong>
       <span class="battle-unit-hp">병력 ${unit.troops} / ${unit.maxTroops} · HP ${unit.hp} / ${unit.maxHp}</span>
-      <span class="battle-unit-hp">공 ${Math.round(getEffectiveAttack(unit))} · 방 ${Math.round(getEffectiveDefense(unit))}</span>
+      <span class="battle-unit-hp">공 ${Math.round(getEffectiveAttack(unit))} · 방 ${Math.round(getEffectiveDefense(unit))} · 지력 ${unit.intelligence}</span>
       <span class="battle-unit-cooldown">고유 특기 재사용 ${unit.currentSkillCooldown}턴 · 방향 ${getDirectionLabel(unit.facing)}</span>
-      ${unit.isDefending ? '<span class="battle-unit-buff">방어 태세</span>' : ""}
+      <span class="battle-unit-buff">${formatStatusList(unit)}</span>
       ${
         unit.buffTurns > 0 && unit.buffAttackBonus > 0
           ? `<span class="battle-unit-buff">공격 상승 +${Math.round(unit.buffAttackBonus * 100)}% · ${unit.buffTurns}턴</span>`
@@ -133,6 +174,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
     && selectedSkill
     && canUseSkill(selectedUnit, selectedSkill)
     && !isFacingPhase
+    && battleState.phase !== "strategy"
   );
   const canUsePostureCommand = Boolean(
     isActive
@@ -141,13 +183,22 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
     && !selectedUnit.hasActed
     && !isFacingPhase
   );
+  const canUseSelectedStrategy = Boolean(
+    selectedUnit
+    && canUseStrategy(selectedUnit)
+    && !isFacingPhase
+    && battleState.phase !== "skill"
+  );
   const skillButtonLabel = selectedSkill?.name ?? "고유 특기";
   const selectedUnitSummary = selectedUnit
     ? `병력 ${selectedUnit.troops} / ${selectedUnit.maxTroops} · HP ${selectedUnit.hp} / ${selectedUnit.maxHp}`
     : "유닛을 선택하면 병력/사거리 정보가 표시됩니다.";
   const selectedUnitStats = selectedUnit
-    ? `공 ${Math.round(getEffectiveAttack(selectedUnit))} · 방 ${Math.round(getEffectiveDefense(selectedUnit))} · 이동 ${selectedUnit.moveRange} · 기본 사거리 ${selectedUnit.attackRange} · 특기 사거리 ${selectedUnit.skillRange}`
+    ? `공 ${Math.round(getEffectiveAttack(selectedUnit))} · 방 ${Math.round(getEffectiveDefense(selectedUnit))} · 지력 ${selectedUnit.intelligence} · 이동 ${selectedUnit.moveRange} · 기본 사거리 ${selectedUnit.attackRange} · 특기 사거리 ${selectedUnit.skillRange}`
     : "유닛을 선택하면 전술 정보가 표시됩니다.";
+  const strategyRangeText = selectedUnit && selectedUnit.intelligence >= 80
+    ? `책략 사거리 ${getStrategyRange(selectedUnit)}`
+    : "지력 80 이상 장수만 책략 사용 가능";
 
   rootElement.innerHTML = `
     <main class="battle-screen">
@@ -155,7 +206,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
         <div class="battle-stage-panel battle-panel">
           <div class="battle-stage-header">
             <div>
-              <p class="eyebrow">Godot Facing / Counter Patch</p>
+              <p class="eyebrow">Strategy Random Outcome Patch</p>
               <h1 id="battle-title" class="battle-screen-title">전투 테스트</h1>
               <p class="battle-screen-copy">
                 ${battleState.attackerCityName} 군이 ${battleState.defenderCityName} 공략을 시도하고 있습니다.
@@ -176,7 +227,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
             <div class="battle-turn-banner">
               ${battleState.turnOwner === "player" ? "아군 턴" : "적군 턴"}
               <span class="battle-turn-subcopy">
-                ${battleState.turnOwner === "player" ? "유닛 선택 · 이동 · 방향 · 공격 · 방어 · 대기" : "적군 행동 중"}
+                ${battleState.turnOwner === "player" ? "유닛 선택 · 이동 · 방향 · 공격 · 특기 · 책략 · 방어 · 대기" : "적군 행동 중"}
               </span>
             </div>
             <div class="battle-selected-card">
@@ -184,13 +235,12 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
               <strong class="battle-unit-name">${selectedUnit?.name ?? "없음"}</strong>
               <span class="battle-unit-hp">${selectedUnitSummary}</span>
               <span class="battle-unit-hp">${selectedUnitStats}</span>
-              ${
-                selectedUnit
-                  ? `<span class="battle-unit-buff">방향: ${getDirectionLabel(selectedUnit.facing)}${selectedUnit.isDefending ? " · 방어 태세" : ""}</span>`
-                  : ""
-              }
+              ${selectedUnit ? `<span class="battle-unit-buff">방향: ${getDirectionLabel(selectedUnit.facing)}</span>` : ""}
               ${selectedUnit ? `<span class="battle-unit-buff">${formatBuffStatus(selectedUnit)}</span>` : ""}
+              ${selectedUnit ? `<span class="battle-unit-buff">${formatStatusList(selectedUnit)}</span>` : ""}
               ${selectedUnit ? `<span class="battle-unit-cooldown">${getAttackAngleHint(battleState, selectedUnit)}</span>` : ""}
+              ${selectedUnit ? `<span class="battle-unit-cooldown">${strategyRangeText}</span>` : ""}
+              ${selectedUnit ? `<span class="battle-unit-buff">${getStrategyInfo(selectedUnit)}</span>` : ""}
             </div>
             <div class="battle-skill-card">
               <span class="battle-unit-side">고유 특기</span>
@@ -207,6 +257,13 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
                   ? `<span class="battle-unit-buff">${selectedSkill.description}</span>`
                   : ""
               }
+            </div>
+            <div class="battle-skill-card">
+              <span class="battle-unit-side">책략</span>
+              <strong class="battle-unit-name">${battleState.phase === "strategy" ? "대상 선택 중" : "가능 효과"}</strong>
+              <span class="battle-unit-hp">
+                ${selectedUnit ? getStrategyInfo(selectedUnit) : "유닛을 선택하면 책략 정보를 표시합니다."}
+              </span>
             </div>
             ${
               isFacingPhase && selectedUnit
@@ -236,14 +293,22 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
               >
                 ${skillButtonLabel}
               </button>
+              <button
+                class="battle-action-button ${battleState.phase === "strategy" ? "battle-action-button-skill is-active" : ""}"
+                type="button"
+                data-battle-action="strategy"
+                ${isActive && canUseSelectedStrategy ? "" : "disabled"}
+              >
+                책략
+              </button>
               <button class="battle-action-button" type="button" data-battle-action="defend" ${canUsePostureCommand ? "" : "disabled"}>
                 방어
               </button>
+            </div>
+            <div class="battle-action-row battle-action-row-skill">
               <button class="battle-action-button" type="button" data-battle-action="wait" ${canUsePostureCommand ? "" : "disabled"}>
                 대기
               </button>
-            </div>
-            <div class="battle-action-row battle-action-row-skill">
               <button class="battle-action-button" type="button" data-battle-action="end-turn" ${isActive ? "" : "disabled"}>
                 턴 종료
               </button>
@@ -290,6 +355,8 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
       onSetFacing: handlers.onBattleSetFacing,
       onAttackUnit: handlers.onBattleAttackUnit,
       onUseSkill: handlers.onBattleUseSkill,
+      onEnterStrategyMode: handlers.onBattleEnterStrategyMode,
+      onUseStrategy: handlers.onBattleUseStrategy,
       onEndTurn: handlers.onBattleEndTurn,
       onDefend: handlers.onBattleDefend,
       onWait: handlers.onBattleWait,
@@ -299,6 +366,10 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
 
   rootElement.querySelector('[data-battle-action="skill"]')?.addEventListener("click", () => {
     handlers.onBattleEnterSkillMode?.();
+  });
+
+  rootElement.querySelector('[data-battle-action="strategy"]')?.addEventListener("click", () => {
+    handlers.onBattleEnterStrategyMode?.();
   });
 
   rootElement.querySelector('[data-battle-action="defend"]')?.addEventListener("click", () => {

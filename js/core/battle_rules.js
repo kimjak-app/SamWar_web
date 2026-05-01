@@ -17,6 +17,13 @@ import {
   getGodotDefenseValue,
   getSkillById,
 } from "./battle_skills.js";
+import {
+  applyStrategy,
+  canUseStrategy,
+  decrementStatusEffectsForSide,
+  getStrategyRange,
+  getStrategyTargets,
+} from "./battle_strategy.js";
 
 function appendLog(battleState, message) {
   return {
@@ -46,6 +53,7 @@ function buildEmptyHighlights() {
     attack: [],
     skill: [],
     facing: [],
+    strategy: [],
   };
 }
 
@@ -69,6 +77,9 @@ function buildSelectionHighlights(battleState, unit) {
     attack: getAttackableUnits(unit, battleState.units).map((target) => ({ x: target.x, y: target.y })),
     skill: buildSkillHighlightPositions(battleState, unit),
     facing: battleState.phase === "facing" ? getFacingOptionsFromDirection(unit) : [],
+    strategy: battleState.phase === "strategy"
+      ? getStrategyTargets(battleState, unit).map((target) => ({ x: target.x, y: target.y }))
+      : [],
   };
 }
 
@@ -103,7 +114,7 @@ function buildBasicAttackResult(attacker, defender, options = {}) {
 }
 
 function applyTurnStartEffects(battleState, side) {
-  return {
+  let nextState = {
     ...battleState,
     units: battleState.units.map((unit) => {
       if (!unit.isAlive) {
@@ -131,6 +142,25 @@ function applyTurnStartEffects(battleState, side) {
       };
     }),
   };
+
+  const statusStep = decrementStatusEffectsForSide(nextState, side);
+  nextState = statusStep.battleState;
+
+  if (statusStep.effects.length > 0) {
+    nextState = {
+      ...nextState,
+      lastAction: {
+        type: "status",
+        skillId: null,
+        actorUnitId: null,
+        targetUnitIds: statusStep.effects.map((effect) => effect.unitId),
+        effects: statusStep.effects,
+      },
+      log: [...nextState.log, ...statusStep.logs],
+    };
+  }
+
+  return nextState;
 }
 
 function setOutcomeStatus(battleState) {
@@ -142,6 +172,7 @@ function setOutcomeStatus(battleState) {
       status: "won",
       phase: "ended",
       selectedUnitId: null,
+      selectedStrategyId: null,
       highlights: buildEmptyHighlights(),
     }, "승리! 적 도시를 점령할 수 있습니다.");
   }
@@ -152,6 +183,7 @@ function setOutcomeStatus(battleState) {
       status: "lost",
       phase: "ended",
       selectedUnitId: null,
+      selectedStrategyId: null,
       highlights: buildEmptyHighlights(),
     }, "패배했습니다.");
   }
@@ -307,6 +339,7 @@ export function clearBattleSelection(battleState) {
   return {
     ...battleState,
     selectedUnitId: null,
+    selectedStrategyId: null,
     phase: battleState.status === "active" && battleState.turnOwner === "player" ? "select" : battleState.phase,
     highlights: buildEmptyHighlights(),
   };
@@ -438,6 +471,32 @@ export function enterSkillMode(battleState) {
       attack: [],
       skill: buildSkillHighlightPositions(battleState, selectedUnit),
       facing: [],
+      strategy: [],
+    },
+  };
+}
+
+export function enterStrategyMode(battleState) {
+  const selectedUnit = getSelectedUnit(battleState);
+
+  if (
+    !selectedUnit
+    || !canUseStrategy(selectedUnit)
+    || battleState.phase === "facing"
+  ) {
+    return battleState;
+  }
+
+  return {
+    ...battleState,
+    phase: "strategy",
+    selectedStrategyId: "strategy",
+    highlights: {
+      ...battleState.highlights,
+      attack: [],
+      skill: [],
+      facing: [],
+      strategy: getStrategyTargets(battleState, selectedUnit).map((target) => ({ x: target.x, y: target.y })),
     },
   };
 }
@@ -510,6 +569,27 @@ export function useSelectedUnitSkill(battleState, targetUnitId = null) {
   }
 
   return clearBattleSelection(nextState);
+}
+
+export function useSelectedUnitStrategy(battleState, targetUnitId, options = {}) {
+  const selectedUnit = getSelectedUnit(battleState);
+
+  if (!selectedUnit || battleState.phase !== "strategy" || !battleState.selectedStrategyId) {
+    return battleState;
+  }
+
+  if (!canUseStrategy(selectedUnit)) {
+    return battleState;
+  }
+
+  const targetUnit = getUnitById(battleState, targetUnitId);
+  const validTarget = targetUnit && battleState.highlights.strategy.some((position) => isSamePosition(position, targetUnit));
+
+  if (!validTarget) {
+    return battleState;
+  }
+
+  return applyStrategy(battleState, selectedUnit.id, targetUnitId, options);
 }
 
 export function defendSelectedUnit(battleState) {
@@ -624,6 +704,16 @@ export function runEnemyTurn(battleState) {
       }
 
       nextState = setOutcomeStatus(nextState);
+
+      if (nextState.status !== "active") {
+        break;
+      }
+
+      continue;
+    }
+
+    if (action.type === "strategy" && action.targetUnitId) {
+      nextState = applyStrategy(nextState, actingEnemy.id, action.targetUnitId);
 
       if (nextState.status !== "active") {
         break;

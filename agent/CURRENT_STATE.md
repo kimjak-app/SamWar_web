@@ -9,8 +9,8 @@ GitHub is used for backup and version control.
 Each completed Codex task now ends with a ChatCoach handoff report.
 
 ## Current Phase
-Phaser-based v0.2-3 hero battle now layers Godot-inspired facing tactics on top of the existing balance/skill baseline while staying connected to the fullscreen world map loop.
-The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skills, cooldowns, visible battlefield feedback, facing direction, angle-based damage, basic counterattack, and defend/wait commands, but it is still intentionally far smaller than the full Godot battle engine.
+Phaser-based v0.2-4a hero battle now uses a generic Godot-inspired strategy action with intelligence-tier random outcomes on top of the existing balance, skill, and facing baseline while staying connected to the fullscreen world map loop.
+The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skills, cooldowns, visible battlefield feedback, facing direction, angle-based damage, basic counterattack, defend/wait commands, and intelligence/probability-based strategy actions with random status outcomes, but it is still intentionally far smaller than the full Godot battle engine.
 
 ## Implemented Structure
 - `index.html` bootstraps the browser MVP, keeps the favicon link, and still loads Phaser 3.86.0 from CDN before the app module.
@@ -22,14 +22,15 @@ The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skil
 - `js/core/battle_direction.js` owns facing-direction helpers, attack-angle classification, attack-bonus lookup, and direction-label utilities shared by rules/UI/Phaser.
 - `js/core/battle_grid.js` owns grid size, Manhattan distance, walkable tile, occupancy, and attack-range helpers.
 - `js/core/battle_skills.js` owns skill lookup, Godot-style attack/defense helpers, owner-locked unique skill validation, AoE/buff skill fidelity, and immutable skill effect application.
-- `js/core/battle_ai.js` owns the current simple enemy turn decision helper for chase/attack behavior, owner-checked enemy unique-skill use, and basic facing updates.
-- `js/core/battle_rules.js` owns the pure tactical rule helpers for selection, movement, choose-facing flow, basic attack resolution, angle bonuses, basic counterattack, defend/wait commands, skill mode/skill use, enemy turns, outcome checks, cooldown/buff turn handling, Godot-inspired damage scaling, and Korean battle logs.
+- `js/core/battle_strategy.js` owns generic strategy availability/range checks, intelligence-tier outcome pools, success-rate logic, random outcome rolling, status application, and status-duration ticking for confusion/shake.
+- `js/core/battle_ai.js` owns the current simple enemy turn decision helper for chase/attack behavior, owner-checked enemy unique-skill use, generic future strategy use, and basic facing updates without manually choosing specific status outcomes.
+- `js/core/battle_rules.js` owns the pure tactical rule helpers for selection, movement, choose-facing flow, basic attack resolution, angle bonuses, basic counterattack, defend/wait commands, skill mode/skill use, generic strategy mode/strategy use, enemy turns, outcome checks, cooldown/buff/status turn handling, Godot-inspired damage scaling, and Korean battle logs.
 - `js/ui/layout_ui.js` routes rendering between the fullscreen world map UI and the battle UI, and cleans up Phaser on return to the map.
 - `js/ui/world_map_ui.js` keeps the fullscreen map stage stable while changing the attack CTA to enter battle mode instead of direct occupation.
-- `js/ui/battle_ui.js` renders the SamWar hero battle shell, HP/troop/status/log panels, selected-unit and unique-skill panels, buff/cooldown state, direction controls, defend/wait controls, and Phaser mount container.
+- `js/ui/battle_ui.js` renders the SamWar hero battle shell, HP/troop/status/log panels, selected-unit and unique-skill panels, a single strategy action, buff/cooldown state, direction controls, defend/wait controls, and Phaser mount container.
 - `js/phaser/phaser_battle_mount.js` mounts or destroys the contained Phaser instance safely and falls back gracefully if Phaser is unavailable.
-- `js/phaser/battle_scene.js` visualizes the 10x6 battle board, move/attack/skill/facing highlights, facing arrows, defend markers, clickable unit/tile input, and floating skill/damage/angle/counter/buff feedback without owning the battle rules.
-- `data/heroes.js`, `data/skills.js`, and `data/battle_rosters.js` now define the fixed MVP hero roster, Godot-inspired hero baseline stats, owner-locked unique skills, and spawn points instead of placeholder data.
+- `js/phaser/battle_scene.js` visualizes the 10x6 battle board, move/attack/skill/facing/strategy highlights, facing arrows, status markers, defend markers, clickable unit/tile input, and floating skill/damage/angle/counter/status feedback without owning the battle rules.
+- `data/heroes.js`, `data/skills.js`, `data/strategies.js`, and `data/battle_rosters.js` now define the fixed MVP hero roster, Godot-inspired hero baseline stats, owner-locked unique skills, a generic strategy action plus random outcome pool, and spawn points instead of placeholder data.
 - `agent/HANDOFF_TO_CHATCOACH.md` records the short end-of-task handoff.
 
 ## v0.2-2a Notes
@@ -45,3 +46,16 @@ The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skil
 - v0.2-3 added basic counterattack for surviving in-range defenders without allowing infinite counter loops.
 - v0.2-3 added defend/wait commands plus temporary defend-state damage reduction and visible battlefield/UI feedback.
 - Full 책략/status system is still intentionally deferred.
+
+## v0.2-4 Notes
+- v0.2-4 added intelligence/probability-based strategy.
+- v0.2-4 added confusion and shake status effects.
+- Strategy is not cooldown/count-based.
+- Full UI polish and advanced AI are still deferred.
+
+## v0.2-4a Notes
+- v0.2-4a changed strategy from manual status selection to intelligence-tier random outcome.
+- Intelligence 80+ can use strategy.
+- Intelligence 90+ unlocks confusion.
+- Intelligence 95+ increases status duration.
+- Strategy remains probability-based, not cooldown/count-based.

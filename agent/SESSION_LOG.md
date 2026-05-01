@@ -78,3 +78,20 @@
 - Updated `js/main.js` to wire `onBattleSetFacing`, `onBattleDefend`, and `onBattleWait` into the existing world-map → battle → world-map loop.
 - Extended `css/main.css` with facing-panel and direction-button styling while keeping the fullscreen world map and laptop HUD layout intact.
 - Re-ran `node --check` on the new/updated battle modules and a runtime sanity script covering move→facing flow, side/back damage ordering, counterattack, defend clear timing, wait behavior, and preserved Yi/Jeong skill fidelity.
+- Added `data/strategies.js` with the first MVP `혼란` and `동요` strategy definitions separate from unique hero skills.
+- Added `js/core/battle_strategy.js` so strategy usability now depends on intelligence, strategy range follows Godot-style intelligence thresholds, strategy resolution is probability-based, and confusion/shake status effects are applied immutably.
+- Updated `js/core/battle_state.js` so battle state now tracks general strategy data, selected strategy mode, strategy highlights, and per-unit status effect counters.
+- Updated `js/core/battle_skills.js` so `동요` lowers effective attack/defense by 30% through the shared effective-stat helpers instead of using a separate damage path.
+- Reworked `js/core/battle_rules.js` so battle phases now include `strategy`, player units can enter strategy mode and resolve target clicks, turn-start handling now ticks confusion/shake alongside cooldowns/buffs, and confused units lose their action on their side turn.
+- Updated `js/core/battle_ai.js` so future high-intelligence enemies can use strategy generically without making strategy a cooldown/count action.
+- Reworked `js/ui/battle_ui.js` so selected-unit panels now show intelligence, strategy range, active status effects, and the `혼란` / `동요` strategy controls.
+- Reworked `js/phaser/battle_scene.js` so strategy target highlights, visible status labels, and floating text for strategy success/failure, confusion, shake, and action lockouts appear directly on the battlefield.
+- Updated `js/main.js` to wire `onBattleEnterStrategyMode` and `onBattleUseStrategy` into the existing battle loop without changing the world-map return flow.
+- Re-ran `node --check` on the new/updated strategy modules and a deterministic runtime sanity script covering strategy mode entry, target highlights, confusion success/skip, shake stat reduction, failure handling, and preserved Yi skill behavior.
+- Reworked `data/strategies.js` so the player-facing strategy system now exposes one generic `책략` action while keeping the actual `혼란` / `동요` outcomes internal to the core logic.
+- Replaced the old manual-pick strategy logic in `js/core/battle_strategy.js` with intelligence-tier outcome pools, random outcome rolling, and duration rules tied to caster intelligence rather than UI button choice.
+- Updated `js/core/battle_rules.js` so strategy mode is now generic, target highlights no longer depend on selecting `혼란` or `동요`, and strategy resolution rolls the actual status result only after a target is chosen.
+- Updated `js/core/battle_ai.js` so future AI strategy use stays generic and does not manually pick a specific status outcome.
+- Reworked `js/ui/battle_ui.js` so 정도전 now shows a single `책략` button plus tier-based possible-outcome info instead of separate `혼란` / `동요` buttons.
+- Updated `js/phaser/battle_scene.js` to keep the same battlefield strategy feedback while accepting the new generic strategy flow and `실패` result text.
+- Re-ran `node --check` on the updated strategy/UI modules and a deterministic runtime sanity script covering master-tier confusion/shake durations, generic strategy mode entry, failure-without-status, preserved action consumption, and preserved Yi AoE behavior.

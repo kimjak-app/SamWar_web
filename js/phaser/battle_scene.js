@@ -1,5 +1,6 @@
 import { getDirectionLabel } from "../core/battle_direction.js";
 import { getSkillById } from "../core/battle_skills.js";
+import { hasStatus } from "../core/battle_strategy.js";
 
 function getEffectStyle(kind) {
   if (kind === "damage") {
@@ -16,6 +17,18 @@ function getEffectStyle(kind) {
 
   if (kind === "counter") {
     return { color: "#ffb86b", stroke: "#5a210f", size: "22px" };
+  }
+
+  if (kind === "strategy") {
+    return { color: "#f9e27d", stroke: "#5b4810", size: "22px" };
+  }
+
+  if (kind === "failure" || kind === "fail") {
+    return { color: "#ffb4b4", stroke: "#5a1f1f", size: "22px" };
+  }
+
+  if (kind === "status") {
+    return { color: "#9ef3b0", stroke: "#17351f", size: "22px" };
   }
 
   if (kind === "defend" || kind === "wait" || kind === "facing") {
@@ -114,6 +127,17 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
         ).setStrokeStyle(2, 0xd8b4fe, 0.8);
       });
 
+      battleState.highlights.strategy.forEach((position) => {
+        this.add.rectangle(
+          board.x + cellWidth * position.x + cellWidth / 2,
+          board.y + cellHeight * position.y + cellHeight / 2,
+          cellWidth - 12,
+          cellHeight - 12,
+          0x7dd3fc,
+          0.2,
+        ).setStrokeStyle(2, 0xa5f3fc, 0.8);
+      });
+
       battleState.highlights.facing.forEach((position) => {
         const rect = this.add.rectangle(
           board.x + cellWidth * position.x + cellWidth / 2,
@@ -210,6 +234,28 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
           unitGroup.add(defendChip);
         }
 
+        if (hasStatus(unit, "confusion")) {
+          const confusionChip = this.add.text(0, -120, `혼란 ${unit.statusEffects.confusion}`, {
+            color: "#f9e27d",
+            fontFamily: "Segoe UI, sans-serif",
+            fontSize: "13px",
+            fontStyle: "bold",
+            align: "center",
+          }).setOrigin(0.5, 0.5);
+          unitGroup.add(confusionChip);
+        }
+
+        if (hasStatus(unit, "shake")) {
+          const shakeChip = this.add.text(0, -138, `동요 ${unit.statusEffects.shake}`, {
+            color: "#9dd6ff",
+            fontFamily: "Segoe UI, sans-serif",
+            fontSize: "13px",
+            fontStyle: "bold",
+            align: "center",
+          }).setOrigin(0.5, 0.5);
+          unitGroup.add(shakeChip);
+        }
+
         if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
           const buffChip = this.add.text(0, -102, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
             color: "#9ef3b0",
@@ -250,6 +296,11 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
           badge.on("pointerdown", () => {
             if (battleState.phase === "skill") {
               callbacks.onUseSkill?.(unit.id);
+              return;
+            }
+
+            if (battleState.phase === "strategy") {
+              callbacks.onUseStrategy?.(unit.id);
               return;
             }
 
@@ -313,8 +364,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
           ? "이동 후 방향 선택"
           : battleState.phase === "skill"
             ? "특기 대상 적 유닛 선택"
+            : battleState.phase === "strategy"
+              ? "책략 대상 적 유닛 선택"
             : battleState.turnOwner === "player"
-              ? "유닛 선택 · 이동 · 방향 · 공격 · 방어 · 대기"
+              ? "유닛 선택 · 이동 · 방향 · 공격 · 특기 · 책략 · 방어 · 대기"
               : "적군 행동 중",
         {
           color: "#aeb7c3",

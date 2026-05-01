@@ -11,12 +11,14 @@ import {
   defendSelectedUnit,
   endPlayerTurn,
   enterSkillMode,
+  enterStrategyMode,
   getPlayerUnits,
   moveSelectedUnit,
   runEnemyTurn,
   selectBattleUnit,
   setSelectedUnitFacing,
   useSelectedUnitSkill,
+  useSelectedUnitStrategy,
   waitSelectedUnit,
 } from "./core/battle_rules.js";
 import { renderLayout } from "./ui/layout_ui.js";
@@ -104,6 +106,25 @@ function rerender() {
 
       const nextBattleState = resolveAfterPlayerAction(
         useSelectedUnitSkill(appState.battle, targetUnitId),
+      );
+      appState = updateBattleState(appState, nextBattleState);
+      rerender();
+    },
+    onBattleEnterStrategyMode: () => {
+      if (!appState.battle || appState.battle.status !== "active") {
+        return;
+      }
+
+      appState = updateBattleState(appState, enterStrategyMode(appState.battle));
+      rerender();
+    },
+    onBattleUseStrategy: (targetUnitId) => {
+      if (!appState.battle || appState.battle.status !== "active" || !appState.battle.selectedUnitId) {
+        return;
+      }
+
+      const nextBattleState = resolveAfterPlayerAction(
+        useSelectedUnitStrategy(appState.battle, targetUnitId),
       );
       appState = updateBattleState(appState, nextBattleState);
       rerender();

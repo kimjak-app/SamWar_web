@@ -1,4 +1,5 @@
 import { getDistance } from "./battle_grid.js";
+import { hasStatus } from "./battle_strategy.js";
 
 export const DAMAGE_SCALE = 0.32;
 
@@ -15,23 +16,37 @@ export function getGodotDefenseValue(unit) {
 }
 
 export function getEffectiveAttack(unit) {
-  return getGodotAttackValue(unit) * (1 + (unit.buffAttackBonus ?? 0));
+  let value = getGodotAttackValue(unit) * (1 + (unit.buffAttackBonus ?? 0));
+
+  if (hasStatus(unit, "shake")) {
+    value *= 0.7;
+  }
+
+  return value;
 }
 
 export function getEffectiveDefense(unit) {
-  return getGodotDefenseValue(unit);
+  let value = getGodotDefenseValue(unit);
+
+  if (hasStatus(unit, "shake")) {
+    value *= 0.7;
+  }
+
+  return value;
 }
 
 function buildClearedSelectionState(battleState) {
   return {
     ...battleState,
     selectedUnitId: null,
+    selectedStrategyId: null,
     phase: "select",
     highlights: {
       move: [],
       attack: [],
       skill: [],
       facing: [],
+      strategy: [],
     },
   };
 }

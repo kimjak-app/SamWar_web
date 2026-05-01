@@ -1,6 +1,7 @@
 import { battleRosters, battleSpawnPositions } from "../../data/battle_rosters.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
+import { strategies } from "../../data/strategies.js";
 import { BATTLE_GRID_HEIGHT, BATTLE_GRID_WIDTH } from "./battle_grid.js";
 
 let battleSequence = 0;
@@ -44,6 +45,10 @@ function buildBattleUnit(heroId) {
     currentSkillCooldown: 0,
     buffAttackBonus: 0,
     buffTurns: 0,
+    statusEffects: {
+      confusion: 0,
+      shake: 0,
+    },
     x: spawnPosition.x,
     y: spawnPosition.y,
     facing: hero.side === "player" ? "right" : "left",
@@ -72,6 +77,7 @@ export function createInitialBattleState({ attackerCity, defenderCity }) {
     status: "active",
     turnOwner: "player",
     selectedUnitId: null,
+    selectedStrategyId: null,
     phase: "select",
     log: [`${attackerCity.name}에서 ${defenderCity.name} 공격을 개시했습니다.`],
     lastAction: null,
@@ -80,11 +86,13 @@ export function createInitialBattleState({ attackerCity, defenderCity }) {
       height: BATTLE_GRID_HEIGHT,
     },
     skills,
+    strategies,
     highlights: {
       move: [],
       attack: [],
       skill: [],
       facing: [],
+      strategy: [],
     },
     units,
   };
