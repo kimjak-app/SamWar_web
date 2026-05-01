@@ -54,6 +54,8 @@ function buildActionSignature(lastAction) {
 export function createBattleSceneDefinition({ battleState, callbacks = {}, onSceneReady } = {}) {
   const PhaserLib = window.Phaser;
   const sceneKey = `samwar-battle-${battleState.id}`;
+  const PLAYER_TOKEN_KEY = "unit-player-mvp";
+  const ENEMY_TOKEN_KEY = "unit-enemy-mvp";
 
   return class BattleScene extends PhaserLib.Scene {
     constructor() {
@@ -67,6 +69,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.headerTitleText = null;
       this.headerStatusText = null;
       this.lastRenderedActionSignature = null;
+      this.missingTokenWarnings = new Set();
     }
 
     getUnitPoint(unit) {
@@ -74,6 +77,16 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         x: this.board.x + this.cellWidth * unit.x + this.cellWidth / 2,
         y: this.board.y + this.cellHeight * unit.y + this.cellHeight / 2,
       };
+    }
+
+    preload() {
+      if (!this.textures.exists(PLAYER_TOKEN_KEY)) {
+        this.load.image(PLAYER_TOKEN_KEY, "assets/units/unit_player_mvp.png");
+      }
+
+      if (!this.textures.exists(ENEMY_TOKEN_KEY)) {
+        this.load.image(ENEMY_TOKEN_KEY, "assets/units/unit_enemy_mvp.png");
+      }
     }
 
     syncBattleState(nextBattleState, nextCallbacks = {}) {
@@ -247,49 +260,52 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
         const skill = getSkillById(this.battleState.skills, unit.skillId);
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
-        const selectionRing = this.add.circle(0, 0, 34, 0xf8d798, unit.id === selectedUnitId ? 0.22 : 0);
-        const badge = this.add.circle(0, 0, 26, fillColor, 0.96).setStrokeStyle(4, 0xf3ead9, 0.92);
-        const label = this.add.text(0, -58, unit.name, {
+        const selectionRing = this.add.ellipse(0, 26, 86, 26, 0xf8d798, unit.id === selectedUnitId ? 0.24 : 0)
+          .setStrokeStyle(unit.id === selectedUnitId ? 3 : 2, 0xf8d798, unit.id === selectedUnitId ? 0.85 : 0.28);
+        const label = this.add.text(0, -96, unit.name, {
           color: "#f3ead9",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "18px",
           fontStyle: "bold",
           align: "center",
         }).setOrigin(0.5, 0.5);
-        const facingText = this.add.text(0, -38, getDirectionLabel(unit.facing), {
+        const facingText = this.add.text(0, -118, getDirectionLabel(unit.facing), {
           color: "#f8d798",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "20px",
           fontStyle: "bold",
           align: "center",
         }).setOrigin(0.5, 0.5);
-        const hpText = this.add.text(0, 44, `병력 ${unit.troops} / ${unit.maxTroops}`, {
+        const hpText = this.add.text(0, 80, `병력 ${unit.troops} / ${unit.maxTroops}`, {
           color: "#dbe6f3",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "16px",
           align: "center",
         }).setOrigin(0.5, 0.5);
-        const cooldownText = this.add.text(0, 62, `${skill?.name ?? "특기"} CD ${unit.currentSkillCooldown}`, {
+        const cooldownText = this.add.text(0, 98, `${skill?.name ?? "특기"} CD ${unit.currentSkillCooldown}`, {
           color: "#d1b075",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "12px",
           align: "center",
         }).setOrigin(0.5, 0.5);
-        const hpBarTrack = this.add.rectangle(0, 78, 90, 10, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
+        const hpBarTrack = this.add.rectangle(0, 62, 90, 10, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
         const hpRatio = unit.maxTroops > 0 ? Math.max(0, unit.troops) / unit.maxTroops : 0;
         const hpBarFill = this.add.rectangle(
           -45 + (90 * hpRatio) / 2,
-          78,
+          62,
           90 * hpRatio,
           10,
           fillColor,
           0.95,
         );
+        const tokenKey = unit.side === "player" ? PLAYER_TOKEN_KEY : ENEMY_TOKEN_KEY;
+        const tokenSprite = this.createUnitTokenSprite(unit, tokenKey, fillColor);
+        const hitZone = this.add.zone(0, 8, 90, 110).setOrigin(0.5, 0.5);
 
-        unitGroup.add([selectionRing, badge, label, facingText, hpText, cooldownText, hpBarTrack, hpBarFill]);
+        unitGroup.add([selectionRing, tokenSprite, hpBarTrack, hpBarFill, facingText, label, hpText, cooldownText, hitZone]);
 
         if (unit.isDefending) {
-          unitGroup.add(this.add.text(0, -84, "방어", {
+          unitGroup.add(this.add.text(0, -60, "방어", {
             color: "#c7d2fe",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
@@ -299,7 +315,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         }
 
         if (hasStatus(unit, "confusion")) {
-          unitGroup.add(this.add.text(0, -120, `혼란 ${unit.statusEffects.confusion}`, {
+          unitGroup.add(this.add.text(0, -148, `혼란 ${unit.statusEffects.confusion}`, {
             color: "#f9e27d",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
@@ -309,7 +325,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         }
 
         if (hasStatus(unit, "shake")) {
-          unitGroup.add(this.add.text(0, -138, `동요 ${unit.statusEffects.shake}`, {
+          unitGroup.add(this.add.text(0, -166, `동요 ${unit.statusEffects.shake}`, {
             color: "#9dd6ff",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
@@ -319,7 +335,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         }
 
         if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
-          unitGroup.add(this.add.text(0, -102, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
+          unitGroup.add(this.add.text(0, -130, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
             color: "#9ef3b0",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
@@ -328,14 +344,26 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           }).setOrigin(0.5, 0.5));
         }
 
-        this.tweens.add({
-          targets: badge,
-          scale: 1.06,
-          duration: 900,
-          yoyo: true,
-          repeat: -1,
-          ease: "Sine.easeInOut",
-        });
+        if (tokenSprite.type !== "Arc") {
+          this.tweens.add({
+            targets: tokenSprite,
+            scaleX: tokenSprite.scaleX * 1.02,
+            scaleY: tokenSprite.scaleY * 1.02,
+            duration: 900,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut",
+          });
+        } else {
+          this.tweens.add({
+            targets: tokenSprite,
+            scale: 1.06,
+            duration: 900,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut",
+          });
+        }
 
         if (unit.id === selectedUnitId) {
           this.tweens.add({
@@ -348,13 +376,13 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         }
 
         if (unit.side === "player") {
-          badge.setInteractive({ useHandCursor: this.battleState.turnOwner === "player" });
-          badge.on("pointerdown", () => this.callbacks.onSelectUnit?.(unit.id));
+          hitZone.setInteractive({ useHandCursor: this.battleState.turnOwner === "player" });
+          hitZone.on("pointerdown", () => this.callbacks.onSelectUnit?.(unit.id));
         }
 
         if (unit.side === "enemy") {
-          badge.setInteractive({ useHandCursor: true });
-          badge.on("pointerdown", () => {
+          hitZone.setInteractive({ useHandCursor: true });
+          hitZone.on("pointerdown", () => {
             if (this.battleState.phase === "skill") {
               this.callbacks.onUseSkill?.(unit.id);
               return;
@@ -371,6 +399,23 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
         this.dynamicLayer.add(unitGroup);
       });
+    }
+
+    createUnitTokenSprite(unit, tokenKey, fillColor) {
+      if (this.textures.exists(tokenKey)) {
+        const sprite = this.add.image(0, 28, tokenKey)
+          .setOrigin(0.5, 0.85);
+        sprite.displayWidth = 96;
+        sprite.scaleY = sprite.scaleX;
+        return sprite;
+      }
+
+      if (!this.missingTokenWarnings.has(tokenKey)) {
+        this.missingTokenWarnings.add(tokenKey);
+        console.warn(`Unit token image missing, using fallback circle marker: ${tokenKey}`);
+      }
+
+      return this.add.circle(0, 10, 26, fillColor, 0.96).setStrokeStyle(4, 0xf3ead9, 0.92);
     }
 
     renderInstructionText() {

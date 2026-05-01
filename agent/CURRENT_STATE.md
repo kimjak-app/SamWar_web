@@ -9,8 +9,8 @@ GitHub is used for backup and version control.
 Each completed Codex task now ends with a ChatCoach handoff report.
 
 ## Current Phase
-Phaser-based v0.2-5a hero battle now preserves a persistent Phaser canvas during active battle updates on top of the existing AI/auto-battle tactical baseline while staying connected to the fullscreen world map loop.
-The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skills, cooldowns, visible battlefield feedback, facing direction, angle-based damage, basic counterattack, defend/wait commands, intelligence/probability-based strategy actions with random status outcomes, optional player auto battle, and a non-flickering persistent Phaser mount, but it is still intentionally far smaller than the full Godot battle engine.
+Phaser-based v0.2-6 hero battle now uses MVP unit image tokens on top of the existing persistent Phaser mount and AI/auto-battle tactical baseline while staying connected to the fullscreen world map loop.
+The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skills, cooldowns, visible battlefield feedback, facing direction, angle-based damage, basic counterattack, defend/wait commands, intelligence/probability-based strategy actions with random status outcomes, optional player auto battle, a non-flickering persistent Phaser mount, and side-specific unit token images, but it is still intentionally far smaller than the full Godot battle engine.
 
 ## Implemented Structure
 - `index.html` bootstraps the browser MVP, keeps the favicon link, and still loads Phaser 3.86.0 from CDN before the app module.
@@ -30,7 +30,7 @@ The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skil
 - `js/ui/world_map_ui.js` keeps the fullscreen map stage stable while changing the attack CTA to enter battle mode instead of direct occupation.
 - `js/ui/battle_ui.js` renders the SamWar hero battle shell in a way that preserves the existing Phaser host during same-battle rerenders while still refreshing HUD/log/button content around it.
 - `js/phaser/phaser_battle_mount.js` now keeps one contained Phaser instance alive per active battle, syncs scene state for same-battle updates, and destroys the game only when leaving battle mode or starting a different battle.
-- `js/phaser/battle_scene.js` visualizes the 10x6 battle board, move/attack/skill/facing/strategy highlights, facing arrows, status markers, defend markers, clickable unit/tile input, and floating skill/damage/angle/counter/status feedback, and now supports in-place state sync without rebuilding the Phaser game.
+- `js/phaser/battle_scene.js` visualizes the 10x6 battle board, move/attack/skill/facing/strategy highlights, facing arrows, status markers, defend markers, clickable unit/tile input, floating skill/damage/angle/counter/status feedback, and side-specific MVP unit image tokens with safe fallback markers.
 - `data/heroes.js`, `data/skills.js`, `data/strategies.js`, and `data/battle_rosters.js` now define the fixed MVP hero roster, Godot-inspired hero baseline stats, owner-locked unique skills, a generic strategy action plus random outcome pool, and spawn points instead of placeholder data.
 - `agent/HANDOFF_TO_CHATCOACH.md` records the short end-of-task handoff.
 
@@ -71,3 +71,10 @@ The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skil
 ## v0.2-5a Notes
 - v0.2-5a fixed auto-battle flicker by preserving the Phaser canvas during active battle updates.
 - Phaser is now destroyed only when leaving battle mode or starting a new battle.
+
+## v0.2-6 Notes
+- v0.2-6 replaced simple circle unit markers with MVP unit image tokens.
+- Player units use `assets/units/unit_player_mvp.png`.
+- Enemy units use `assets/units/unit_enemy_mvp.png`.
+- Hero portrait overlay is intentionally deferred to a later version.
+- Gameplay rules and v0.2-5a persistent Phaser behavior were preserved.

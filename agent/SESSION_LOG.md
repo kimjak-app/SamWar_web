@@ -108,3 +108,8 @@
 - Reworked `js/ui/battle_ui.js` so same-battle rerenders preserve the existing `.battle-phaser-host` DOM node and only refresh the stage header and HUD/log sections.
 - Preserved `js/ui/layout_ui.js` world-map cleanup behavior so Phaser still gets destroyed correctly on victory return, retreat, defeat return, or any other exit from battle mode.
 - Re-ran `node --check` on the updated Phaser/UI modules and a mocked mount-lifecycle sanity script covering same-battle reuse, new-battle remount, container swap remount, and explicit destroy cleanup.
+- Updated `js/phaser/battle_scene.js` to preload and use `assets/units/unit_player_mvp.png` and `assets/units/unit_enemy_mvp.png` as the new battlefield unit tokens.
+- Replaced the old circle body marker with side-specific image sprites anchored near the tile base while keeping a separate hit zone for stable selection/attack/skill/strategy clicks.
+- Preserved fallback circle markers and added a safe console warning path if the token images are unavailable so the battle remains playable without crashing.
+- Repositioned unit labels, facing arrows, HP bars, and status/buff badges around the new image tokens so readability survives the larger visual footprint.
+- Re-ran `node --check` on the touched Phaser/UI modules and a static asset presence check for both required token PNGs.
