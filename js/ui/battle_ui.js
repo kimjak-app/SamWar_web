@@ -1,4 +1,4 @@
-import { getSkillById } from "../core/battle_skills.js";
+import { canUseSkill, getEffectiveAttack, getEffectiveDefense, getSkillById } from "../core/battle_skills.js";
 import { getEnemyUnits, getPlayerUnits, getSelectedUnit } from "../core/battle_rules.js";
 import { mountBattleScene } from "../phaser/phaser_battle_mount.js";
 
@@ -19,7 +19,31 @@ function getBattleStatusCopy(battleState) {
     return "스킬 대상이 되는 적 유닛을 선택하세요.";
   }
 
-  return "아군 유닛 선택 → 이동 → 기본 공격 또는 스킬 사용 순서로 전투를 진행합니다.";
+  return "아군 유닛 선택 → 이동 → 기본 공격 또는 고유 특기 사용 순서로 전투를 진행합니다.";
+}
+
+function getSkillHelpCopy(skill) {
+  if (!skill) {
+    return "영웅을 선택하면 고유 특기 정보가 표시됩니다.";
+  }
+
+  if (skill.id === "hakikjin_barrage") {
+    return "사정거리 안의 모든 적을 포격합니다.";
+  }
+
+  if (skill.id === "reform_order") {
+    return "아군의 공격력을 2턴 동안 상승시킵니다.";
+  }
+
+  return skill.description;
+}
+
+function formatBuffStatus(unit) {
+  if (!unit || unit.buffTurns <= 0 || unit.buffAttackBonus <= 0) {
+    return "버프 없음";
+  }
+
+  return `개혁령 효과: 공격력 +${Math.round(unit.buffAttackBonus * 100)}% / ${unit.buffTurns}턴`;
 }
 
 function renderBattleLog(logEntries) {
@@ -28,6 +52,23 @@ function renderBattleLog(logEntries) {
     .reverse()
     .map((entry) => `<li class="battle-log-item">${entry}</li>`)
     .join("");
+}
+
+function renderUnitCard(unit, sideLabel) {
+  return `
+    <div class="battle-unit-card battle-unit-card-${unit.side}">
+      <span class="battle-unit-side">${sideLabel}</span>
+      <strong class="battle-unit-name">${unit.name}</strong>
+      <span class="battle-unit-hp">병력 ${unit.troops} / ${unit.maxTroops} · HP ${unit.hp} / ${unit.maxHp}</span>
+      <span class="battle-unit-hp">공 ${Math.round(getEffectiveAttack(unit))} · 방 ${Math.round(getEffectiveDefense(unit))}</span>
+      <span class="battle-unit-cooldown">고유 특기 재사용 ${unit.currentSkillCooldown}턴</span>
+      ${
+        unit.buffTurns > 0 && unit.buffAttackBonus > 0
+          ? `<span class="battle-unit-buff">공격 상승 +${Math.round(unit.buffAttackBonus * 100)}% · ${unit.buffTurns}턴</span>`
+          : ""
+      }
+    </div>
+  `;
 }
 
 export function renderBattleUI(rootElement, appState, handlers = {}) {
@@ -51,12 +92,14 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
   const selectedUnit = getSelectedUnit(battleState);
   const selectedSkill = selectedUnit ? getSkillById(battleState.skills, selectedUnit.skillId) : null;
   const isActive = battleState.status === "active";
-  const canUseSelectedSkill = Boolean(selectedUnit && selectedSkill && selectedUnit.currentSkillCooldown <= 0 && !selectedUnit.hasActed);
-  const skillButtonLabel = selectedSkill
-    ? selectedUnit.currentSkillCooldown > 0
-      ? `스킬 (${selectedUnit.currentSkillCooldown})`
-      : "스킬"
-    : "스킬";
+  const canUseSelectedSkill = Boolean(selectedUnit && selectedSkill && canUseSkill(selectedUnit, selectedSkill));
+  const skillButtonLabel = selectedSkill?.name ?? "고유 특기";
+  const selectedUnitSummary = selectedUnit
+    ? `병력 ${selectedUnit.troops} / ${selectedUnit.maxTroops} · HP ${selectedUnit.hp} / ${selectedUnit.maxHp}`
+    : "유닛을 선택하면 병력/사거리 정보가 표시됩니다.";
+  const selectedUnitStats = selectedUnit
+    ? `공 ${Math.round(getEffectiveAttack(selectedUnit))} · 방 ${Math.round(getEffectiveDefense(selectedUnit))} · 이동 ${selectedUnit.moveRange} · 기본 사거리 ${selectedUnit.attackRange} · 특기 사거리 ${selectedUnit.skillRange}`
+    : "유닛을 선택하면 전술 정보가 표시됩니다.";
 
   rootElement.innerHTML = `
     <main class="battle-screen">
@@ -64,7 +107,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
         <div class="battle-stage-panel battle-panel">
           <div class="battle-stage-header">
             <div>
-              <p class="eyebrow">Hero Skill Battle MVP</p>
+              <p class="eyebrow">Godot Balance Fidelity Patch</p>
               <h1 id="battle-title" class="battle-screen-title">전투 테스트</h1>
               <p class="battle-screen-copy">
                 ${battleState.attackerCityName} 군이 ${battleState.defenderCityName} 공략을 시도하고 있습니다.
@@ -85,52 +128,35 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
             <div class="battle-turn-banner">
               ${battleState.turnOwner === "player" ? "아군 턴" : "적군 턴"}
               <span class="battle-turn-subcopy">
-                ${battleState.turnOwner === "player" ? "유닛 선택 · 이동 · 공격 · 스킬" : "적군 행동 중"}
+                ${battleState.turnOwner === "player" ? "유닛 선택 · 이동 · 기본 공격 · 고유 특기" : "적군 행동 중"}
               </span>
             </div>
             <div class="battle-selected-card">
               <span class="battle-unit-side">선택 유닛</span>
               <strong class="battle-unit-name">${selectedUnit?.name ?? "없음"}</strong>
-              <span class="battle-unit-hp">
-                ${
-                  selectedUnit
-                    ? `HP ${selectedUnit.hp} / ${selectedUnit.maxHp} · 이동 ${selectedUnit.moveRange} · 사거리 ${selectedUnit.attackRange}`
-                    : "유닛을 선택하면 이동/공격 정보가 표시됩니다."
-                }
-              </span>
+              <span class="battle-unit-hp">${selectedUnitSummary}</span>
+              <span class="battle-unit-hp">${selectedUnitStats}</span>
+              ${selectedUnit ? `<span class="battle-unit-buff">${formatBuffStatus(selectedUnit)}</span>` : ""}
             </div>
             <div class="battle-skill-card">
-              <span class="battle-unit-side">선택 스킬</span>
+              <span class="battle-unit-side">고유 특기</span>
               <strong class="battle-unit-name">${selectedSkill?.name ?? "없음"}</strong>
               <span class="battle-unit-hp">
                 ${
                   selectedSkill
-                    ? `재사용 ${selectedUnit?.currentSkillCooldown ?? 0} / 설명: ${selectedSkill.description}`
-                    : "영웅을 선택하면 고유 스킬 정보가 표시됩니다."
+                    ? `재사용 대기: ${selectedUnit?.currentSkillCooldown ?? 0}턴 · ${getSkillHelpCopy(selectedSkill)}`
+                    : "영웅을 선택하면 고유 특기 정보가 표시됩니다."
                 }
               </span>
+              ${
+                selectedSkill
+                  ? `<span class="battle-unit-buff">${selectedSkill.description}</span>`
+                  : ""
+              }
             </div>
             <div class="battle-unit-stats">
-              ${playerUnits
-                .map((unit) => `
-                  <div class="battle-unit-card battle-unit-card-player">
-                    <span class="battle-unit-side">아군</span>
-                    <strong class="battle-unit-name">${unit.name}</strong>
-                    <span class="battle-unit-hp">HP ${unit.hp} / ${unit.maxHp}</span>
-                    <span class="battle-unit-cooldown">스킬 재사용 ${unit.currentSkillCooldown}</span>
-                  </div>
-                `)
-                .join("")}
-              ${enemyUnits
-                .map((unit) => `
-                  <div class="battle-unit-card battle-unit-card-enemy">
-                    <span class="battle-unit-side">적군</span>
-                    <strong class="battle-unit-name">${unit.name}</strong>
-                    <span class="battle-unit-hp">HP ${unit.hp} / ${unit.maxHp}</span>
-                    <span class="battle-unit-cooldown">스킬 재사용 ${unit.currentSkillCooldown}</span>
-                  </div>
-                `)
-                .join("")}
+              ${playerUnits.map((unit) => renderUnitCard(unit, "아군")).join("")}
+              ${enemyUnits.map((unit) => renderUnitCard(unit, "적군")).join("")}
             </div>
             <div class="battle-action-row battle-action-row-skill">
               <button
@@ -148,6 +174,13 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
                 후퇴
               </button>
             </div>
+            ${
+              selectedUnit && selectedSkill && selectedUnit.currentSkillCooldown > 0
+                ? `<p class="battle-skill-help">재사용 대기: ${selectedUnit.currentSkillCooldown}턴</p>`
+                : selectedSkill
+                  ? `<p class="battle-skill-help">${getSkillHelpCopy(selectedSkill)}</p>`
+                  : ""
+            }
             ${
               !isActive
                 ? `

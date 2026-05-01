@@ -1,5 +1,17 @@
 import { getSkillById } from "../core/battle_skills.js";
 
+function getEffectStyle(kind) {
+  if (kind === "damage") {
+    return { color: "#ff9f9f", stroke: "#3f0d0d", size: "26px" };
+  }
+
+  if (kind === "buff") {
+    return { color: "#9ef3b0", stroke: "#0f3020", size: "22px" };
+  }
+
+  return { color: "#f8d798", stroke: "#4a2c0f", size: "24px" };
+}
+
 export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
   const PhaserLib = window.Phaser;
   const sceneKey = `samwar-battle-${battleState.id}`;
@@ -21,6 +33,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
       const cellWidth = board.width / battleState.grid.width;
       const cellHeight = board.height / battleState.grid.height;
       const selectedUnitId = battleState.selectedUnitId;
+      const getUnitPoint = (unit) => ({
+        x: board.x + cellWidth * unit.x + cellWidth / 2,
+        y: board.y + cellHeight * unit.y + cellHeight / 2,
+      });
 
       this.cameras.main.setBackgroundColor("#081018");
 
@@ -104,11 +120,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
           return;
         }
 
-        const unitX = board.x + cellWidth * unit.x + cellWidth / 2;
-        const unitY = board.y + cellHeight * unit.y + cellHeight / 2;
+        const unitPoint = getUnitPoint(unit);
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
         const skill = getSkillById(battleState.skills, unit.skillId);
-        const unitGroup = this.add.container(unitX, unitY);
+        const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
         const selectionRing = this.add.circle(0, 0, 34, 0xf8d798, unit.id === selectedUnitId ? 0.22 : 0);
         const badge = this.add.circle(0, 0, 26, fillColor, 0.96).setStrokeStyle(4, 0xf3ead9, 0.92);
         const label = this.add.text(0, -58, unit.name, {
@@ -118,29 +133,41 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
           fontStyle: "bold",
           align: "center",
         }).setOrigin(0.5, 0.5);
-        const hpText = this.add.text(0, 44, `HP ${unit.hp} / ${unit.maxHp}`, {
+        const hpText = this.add.text(0, 44, `병력 ${unit.troops} / ${unit.maxTroops}`, {
           color: "#dbe6f3",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "16px",
           align: "center",
         }).setOrigin(0.5, 0.5);
-        const cooldownText = this.add.text(0, 62, `${skill?.name ?? "스킬"} CD ${unit.currentSkillCooldown}`, {
+        const cooldownText = this.add.text(0, 62, `${skill?.name ?? "특기"} CD ${unit.currentSkillCooldown}`, {
           color: "#d1b075",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "12px",
           align: "center",
         }).setOrigin(0.5, 0.5);
         const hpBarTrack = this.add.rectangle(0, 78, 90, 10, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
+        const hpRatio = unit.maxTroops > 0 ? Math.max(0, unit.troops) / unit.maxTroops : 0;
         const hpBarFill = this.add.rectangle(
-          -45 + (90 * Math.max(0, unit.hp) / unit.maxHp) / 2,
+          -45 + (90 * hpRatio) / 2,
           78,
-          90 * Math.max(0, unit.hp) / unit.maxHp,
+          90 * hpRatio,
           10,
           fillColor,
           0.95,
         );
 
         unitGroup.add([selectionRing, badge, label, hpText, cooldownText, hpBarTrack, hpBarFill]);
+
+        if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
+          const buffChip = this.add.text(0, -84, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
+            color: "#9ef3b0",
+            fontFamily: "Segoe UI, sans-serif",
+            fontSize: "13px",
+            fontStyle: "bold",
+            align: "center",
+          }).setOrigin(0.5, 0.5);
+          unitGroup.add(buffChip);
+        }
 
         this.tweens.add({
           targets: badge,
@@ -179,73 +206,74 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
         }
       });
 
-      if (battleState.lastAction?.type === "skill") {
+      if (battleState.lastAction?.effects?.length) {
         const actor = battleState.units.find((unit) => unit.id === battleState.lastAction.actorUnitId);
-        const target = battleState.units.find((unit) => unit.id === battleState.lastAction.targetUnitId);
+        const targetUnits = battleState.units.filter((unit) => battleState.lastAction.targetUnitIds?.includes(unit.id));
 
-        if (actor && target) {
-          const beam = this.add.line(
-            0,
-            0,
-            board.x + cellWidth * actor.x + cellWidth / 2,
-            board.y + cellHeight * actor.y + cellHeight / 2,
-            board.x + cellWidth * target.x + cellWidth / 2,
-            board.y + cellHeight * target.y + cellHeight / 2,
-            0xd8b4fe,
-            0.9,
-          ).setOrigin(0, 0).setLineWidth(4);
-
+        if (battleState.lastAction.type === "skill" && actor) {
+          const actorPoint = getUnitPoint(actor);
+          const actorFlash = this.add.circle(actorPoint.x, actorPoint.y, 48, 0xd8b4fe, 0.18);
           this.tweens.add({
-            targets: beam,
-            alpha: 0,
-            duration: 360,
-            onComplete: () => beam.destroy(),
-          });
-        }
-        if (target) {
-          const flash = this.add.circle(
-            board.x + cellWidth * target.x + cellWidth / 2,
-            board.y + cellHeight * target.y + cellHeight / 2,
-            42,
-            0xd8b4fe,
-            0.28,
-          );
-
-          this.tweens.add({
-            targets: flash,
+            targets: actorFlash,
             alpha: 0,
             scale: 1.6,
             duration: 320,
-            onComplete: () => flash.destroy(),
+            onComplete: () => actorFlash.destroy(),
           });
         }
 
-        if (actor && !target) {
-          const flash = this.add.circle(
-            board.x + cellWidth * actor.x + cellWidth / 2,
-            board.y + cellHeight * actor.y + cellHeight / 2,
-            48,
-            0x86efac,
-            0.24,
-          );
+        targetUnits.forEach((unit) => {
+          const point = getUnitPoint(unit);
+          const flashColor = battleState.lastAction.type === "buff" ? 0x86efac : 0xffd166;
+          const flash = this.add.circle(point.x, point.y, 42, flashColor, 0.2);
+          this.cameras.main.shake(90, 0.0018, true);
 
           this.tweens.add({
             targets: flash,
             alpha: 0,
-            scale: 1.8,
-            duration: 360,
+            scale: 1.45,
+            duration: 280,
             onComplete: () => flash.destroy(),
           });
-        }
+        });
+
+        battleState.lastAction.effects.forEach((effect, index) => {
+          const unit = battleState.units.find((entry) => entry.id === effect.unitId);
+
+          if (!unit) {
+            return;
+          }
+
+          const point = getUnitPoint(unit);
+          const style = getEffectStyle(effect.kind);
+          const floatingText = this.add.text(point.x, point.y - 30 - index * 6, effect.text, {
+            color: style.color,
+            fontFamily: "Segoe UI, sans-serif",
+            fontSize: style.size,
+            fontStyle: "bold",
+            stroke: style.stroke,
+            strokeThickness: 4,
+            align: "center",
+          }).setOrigin(0.5, 0.5);
+
+          this.tweens.add({
+            targets: floatingText,
+            y: floatingText.y - 34,
+            alpha: 0,
+            duration: 820,
+            ease: "Sine.easeOut",
+            onComplete: () => floatingText.destroy(),
+          });
+        });
       }
 
       this.add.text(
         width - 96,
         54,
         battleState.phase === "skill"
-          ? "스킬 대상 적 유닛 선택"
+          ? "특기 대상 적 유닛 선택"
           : battleState.turnOwner === "player"
-            ? "유닛 선택 · 이동 · 공격 · 스킬"
+            ? "유닛 선택 · 이동 · 기본 공격 · 고유 특기"
             : "적군 행동 중",
         {
           color: "#aeb7c3",

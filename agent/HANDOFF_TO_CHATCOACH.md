@@ -1,13 +1,12 @@
 # Handoff to ChatCoach
 
-## Last Completed Task
-SamWar_web v0.2-2 Hero Skill Core MVP
+## Completed Task
+SamWar_web v0.2-2a Godot Balance & Unique Skill Fidelity Patch
 
 ## Changed Files
 - `css/main.css`
 - `data/heroes.js`
 - `data/skills.js`
-- `data/battle_rosters.js`
 - `js/main.js`
 - `js/core/battle_state.js`
 - `js/core/battle_ai.js`
@@ -19,45 +18,41 @@ SamWar_web v0.2-2 Hero Skill Core MVP
 - `agent/SESSION_LOG.md`
 - `agent/HANDOFF_TO_CHATCOACH.md`
 
-## Verification
-- Static code inspection confirms the fullscreen world map structure remains intact with the same city anchors, connection lines, HUD placement, and Phaser CDN boot order.
-- Static code inspection confirms hero/skill data remains outside Phaser and outside the core rules, with battle behavior driven from `data/` modules plus JS core helpers.
-- Static code inspection confirms battle rules remain outside Phaser and the Phaser scene is used only as a contained renderer/input relay surface.
-- `node --check` passed for `data/heroes.js`, `data/skills.js`, `data/battle_rosters.js`, `js/main.js`, `js/core/battle_state.js`, `js/core/battle_skills.js`, `js/core/battle_grid.js`, `js/core/battle_ai.js`, `js/core/battle_rules.js`, `js/ui/battle_ui.js`, `js/phaser/phaser_battle_mount.js`, and `js/phaser/battle_scene.js`.
-- A runtime sanity check passed for 2v2 roster creation, 이순신 skill damage, 정도전 buff application, enemy AI action/skill flow, and world-map occupation on victory return.
-- Static code inspection confirms the Phaser CDN script tag still targets `https://cdn.jsdelivr.net/npm/phaser@3.86.0/dist/phaser.min.js` and remains before `./js/main.js`.
-- Browser/manual console QA was not run in this environment.
+## Verification Result
+- Inspected `_reference/godot_battle/scripts/battle_scene.gd`, `unit.gd`, and `grid_manager.gd` directly and used those values as the balance baseline for the four MVP heroes.
+- `node --check` passed for `js/main.js`, `js/ui/battle_ui.js`, `js/phaser/battle_scene.js`, `js/core/battle_state.js`, `js/core/battle_skills.js`, `js/core/battle_rules.js`, and `js/core/battle_ai.js`.
+- Runtime sanity script passed for:
+  - 4-hero battle-state creation with Godot-origin hero fields present
+  - 이순신 `학익진 포격` hitting all alive enemies within range
+  - 정도전 `개혁령` applying a `+15%` allied attack buff for 2 turns
+  - invalid unique-skill owner mismatch producing a rejection log
+  - basic-attack feedback still existing after the balance patch
+  - enemy turn still producing a valid ranged/melee action
+- Static inspection confirms `_reference/godot_battle/` files were not modified.
+- Browser/manual QA was not run in this environment.
 
 ## Known Issues
-- Browser-side manual QA remains pending for Phaser tile hit accuracy, repeated battle entry/exit behavior, hero skill feedback clarity, and coexistence between the stable world HUD and the upgraded tactical battle scene.
-- The hero-skill MVP still omits facing bonuses, terrain, obstacles, pathfinding, strategy/책략, status effects, and advanced AI target logic.
-- Phaser availability fallback is implemented, but the fallback path was not manually exercised in a browser here.
+- Browser-side manual validation is still required for Phaser floating-text readability, multi-target flash feedback clarity, and repeated battle entry/exit behavior.
+- Skill visuals are intentionally lightweight and do not yet try to match full Godot animation polish.
+- Full 책략/strategy logic remains intentionally deferred; only the design direction is preserved in code/docs.
 
-## Needs Kimjak Check
-- Confirm Live Server opens the project successfully with no console errors.
-- Confirm the fullscreen world map still renders as the main background.
-- Confirm the laptop-safe world HUD layout still looks acceptable after the v0.2 battle additions.
-- Confirm attackable enemy cities still show the attack button.
-- Confirm city labels remain readable.
-- Confirm city selection still updates the HUD correctly.
-- Confirm clicking `공격` enters battle mode instead of direct occupation.
-- Confirm the Phaser battle canvas appears with a visible 10x6 grid and four visible heroes: 이순신, 정도전, 노부나가, 겐신.
-- Confirm clicking 이순신 selects him and shows move/attack/skill-relevant highlights.
-- Confirm 이순신 can basic attack and can use `학익진 포격` on a valid enemy target.
-- Confirm 정도전 can use `개혁령` and buff allied units.
-- Confirm 노부나가 can use `화승총 사격` through enemy AI when a valid target is in range.
-- Confirm 겐신 can use `돌격` through enemy AI when a valid target is in range.
-- Confirm skill cooldown text updates and the `스킬` button disables while cooldown is active.
-- Confirm clicking a valid move tile moves the selected hero and clicking an in-range enemy resolves a basic attack.
-- Confirm the battle log records movement, attack, and skill usage messages.
-- Confirm ending the player turn or finishing all player actions triggers the simple enemy turn.
-- Confirm battle victory shows the correct win message and `월드맵으로 복귀`.
-- Confirm returning from a won battle occupies the defender city and selects that city on the world map.
-- Confirm retreat returns to the world map without occupation.
-- Confirm the victory message still appears after all enemy cities are occupied.
-- Confirm no duplicate Phaser canvases appear after entering and leaving battle repeatedly.
-- Confirm the browser console has no errors.
+## Kimjak Check Items
+- Confirm Live Server opens without console errors.
 - Confirm `Phaser.VERSION` returns `3.86.0`.
+- Confirm the fullscreen world map and laptop-safe HUD still render correctly.
+- Confirm attackable enemy cities still show `공격` and still enter battle mode.
+- Confirm the four heroes still appear correctly in battle: 이순신, 정도전, 노부나가, 겐신.
+- Confirm hero data behavior feels correct after the balance patch: ranged pressure from 이순신/노부나가, support from 정도전, aggressive melee pressure from 겐신.
+- Confirm selecting 이순신 and pressing `학익진 포격` damages all alive enemies within range, not just one.
+- Confirm `학익진 포격` shows floating skill-name text and per-target damage numbers above affected units.
+- Confirm selecting 정도전 and pressing `개혁령` buffs alive allied units and shows visible buff text over each affected ally.
+- Confirm buff state is visible in the right-side battle HUD and expires after the expected number of turns.
+- Confirm buffed units deal more damage on subsequent attacks.
+- Confirm 노부나가 can use `화승총 사격` when cooldown/range permits.
+- Confirm 겐신 can use `돌격` when cooldown/range permits.
+- Confirm enemy skills do not fire when cooldown is active or targets are out of range.
+- Confirm unique skills do not duplicate Phaser canvases or break repeated battle re-entry.
+- Confirm retreat, victory return, city occupation, selected-city sync, and world-map victory flow still work.
 
 ## Suggested Next Task
-- Start v0.2-3 by adding a cleaner multi-unit turn presentation and one deeper tactical layer such as explicit action-end state or safer enemy target selection, while still keeping terrain and facing bonuses out of scope.
+- v0.2-3 should deepen tactical fidelity without full Godot porting: keep the owner-locked hero framework, then add cleaner turn presentation plus the first intelligence-based 책략 foundation rather than a cooldown/count-based strategy model.

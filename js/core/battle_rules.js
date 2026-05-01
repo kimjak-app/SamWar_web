@@ -1,6 +1,14 @@
 import { getEnemyTurnAction } from "./battle_ai.js";
 import { getAttackableUnits, getDistance, getWalkablePositions, isSamePosition } from "./battle_grid.js";
-import { applySkill, canUseSkill, getSkillById } from "./battle_skills.js";
+import {
+  applySkill,
+  canUseSkill,
+  getEffectiveAttack,
+  getEffectiveDefense,
+  getGodotAttackValue,
+  getGodotDefenseValue,
+  getSkillById,
+} from "./battle_skills.js";
 
 function appendLog(battleState, message) {
   return {
@@ -35,12 +43,14 @@ function buildEmptyHighlights() {
 function buildSkillHighlightPositions(battleState, unit) {
   const skill = getSkillById(battleState.skills, unit?.skillId);
 
-  if (!skill || !canUseSkill(unit) || skill.type !== "damage") {
+  if (!skill || !canUseSkill(unit, skill) || skill.target !== "enemy") {
     return [];
   }
 
+  const range = skill.rangeSource === "unit.skillRange" ? unit.skillRange : 0;
+
   return battleState.units
-    .filter((target) => target.isAlive && target.side !== unit.side && getDistance(unit, target) <= skill.range)
+    .filter((target) => target.isAlive && target.side !== unit.side && getDistance(unit, target) <= range)
     .map((target) => ({ x: target.x, y: target.y }));
 }
 
@@ -53,8 +63,8 @@ function buildSelectionHighlights(battleState, unit) {
 }
 
 function dealBasicDamage(attacker, target) {
-  const rawDamage = attacker.attack + (attacker.buffAttackBonus ?? 0) - Math.floor(target.defense * 0.4);
-  return Math.max(8, rawDamage);
+  const rawDamage = (getEffectiveAttack(attacker) - getEffectiveDefense(target) * 0.45) * 0.32;
+  return Math.max(8, Math.round(rawDamage));
 }
 
 function applyTurnStartEffects(battleState, side) {
@@ -69,7 +79,7 @@ function applyTurnStartEffects(battleState, side) {
 
       return {
         ...unit,
-        currentSkillCooldown: Math.max(0, unit.currentSkillCooldown - 1),
+        currentSkillCooldown: unit.currentSkillCooldown > 0 ? unit.currentSkillCooldown - 1 : 0,
         buffTurns: nextBuffTurns,
         buffAttackBonus: nextBuffTurns > 0 ? unit.buffAttackBonus : 0,
         hasMoved: false,
@@ -124,6 +134,7 @@ function applyResolvedBasicAttack(battleState, attackerUnitId, targetUnitId) {
     return {
       ...unit,
       hp: nextHp,
+      troops: nextHp,
       isAlive: nextHp > 0,
     };
   });
@@ -136,15 +147,25 @@ function applyResolvedBasicAttack(battleState, attackerUnitId, targetUnitId) {
     ...nextState,
     lastAction: {
       type: "attack",
-      actorUnitId: attacker.id,
-      targetUnitId: target.id,
       skillId: null,
+      actorUnitId: attacker.id,
+      targetUnitIds: [target.id],
+      effects: [
+        { unitId: target.id, kind: "damage", text: `-${damage}` },
+      ],
     },
   };
   nextState = appendLog(nextState, `${attacker.name}가 ${target.name}를 공격해 ${damage} 피해를 입혔습니다.`);
 
   return setOutcomeStatus(nextState);
 }
+
+export {
+  getGodotAttackValue,
+  getGodotDefenseValue,
+  getEffectiveAttack,
+  getEffectiveDefense,
+};
 
 export function getPlayerUnits(battleState) {
   return getAliveUnitsBySide(battleState, "player");
@@ -231,9 +252,10 @@ export function moveSelectedUnit(battleState, targetPosition) {
     highlights: movedUnit ? buildSelectionHighlights(nextState, movedUnit) : buildEmptyHighlights(),
     lastAction: {
       type: "move",
-      actorUnitId: selectedUnit.id,
-      targetUnitId: null,
       skillId: null,
+      actorUnitId: selectedUnit.id,
+      targetUnitIds: [],
+      effects: [],
     },
   };
 
@@ -244,7 +266,7 @@ export function enterSkillMode(battleState) {
   const selectedUnit = getSelectedUnit(battleState);
   const skill = getSkillById(battleState.skills, selectedUnit?.skillId);
 
-  if (!selectedUnit || !skill || !canUseSkill(selectedUnit) || skill.type !== "damage") {
+  if (!selectedUnit || !skill || !canUseSkill(selectedUnit, skill) || skill.target !== "enemy") {
     return battleState;
   }
 
@@ -300,11 +322,15 @@ export function useSelectedUnitSkill(battleState, targetUnitId = null) {
 
   const skill = getSkillById(battleState.skills, selectedUnit.skillId);
 
-  if (!skill || !canUseSkill(selectedUnit)) {
+  if (!skill) {
     return battleState;
   }
 
-  if (skill.type === "damage") {
+  if (!canUseSkill(selectedUnit, skill)) {
+    return appendLog(battleState, `${selectedUnit.name}의 고유 특기 조건이 맞지 않아 사용할 수 없습니다.`);
+  }
+
+  if (skill.target === "enemy") {
     const targetUnit = getUnitById(battleState, targetUnitId);
     const validTarget = targetUnit && battleState.highlights.skill.some((position) => isSamePosition(position, targetUnit));
 
@@ -390,15 +416,43 @@ export function runEnemyTurn(battleState) {
         ...nextState,
         lastAction: {
           type: "move",
-          actorUnitId: actingEnemy.id,
-          targetUnitId: null,
           skillId: null,
+          actorUnitId: actingEnemy.id,
+          targetUnitIds: [],
+          effects: [],
         },
       };
       nextState = appendLog(nextState, `${actingEnemy.name}가 (${action.movePosition.x + 1}, ${action.movePosition.y + 1}) 위치로 이동했습니다.`);
     }
 
     const movedEnemy = getUnitById(nextState, actingEnemy.id);
+    const movedSkill = movedEnemy ? getSkillById(nextState.skills, movedEnemy.skillId) : null;
+
+    if (
+      movedEnemy
+      && movedSkill
+      && canUseSkill(movedEnemy, movedSkill)
+      && movedEnemy.heroId !== "jeong_do_jeon"
+      && movedSkill.target === "enemy"
+    ) {
+      const skillTargets = buildSkillHighlightPositions(nextState, movedEnemy);
+
+      if (skillTargets.length > 0) {
+        const targetUnit = nextState.units.find((unit) => unit.isAlive && unit.side === "player" && skillTargets.some((position) => isSamePosition(position, unit)));
+
+        if (targetUnit) {
+          nextState = applySkill(nextState, movedEnemy.id, targetUnit.id);
+          nextState = setOutcomeStatus(nextState);
+
+          if (nextState.status !== "active") {
+            break;
+          }
+
+          continue;
+        }
+      }
+    }
+
     const attackTargets = movedEnemy ? getAttackableUnits(movedEnemy, nextState.units) : [];
 
     if (movedEnemy && attackTargets.length > 0) {

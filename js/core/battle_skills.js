@@ -1,21 +1,63 @@
 import { getDistance } from "./battle_grid.js";
 
+export const DAMAGE_SCALE = 0.32;
+
 export function getSkillById(skills, skillId) {
   return skills.find((skill) => skill.id === skillId) ?? null;
 }
 
-export function canUseSkill(unit) {
+export function getGodotAttackValue(unit) {
+  return unit.power * 0.8 + unit.intelligence * 0.2;
+}
+
+export function getGodotDefenseValue(unit) {
+  return unit.power * 0.6 + unit.intelligence * 0.4;
+}
+
+export function getEffectiveAttack(unit) {
+  return getGodotAttackValue(unit) * (1 + (unit.buffAttackBonus ?? 0));
+}
+
+export function getEffectiveDefense(unit) {
+  return getGodotDefenseValue(unit);
+}
+
+function buildClearedSelectionState(battleState) {
+  return {
+    ...battleState,
+    selectedUnitId: null,
+    phase: "select",
+    highlights: {
+      move: [],
+      attack: [],
+      skill: [],
+    },
+  };
+}
+
+function getResolvedSkillRange(unit, skill) {
+  if (skill.rangeSource === "unit.skillRange") {
+    return unit.skillRange;
+  }
+
+  return 0;
+}
+
+export function canUseSkill(unit, skill) {
   return Boolean(
     unit
+    && skill
     && unit.isAlive
     && !unit.hasActed
-    && unit.skillId
-    && unit.currentSkillCooldown <= 0,
+    && unit.currentSkillCooldown <= 0
+    && unit.skillId === skill.id
+    && unit.uniqueSkillId === skill.id
+    && skill.ownerHeroId === unit.heroId,
   );
 }
 
 export function getSkillTargets(battleState, unit, skill) {
-  if (!battleState || !unit || !skill || !unit.isAlive) {
+  if (!battleState || !unit || !skill || !canUseSkill(unit, skill)) {
     return [];
   }
 
@@ -23,15 +65,183 @@ export function getSkillTargets(battleState, unit, skill) {
     return battleState.units.filter((candidate) => candidate.isAlive && candidate.side === unit.side);
   }
 
+  const range = getResolvedSkillRange(unit, skill);
+
+  if (skill.target === "enemy_all_in_range") {
+    return battleState.units.filter((candidate) => (
+      candidate.isAlive
+      && candidate.side !== unit.side
+      && getDistance(unit, candidate) <= range
+    ));
+  }
+
   if (skill.target === "enemy") {
     return battleState.units.filter((candidate) => (
       candidate.isAlive
       && candidate.side !== unit.side
-      && getDistance(unit, candidate) <= skill.range
+      && getDistance(unit, candidate) <= range
     ));
   }
 
   return [];
+}
+
+function buildSkillDamage(caster, target, skillBonus = 0) {
+  const rawDamage = (getEffectiveAttack(caster) - getEffectiveDefense(target) * 0.35) * DAMAGE_SCALE + skillBonus;
+  return Math.max(8, Math.round(rawDamage));
+}
+
+export function applyHakikjinBarrage(battleState, casterUnit, skill) {
+  const targets = getSkillTargets(battleState, casterUnit, skill);
+
+  if (targets.length === 0) {
+    return {
+      ...battleState,
+      log: [...battleState.log, "학익진 포격 범위 안에 적이 없습니다."],
+    };
+  }
+
+  const targetById = new Map(targets.map((target) => [target.id, target]));
+  const effects = [
+    { unitId: casterUnit.id, kind: "skill_name", text: "학익진 포격!" },
+  ];
+  const logs = ["이순신이 학익진 포격을 전개했습니다."];
+
+  const nextUnits = battleState.units.map((unit) => {
+    if (unit.id === casterUnit.id) {
+      return {
+        ...unit,
+        currentSkillCooldown: skill.cooldown,
+        hasActed: true,
+      };
+    }
+
+    const target = targetById.get(unit.id);
+
+    if (!target) {
+      return unit;
+    }
+
+    const damage = buildSkillDamage(casterUnit, target, 10);
+    const nextHp = Math.max(0, unit.hp - damage);
+    effects.push({ unitId: unit.id, kind: "damage", text: `-${damage}` });
+    logs.push(`${unit.name}에게 ${damage} 피해!`);
+
+    return {
+      ...unit,
+      hp: nextHp,
+      troops: nextHp,
+      isAlive: nextHp > 0,
+    };
+  });
+
+  return {
+    ...buildClearedSelectionState(battleState),
+    units: nextUnits,
+    log: [...battleState.log, ...logs],
+    lastAction: {
+      type: "skill",
+      skillId: skill.id,
+      actorUnitId: casterUnit.id,
+      targetUnitIds: targets.map((target) => target.id),
+      effects,
+    },
+  };
+}
+
+export function applyReformOrder(battleState, casterUnit, skill) {
+  const targets = getSkillTargets(battleState, casterUnit, skill);
+  const effects = [
+    { unitId: casterUnit.id, kind: "skill_name", text: "개혁령!" },
+  ];
+  const logs = ["정도전이 개혁령을 선포했습니다."];
+
+  const nextUnits = battleState.units.map((unit) => {
+    if (unit.id === casterUnit.id) {
+      effects.push({ unitId: unit.id, kind: "buff", text: "공격 상승" });
+      logs.push(`${unit.name} 공격력 상승!`);
+
+      return {
+        ...unit,
+        currentSkillCooldown: skill.cooldown,
+        hasActed: true,
+        buffAttackBonus: skill.buffAttackBonus ?? 0,
+        buffTurns: skill.duration ?? 0,
+      };
+    }
+
+    if (targets.some((target) => target.id === unit.id)) {
+      effects.push({ unitId: unit.id, kind: "buff", text: "공격 상승" });
+      logs.push(`${unit.name} 공격력 상승!`);
+
+      return {
+        ...unit,
+        buffAttackBonus: skill.buffAttackBonus ?? 0,
+        buffTurns: skill.duration ?? 0,
+      };
+    }
+
+    return unit;
+  });
+
+  return {
+    ...buildClearedSelectionState(battleState),
+    units: nextUnits,
+    log: [...battleState.log, ...logs],
+    lastAction: {
+      type: "buff",
+      skillId: skill.id,
+      actorUnitId: casterUnit.id,
+      targetUnitIds: targets.map((target) => target.id),
+      effects,
+    },
+  };
+}
+
+function applySingleTargetSkill(battleState, casterUnit, skill, targetUnit) {
+  const damage = buildSkillDamage(casterUnit, targetUnit, skill.bonusDamage ?? 0);
+  const nextUnits = battleState.units.map((unit) => {
+    if (unit.id === casterUnit.id) {
+      return {
+        ...unit,
+        currentSkillCooldown: skill.cooldown,
+        hasActed: true,
+      };
+    }
+
+    if (unit.id === targetUnit.id) {
+      const nextHp = Math.max(0, unit.hp - damage);
+
+      return {
+        ...unit,
+        hp: nextHp,
+        troops: nextHp,
+        isAlive: nextHp > 0,
+      };
+    }
+
+    return unit;
+  });
+
+  return {
+    ...buildClearedSelectionState(battleState),
+    units: nextUnits,
+    log: [
+      ...battleState.log,
+      `${casterUnit.name}이 ${skill.name}을 사용했습니다.`,
+      `${targetUnit.name}에게 ${damage} 피해!`,
+    ],
+    lastAction: {
+      type: "skill",
+      skillId: skill.id,
+      actorUnitId: casterUnit.id,
+      targetUnitIds: [targetUnit.id],
+      effects: [
+        { unitId: casterUnit.id, kind: "skill_name", text: `${skill.name}!` },
+        { unitId: targetUnit.id, kind: "damage", text: `-${damage}` },
+      ],
+    },
+  };
 }
 
 export function applySkill(battleState, casterUnitId, targetUnitId = null) {
@@ -43,106 +253,31 @@ export function applySkill(battleState, casterUnitId, targetUnitId = null) {
 
   const skill = getSkillById(battleState.skills, casterUnit.skillId);
 
-  if (!skill || !canUseSkill(casterUnit)) {
+  if (!skill) {
     return battleState;
   }
 
-  const availableTargets = getSkillTargets(battleState, casterUnit, skill);
-
-  if (skill.type === "buff") {
+  if (!canUseSkill(casterUnit, skill)) {
     return {
       ...battleState,
-      selectedUnitId: null,
-      phase: "select",
-      highlights: {
-        move: [],
-        attack: [],
-        skill: [],
-      },
-      units: battleState.units.map((unit) => {
-        if (unit.id === casterUnit.id) {
-          return {
-            ...unit,
-            currentSkillCooldown: skill.cooldown,
-            hasActed: true,
-          };
-        }
-
-        if (availableTargets.some((target) => target.id === unit.id)) {
-          return {
-            ...unit,
-            buffAttackBonus: skill.attackBuff ?? 0,
-            buffTurns: skill.duration ?? 0,
-          };
-        }
-
-        return unit;
-      }),
-      log: [
-        ...battleState.log,
-        `${casterUnit.name}이 ${skill.name}을 선포했습니다. 아군의 공격력이 상승했습니다.`,
-      ],
-      lastAction: {
-        type: "skill",
-        skillId: skill.id,
-        actorUnitId: casterUnit.id,
-        targetUnitId: null,
-      },
+      log: [...battleState.log, `${casterUnit.name}의 고유 특기 조건이 맞지 않아 사용할 수 없습니다.`],
     };
   }
 
+  if (skill.effectType === "cannon_aoe") {
+    return applyHakikjinBarrage(battleState, casterUnit, skill);
+  }
+
+  if (skill.effectType === "ally_attack_buff") {
+    return applyReformOrder(battleState, casterUnit, skill);
+  }
+
+  const availableTargets = getSkillTargets(battleState, casterUnit, skill);
   const targetUnit = availableTargets.find((unit) => unit.id === targetUnitId) ?? null;
 
   if (!targetUnit) {
     return battleState;
   }
 
-  const rawDamage = casterUnit.attack
-    + (skill.bonusDamage ?? 0)
-    + (casterUnit.buffAttackBonus ?? 0)
-    - Math.floor(targetUnit.defense * 0.3);
-  const damage = Math.max(10, rawDamage);
-
-  return {
-    ...battleState,
-    selectedUnitId: null,
-    phase: "select",
-    highlights: {
-      move: [],
-      attack: [],
-      skill: [],
-    },
-    units: battleState.units.map((unit) => {
-      if (unit.id === casterUnit.id) {
-        return {
-          ...unit,
-          currentSkillCooldown: skill.cooldown,
-          hasActed: true,
-        };
-      }
-
-      if (unit.id === targetUnit.id) {
-        const nextHp = Math.max(0, unit.hp - damage);
-
-        return {
-          ...unit,
-          hp: nextHp,
-          isAlive: nextHp > 0,
-        };
-      }
-
-      return unit;
-    }),
-    log: [
-      ...battleState.log,
-      `${casterUnit.name}이 ${skill.name}을 사용했습니다.`,
-      `${targetUnit.name}에게 ${damage} 피해를 입혔습니다.`,
-    ],
-    lastAction: {
-      type: "skill",
-      skillId: skill.id,
-      actorUnitId: casterUnit.id,
-      targetUnitId: targetUnit.id,
-    },
-  };
+  return applySingleTargetSkill(battleState, casterUnit, skill, targetUnit);
 }

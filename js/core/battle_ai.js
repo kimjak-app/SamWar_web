@@ -9,9 +9,25 @@ function getClosestPlayerUnit(enemyUnit, playerUnits) {
 
 export function getEnemyTurnAction(battleState, enemyUnit, playerUnits) {
   const skill = getSkillById(battleState.skills, enemyUnit?.skillId);
-  const skillTargets = skill && canUseSkill(enemyUnit) ? getSkillTargets(battleState, enemyUnit, skill) : [];
+  const skillTargets = skill && canUseSkill(enemyUnit, skill) ? getSkillTargets(battleState, enemyUnit, skill) : [];
 
-  if (skill && skill.type === "damage" && skillTargets.length > 0) {
+  if (
+    enemyUnit?.heroId === "nobunaga"
+    && skill?.id === "matchlock_volley"
+    && skillTargets.length > 0
+  ) {
+    return {
+      type: "skill",
+      targetUnitId: skillTargets[0].id,
+      movePosition: null,
+    };
+  }
+
+  if (
+    enemyUnit?.heroId === "kenshin"
+    && skill?.id === "cavalry_charge"
+    && skillTargets.length > 0
+  ) {
     return {
       type: "skill",
       targetUnitId: skillTargets[0].id,

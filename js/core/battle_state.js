@@ -8,9 +8,8 @@ let battleSequence = 0;
 function buildBattleUnit(heroId) {
   const hero = heroes.find((entry) => entry.id === heroId);
   const spawnPosition = battleSpawnPositions[heroId];
-  const skill = skills.find((entry) => entry.id === hero?.skillId);
 
-  if (!hero || !spawnPosition || !skill) {
+  if (!hero || !spawnPosition) {
     return null;
   }
 
@@ -22,12 +21,26 @@ function buildBattleUnit(heroId) {
     role: hero.role,
     hp: hero.maxHp,
     maxHp: hero.maxHp,
+    troops: hero.troops,
+    maxTroops: hero.maxTroops,
+    power: hero.power,
+    intelligence: hero.intelligence,
     attack: hero.attack,
     defense: hero.defense,
     moveRange: hero.moveRange,
     attackRange: hero.attackRange,
+    skillRange: hero.skillRange,
+    aiType: hero.aiType,
+    attackEffectType: hero.attackEffectType,
+    skillEffectType: hero.skillEffectType,
+    baseCritChance: hero.baseCritChance,
+    critBonus: hero.critBonus,
+    critMultiplier: hero.critMultiplier,
+    sideCritBonus: hero.sideCritBonus,
+    backCritBonus: hero.backCritBonus,
+    uniqueSkillId: hero.uniqueSkillId,
     skillId: hero.skillId,
-    skillCooldown: skill.cooldown,
+    skillCooldown: hero.skillCooldown,
     currentSkillCooldown: 0,
     buffAttackBonus: 0,
     buffTurns: 0,

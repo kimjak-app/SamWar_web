@@ -59,3 +59,12 @@
 - Updated `js/ui/battle_ui.js`, `js/phaser/battle_scene.js`, and `js/main.js` so the UI now supports skill entry, skill targeting, selected-skill info, enemy AI skill use, and simple Phaser skill feedback.
 - Extended `css/main.css` with selected-skill card, skill button, cooldown text, and skill-mode styling while preserving the fullscreen world map and laptop-safe HUD.
 - Ran `node --check` across the new hero/skill modules and a runtime sanity script covering 2v2 roster creation, 이순신 skill damage, 정도전 buff application, enemy AI action/skill flow, and world-map victory return.
+- Rebased the four MVP heroes on Godot-origin balance fields in `data/heroes.js`, including `power`, `intelligence`, `skillRange`, `aiType`, `skillEffectType`, and crit-related fields for future fidelity work.
+- Replaced the simplified generic skill definitions in `data/skills.js` with owner-locked unique-skill definitions so each hero now carries a Godot-direction unique ability baseline.
+- Upgraded `js/core/battle_state.js`, `js/core/battle_skills.js`, and `js/core/battle_rules.js` so battle units mirror HP/troops together, use Godot-inspired attack/defense scaling, respect unique-skill owner locks, and keep `lastAction.effects` for battlefield popups.
+- Corrected 이순신의 `학익진 포격` to hit all alive enemies within range instead of a single target, with per-target damage logs and floating effect payloads.
+- Corrected 정도전의 `개혁령` to apply a visible allied `+15%` attack buff for 2 turns rather than a flat-feeling MVP bonus, and made later damage calculations consume that buff state.
+- Updated `js/core/battle_ai.js` so 노부나가 and 겐신 only use their own unique skills when cooldown, ownership, and range checks all pass.
+- Reworked `js/ui/battle_ui.js` and `js/phaser/battle_scene.js` so the selected-unit panel shows effective stats/buff state, skill buttons display unique skill names, and Phaser now renders floating skill/damage/buff text over affected units.
+- Updated `js/main.js` so immediate-use skills like `학익진 포격` and `개혁령` fire correctly from the skill button without the older generic single-target flow.
+- Re-ran `node --check` on the touched battle modules and a runtime sanity script covering Yi AoE hits, Jeong percentage buff application, owner-lock rejection logging, enemy skill usage, and preserved battle/world-map return behavior.

@@ -113,7 +113,11 @@ function rerender() {
 
       let nextBattleState = appState.battle;
 
-      if (selectedSkill.type === "buff") {
+      if (
+        selectedSkill.effectType === "ally_attack_buff" ||
+        selectedSkill.effectType === "cannon_aoe" ||
+        selectedSkill.target === "enemy_all_in_range"
+      ) {
         nextBattleState = resolveAfterPlayerAction(useSelectedUnitSkill(appState.battle));
       } else {
         nextBattleState = enterSkillMode(appState.battle);
