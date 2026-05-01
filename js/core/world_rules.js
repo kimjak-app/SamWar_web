@@ -21,6 +21,18 @@ export function canAttackCity(cities, targetCity) {
   });
 }
 
+export function getAttackSourceCity(cities, targetCityId) {
+  const targetCity = cities.find((city) => city.id === targetCityId);
+
+  if (!targetCity) {
+    return null;
+  }
+
+  return targetCity.neighbors
+    .map((neighborId) => cities.find((city) => city.id === neighborId))
+    .find((neighbor) => isPlayerCity(neighbor)) ?? null;
+}
+
 export function occupyCity(cities, cityId, ownerFactionId = "player") {
   return cities.map((city) =>
     city.id === cityId ? { ...city, ownerFactionId } : city,

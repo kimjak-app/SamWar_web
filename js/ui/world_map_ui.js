@@ -42,11 +42,11 @@ function getStatusText(cities, selectedCity) {
   }
 
   if (canAttackCity(cities, selectedCity)) {
-    return "전투 시스템은 다음 버전에서 구현 예정입니다.";
+    return "공격을 시작하면 Phaser 전투 화면으로 진입합니다.";
   }
 
   if (isPlayerCity(selectedCity)) {
-    return "아군 거점입니다. 인접한 적 도시가 있으면 공격 테스트를 진행할 수 있습니다.";
+    return "아군 거점입니다. 인접한 적 도시가 있으면 즉시 전투를 시작할 수 있습니다.";
   }
 
   if (isEnemyCity(selectedCity)) {
@@ -161,12 +161,12 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
               attackable
                 ? `
                   <button class="attack-button" type="button" data-attack-city-id="${selectedCity.id}">
-                    공격 테스트
+                    공격
                   </button>
-                  <p class="attack-note">전투 시스템은 다음 버전에서 구현 예정입니다.</p>
+                  <p class="attack-note">공격을 시작하면 전투 화면으로 진입합니다.</p>
                 `
                 : `
-                  <p class="attack-note">전투 시스템은 다음 버전에서 구현 예정입니다.</p>
+                  <p class="attack-note">전투 화면은 공격 가능한 적 도시를 선택했을 때만 진입합니다.</p>
                 `
             }
           </section>
@@ -194,8 +194,8 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
             <h3 class="detail-heading">MVP 목표</h3>
             <ul class="goal-list">
               <li>배경 맵의 성곽 랜드마크에 4개 도시 앵커를 맞춰 전선을 검증합니다.</li>
-              <li>도시 선택과 공격 테스트, 점령, 통일 메시지까지 현재 월드맵 루프만 확인합니다.</li>
-              <li>전투 장면은 아직 없고 상태 메시지만 표시합니다.</li>
+              <li>도시 선택과 공격 진입, 점령, 통일 메시지까지 현재 월드맵 루프를 확인합니다.</li>
+              <li>전투는 Phaser 기반 1차 MVP이며 이동과 스킬은 아직 구현하지 않았습니다.</li>
             </ul>
           </section>
         </aside>

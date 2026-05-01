@@ -2,7 +2,8 @@ import { cities } from "../../data/cities.js";
 import { factions } from "../../data/factions.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
-import { occupyCity } from "./world_rules.js";
+import { createInitialBattleState } from "./battle_state.js";
+import { canAttackCity, getAttackSourceCity, occupyCity } from "./world_rules.js";
 
 const DEFAULT_SELECTED_CITY_ID = "hanseong";
 
@@ -15,9 +16,11 @@ export function createInitialAppState() {
       playerFactionId: "player",
       turn: 1,
     },
+    mode: "world",
     selection: {
       cityId: DEFAULT_SELECTED_CITY_ID,
     },
+    battle: null,
     world: {
       cities,
       factions,
@@ -37,19 +40,72 @@ export function selectCity(appState, cityId) {
   };
 }
 
-export function attackCity(appState, cityId) {
-  const updatedCities = occupyCity(appState.world.cities, cityId, appState.meta.playerFactionId);
-  const selectedCity = updatedCities.find((city) => city.id === cityId);
+export function startBattle(appState, cityId) {
+  const defenderCity = appState.world.cities.find((city) => city.id === cityId);
+  const attackerCity = getAttackSourceCity(appState.world.cities, cityId);
+
+  if (!defenderCity || !attackerCity || !canAttackCity(appState.world.cities, defenderCity)) {
+    return appState;
+  }
 
   return {
     ...appState,
+    mode: "battle",
     selection: {
       ...appState.selection,
-      cityId: selectedCity?.id ?? appState.selection.cityId,
+      cityId: defenderCity.id,
     },
-    world: {
-      ...appState.world,
-      cities: updatedCities,
-    },
+    battle: createInitialBattleState({ attackerCity, defenderCity }),
+  };
+}
+
+export function updateBattleState(appState, battleState) {
+  return {
+    ...appState,
+    battle: battleState,
+  };
+}
+
+export function retreatFromBattle(appState) {
+  return {
+    ...appState,
+    mode: "world",
+    battle: null,
+  };
+}
+
+export function returnFromBattle(appState) {
+  const { battle } = appState;
+
+  if (!battle) {
+    return retreatFromBattle(appState);
+  }
+
+  if (battle.status === "won") {
+    const updatedCities = occupyCity(
+      appState.world.cities,
+      battle.defenderCityId,
+      appState.meta.playerFactionId,
+    );
+
+    return {
+      ...appState,
+      mode: "world",
+      battle: null,
+      selection: {
+        ...appState.selection,
+        cityId: battle.defenderCityId,
+      },
+      world: {
+        ...appState.world,
+        cities: updatedCities,
+      },
+    };
+  }
+
+  return {
+    ...appState,
+    mode: "world",
+    battle: null,
   };
 }

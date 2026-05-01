@@ -38,3 +38,24 @@
 - Added `mvp-goal-panel` markup targeting in `js/ui/world_map_ui.js` and compacted the MVP goal card styling instead of removing the panel.
 - Added a capped laptop HUD stack height with subtle scrolling support to reduce middle-right map obstruction on shorter screens.
 - Preserved city coordinates, attack test flow, occupation flow, selected-city sync, victory message logic, and Phaser CDN boot order.
+- Added `js/core/battle_state.js` with a small immutable battle-state shape for a 10x6 Phaser-rendered battle MVP.
+- Added `js/core/battle_rules.js` with pure player attack, enemy counterattack, outcome, and log helpers separate from Phaser rendering.
+- Added `js/ui/battle_ui.js`, `js/phaser/phaser_battle_mount.js`, and `js/phaser/battle_scene.js` to render a contained Phaser battle screen with status panels and safe instance teardown.
+- Reworked `js/core/app_state.js`, `js/main.js`, and `js/ui/layout_ui.js` so attackable enemy cities now enter battle mode and return battle results back to the world map.
+- Replaced direct occupation-on-attack in the world map flow with battle entry, retreat, victory return, occupied-city selection sync, and loss-safe return logic.
+- Extended `css/main.css` with battle-screen styling while preserving the fullscreen world map layout and existing laptop-safe HUD behavior.
+- Ran `node --check` on all touched JavaScript modules and a module-level runtime sanity check for battle entry, victory return, and retreat return.
+- Upgraded `js/core/battle_state.js` to a tactical state shape with selection, phase, move/attack highlights, and richer unit stats inspired by the Godot grid flow.
+- Added `js/core/battle_grid.js` and `js/core/battle_ai.js` for Manhattan grid helpers and a simple enemy chase/attack turn.
+- Replaced the old direct battle click-damage rules with tactical `selectBattleUnit`, `moveSelectedUnit`, `attackUnit`, `endPlayerTurn`, and `runEnemyTurn` logic in `js/core/battle_rules.js`.
+- Reworked `js/ui/battle_ui.js` and `js/phaser/battle_scene.js` so grid clicks now drive unit selection, movement, and attacks while Phaser remains a renderer/input relay only.
+- Updated `js/main.js` to wire the tactical handlers and auto-run the simple enemy turn after the lone player unit acts.
+- Extended battle HUD styling in `css/main.css` for selected-unit and turn-state feedback without changing the fullscreen world map layout.
+- Ran `node --check` on the updated tactical modules and a second runtime sanity script covering selection, movement highlights, enemy advance, tactical attacks, and world-map victory return.
+- Replaced placeholder `data/heroes.js` and `data/skills.js` with fixed MVP hero and skill definitions for 이순신, 정도전, 노부나가, and 겐신.
+- Added `data/battle_rosters.js` so the battle scene now builds a fixed 2v2 roster from data modules instead of generic inline units.
+- Added `js/core/battle_skills.js` and upgraded `js/core/battle_state.js` so battle units now track hero IDs, skill IDs, cooldowns, buff bonuses, buff turns, and last-action markers.
+- Reworked `js/core/battle_rules.js` and `js/core/battle_ai.js` so player and enemy turns can use basic attacks or hero skills with cooldowns and immutable logs/state updates.
+- Updated `js/ui/battle_ui.js`, `js/phaser/battle_scene.js`, and `js/main.js` so the UI now supports skill entry, skill targeting, selected-skill info, enemy AI skill use, and simple Phaser skill feedback.
+- Extended `css/main.css` with selected-skill card, skill button, cooldown text, and skill-mode styling while preserving the fullscreen world map and laptop-safe HUD.
+- Ran `node --check` across the new hero/skill modules and a runtime sanity script covering 2v2 roster creation, 이순신 skill damage, 정도전 buff application, enemy AI action/skill flow, and world-map victory return.
