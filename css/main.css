@@ -381,6 +381,115 @@ button {
   line-height: 1.7;
 }
 
+@media (max-width: 1500px) {
+  .title-panel {
+    width: min(340px, calc(100vw - 36px));
+    padding: 18px 20px;
+    border-radius: 18px;
+  }
+
+  .eyebrow {
+    margin-bottom: 8px;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+  }
+
+  .title {
+    font-size: clamp(3rem, 5vw, 4.6rem);
+  }
+
+  .title-copy {
+    margin-top: 12px;
+    max-width: 300px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .hud-stack {
+    gap: 10px;
+    width: min(280px, calc(100vw - 36px));
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(209, 176, 117, 0.35) rgba(7, 14, 23, 0.12);
+  }
+
+  .hud-stack::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .hud-stack::-webkit-scrollbar-track {
+    background: rgba(7, 14, 23, 0.12);
+    border-radius: 999px;
+  }
+
+  .hud-stack::-webkit-scrollbar-thumb {
+    background: rgba(209, 176, 117, 0.35);
+    border-radius: 999px;
+  }
+
+  .turn-card,
+  .detail-card {
+    padding: 14px 16px;
+    border-radius: 14px;
+  }
+
+  .turn-value {
+    font-size: 1.7rem;
+  }
+
+  .turn-copy,
+  .city-detail-copy,
+  .attack-note,
+  .goal-list {
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  .city-detail-name {
+    font-size: 1.7rem;
+  }
+
+  .city-detail-meta {
+    margin-top: 8px;
+    font-size: 0.94rem;
+  }
+
+  .detail-heading {
+    font-size: 1.18rem;
+  }
+
+  .linked-city-list {
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .linked-city-item {
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .attack-button {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+
+  .mvp-goal-panel {
+    opacity: 0.94;
+  }
+
+  .mvp-goal-panel .goal-list {
+    margin-top: 10px;
+    padding-left: 16px;
+  }
+
+  .mvp-goal-panel .goal-list li + li {
+    margin-top: 4px;
+  }
+}
+
 @media (max-width: 1100px) {
   .title-panel {
     width: min(400px, calc(100vw - 44px));

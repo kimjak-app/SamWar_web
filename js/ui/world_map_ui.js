@@ -190,7 +190,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
             </div>
           </section>
 
-          <section class="detail-card hud-panel">
+          <section class="detail-card hud-panel mvp-goal-panel">
             <h3 class="detail-heading">MVP 목표</h3>
             <ul class="goal-list">
               <li>배경 맵의 성곽 랜드마크에 4개 도시 앵커를 맞춰 전선을 검증합니다.</li>

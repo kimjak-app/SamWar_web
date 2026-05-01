@@ -33,3 +33,8 @@
 - Updated `index.html` to load Phaser 3.86.0 from the jsDelivr CDN before `./js/main.js` for the v0.2 battle-scene bootstrap check.
 - Preserved the existing world map, city data, world rules, and gameplay behavior without additional implementation changes.
 - Updated agent state, session log, and ChatCoach handoff documents for the Phaser CDN bootstrap task.
+- Added a laptop-width compact HUD mode for the fullscreen world map so the right-side panel stack occupies less of the Japan/Kyoto region.
+- Reduced laptop HUD width, panel padding, card gaps, title panel footprint, and several HUD text sizes while keeping the fullscreen map layout intact.
+- Added `mvp-goal-panel` markup targeting in `js/ui/world_map_ui.js` and compacted the MVP goal card styling instead of removing the panel.
+- Added a capped laptop HUD stack height with subtle scrolling support to reduce middle-right map obstruction on shorter screens.
+- Preserved city coordinates, attack test flow, occupation flow, selected-city sync, victory message logic, and Phaser CDN boot order.
