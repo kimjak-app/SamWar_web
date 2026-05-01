@@ -31,6 +31,7 @@ function buildClearedSelectionState(battleState) {
       move: [],
       attack: [],
       skill: [],
+      facing: [],
     },
   };
 }

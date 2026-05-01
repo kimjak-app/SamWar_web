@@ -1,8 +1,16 @@
+import {
+  getAttackAngleBonus,
+  getAttackAngleType,
+  getDirectionFromPositions,
+  getDirectionLabel,
+  getFacingOptions as getFacingOptionsFromDirection,
+} from "./battle_direction.js";
 import { getEnemyTurnAction } from "./battle_ai.js";
 import { getAttackableUnits, getDistance, getWalkablePositions, isSamePosition } from "./battle_grid.js";
 import {
   applySkill,
   canUseSkill,
+  DAMAGE_SCALE,
   getEffectiveAttack,
   getEffectiveDefense,
   getGodotAttackValue,
@@ -37,6 +45,7 @@ function buildEmptyHighlights() {
     move: [],
     attack: [],
     skill: [],
+    facing: [],
   };
 }
 
@@ -59,20 +68,54 @@ function buildSelectionHighlights(battleState, unit) {
     move: unit.hasMoved ? [] : getWalkablePositions(unit, battleState.units, battleState.grid),
     attack: getAttackableUnits(unit, battleState.units).map((target) => ({ x: target.x, y: target.y })),
     skill: buildSkillHighlightPositions(battleState, unit),
+    facing: battleState.phase === "facing" ? getFacingOptionsFromDirection(unit) : [],
   };
 }
 
-function dealBasicDamage(attacker, target) {
-  const rawDamage = (getEffectiveAttack(attacker) - getEffectiveDefense(target) * 0.45) * 0.32;
-  return Math.max(8, Math.round(rawDamage));
+function buildBasicAttackResult(attacker, defender, options = {}) {
+  const {
+    actionName = "공격",
+    isCounter = false,
+  } = options;
+  const angleType = getAttackAngleType(attacker, defender);
+  const angleBonus = getAttackAngleBonus(angleType);
+  const rawDamage = (
+    getEffectiveAttack(attacker)
+    - getEffectiveDefense(defender) * 0.45
+  ) * DAMAGE_SCALE * angleBonus;
+
+  let damage = Math.max(8, Math.round(rawDamage));
+
+  if (defender.isDefending) {
+    damage = Math.max(4, Math.round(damage * 0.65));
+  }
+
+  const angleLabel = angleType === "back" ? "후방" : angleType === "side" ? "측면" : "정면";
+
+  return {
+    damage,
+    angleType,
+    angleBonus,
+    angleLabel,
+    actionName,
+    isCounter,
+  };
 }
 
 function applyTurnStartEffects(battleState, side) {
   return {
     ...battleState,
     units: battleState.units.map((unit) => {
-      if (unit.side !== side || !unit.isAlive) {
+      if (!unit.isAlive) {
         return unit;
+      }
+
+      if (unit.side !== side) {
+        return {
+          ...unit,
+          hasMoved: false,
+          hasActed: false,
+        };
       }
 
       const nextBuffTurns = Math.max(0, unit.buffTurns - 1);
@@ -84,6 +127,7 @@ function applyTurnStartEffects(battleState, side) {
         buffAttackBonus: nextBuffTurns > 0 ? unit.buffAttackBonus : 0,
         hasMoved: false,
         hasActed: false,
+        isDefending: false,
       };
     }),
   };
@@ -115,7 +159,63 @@ function setOutcomeStatus(battleState) {
   return battleState;
 }
 
-function applyResolvedBasicAttack(battleState, attackerUnitId, targetUnitId) {
+function applyCounterIfNeeded(battleState, attackerId, defenderId) {
+  const attacker = getUnitById(battleState, attackerId);
+  const defender = getUnitById(battleState, defenderId);
+
+  if (
+    !attacker
+    || !defender
+    || !attacker.isAlive
+    || !defender.isAlive
+    || defender.hasActed
+    || getDistance(attacker, defender) > defender.attackRange
+    || battleState.status !== "active"
+  ) {
+    return battleState;
+  }
+
+  const counterResult = buildBasicAttackResult(defender, attacker, {
+    actionName: "반격",
+    isCounter: true,
+  });
+
+  let nextState = updateUnit(battleState, attacker.id, (unit) => {
+    const nextHp = Math.max(0, unit.hp - counterResult.damage);
+
+    return {
+      ...unit,
+      hp: nextHp,
+      troops: nextHp,
+      isAlive: nextHp > 0,
+    };
+  });
+
+  nextState = updateUnit(nextState, defender.id, (unit) => ({
+    ...unit,
+    hasActed: true,
+    facing: getDirectionFromPositions(unit, attacker) ?? unit.facing,
+  }));
+  nextState = {
+    ...nextState,
+    lastAction: {
+      type: "counter",
+      skillId: null,
+      actorUnitId: defender.id,
+      targetUnitIds: [attacker.id],
+      effects: [
+        { unitId: defender.id, kind: "counter", text: "반격!" },
+        { unitId: attacker.id, kind: "damage", text: `-${counterResult.damage}` },
+      ],
+    },
+  };
+  nextState = appendLog(nextState, `${defender.name}가 반격했습니다.`);
+  nextState = appendLog(nextState, `${attacker.name}이 ${counterResult.damage} 반격 피해를 입었습니다.`);
+
+  return setOutcomeStatus(nextState);
+}
+
+function applyResolvedBasicAttack(battleState, attackerUnitId, targetUnitId, options = {}) {
   const attacker = getUnitById(battleState, attackerUnitId);
   const target = getUnitById(battleState, targetUnitId);
 
@@ -127,9 +227,9 @@ function applyResolvedBasicAttack(battleState, attackerUnitId, targetUnitId) {
     return battleState;
   }
 
-  const damage = dealBasicDamage(attacker, target);
+  const attackResult = buildBasicAttackResult(attacker, target, options);
   let nextState = updateUnit(battleState, target.id, (unit) => {
-    const nextHp = Math.max(0, unit.hp - damage);
+    const nextHp = Math.max(0, unit.hp - attackResult.damage);
 
     return {
       ...unit,
@@ -142,22 +242,30 @@ function applyResolvedBasicAttack(battleState, attackerUnitId, targetUnitId) {
   nextState = updateUnit(nextState, attacker.id, (unit) => ({
     ...unit,
     hasActed: true,
+    facing: getDirectionFromPositions(unit, target) ?? unit.facing,
   }));
   nextState = {
     ...nextState,
     lastAction: {
-      type: "attack",
+      type: attackResult.isCounter ? "counter" : "attack",
       skillId: null,
       actorUnitId: attacker.id,
       targetUnitIds: [target.id],
       effects: [
-        { unitId: target.id, kind: "damage", text: `-${damage}` },
+        { unitId: target.id, kind: "angle", text: `${attackResult.angleLabel} 공격!` },
+        { unitId: target.id, kind: "damage", text: `-${attackResult.damage}` },
       ],
     },
   };
-  nextState = appendLog(nextState, `${attacker.name}가 ${target.name}를 공격해 ${damage} 피해를 입혔습니다.`);
+  nextState = appendLog(nextState, `${attacker.name}이 ${target.name}를 ${attackResult.angleLabel} 공격했습니다.`);
+  nextState = appendLog(nextState, `${target.name}에게 ${attackResult.damage} 피해!`);
+  nextState = setOutcomeStatus(nextState);
 
-  return setOutcomeStatus(nextState);
+  if (nextState.status !== "active" || attackResult.isCounter) {
+    return nextState;
+  }
+
+  return applyCounterIfNeeded(nextState, attacker.id, target.id);
 }
 
 export {
@@ -189,6 +297,10 @@ export function getBattleOutcome(battleState) {
   }
 
   return "active";
+}
+
+export function getFacingOptions(unit) {
+  return getFacingOptionsFromDirection(unit);
 }
 
 export function clearBattleSelection(battleState) {
@@ -227,6 +339,7 @@ export function moveSelectedUnit(battleState, targetPosition) {
     || battleState.turnOwner !== "player"
     || !selectedUnit
     || selectedUnit.hasMoved
+    || battleState.phase === "facing"
   ) {
     return battleState;
   }
@@ -248,8 +361,14 @@ export function moveSelectedUnit(battleState, targetPosition) {
 
   nextState = {
     ...nextState,
-    phase: "attack",
-    highlights: movedUnit ? buildSelectionHighlights(nextState, movedUnit) : buildEmptyHighlights(),
+    phase: "facing",
+    highlights: {
+      ...buildSelectionHighlights(nextState, movedUnit),
+      move: [],
+      attack: [],
+      skill: [],
+      facing: movedUnit ? getFacingOptionsFromDirection(movedUnit) : [],
+    },
     lastAction: {
       type: "move",
       skillId: null,
@@ -262,11 +381,52 @@ export function moveSelectedUnit(battleState, targetPosition) {
   return appendLog(nextState, `${selectedUnit.name}가 (${targetPosition.x + 1}, ${targetPosition.y + 1}) 위치로 이동했습니다.`);
 }
 
+export function setSelectedUnitFacing(battleState, direction) {
+  const selectedUnit = getSelectedUnit(battleState);
+
+  if (
+    battleState.status !== "active"
+    || battleState.turnOwner !== "player"
+    || battleState.phase !== "facing"
+    || !selectedUnit
+    || !direction
+  ) {
+    return battleState;
+  }
+
+  let nextState = updateUnit(battleState, selectedUnit.id, (unit) => ({
+    ...unit,
+    facing: direction,
+  }));
+  const updatedUnit = getUnitById(nextState, selectedUnit.id);
+
+  return {
+    ...nextState,
+    phase: "attack",
+    highlights: updatedUnit ? buildSelectionHighlights(nextState, updatedUnit) : buildEmptyHighlights(),
+    lastAction: {
+      type: "facing",
+      skillId: null,
+      actorUnitId: selectedUnit.id,
+      targetUnitIds: [],
+      effects: [
+        { unitId: selectedUnit.id, kind: "facing", text: `방향 ${getDirectionLabel(direction)}` },
+      ],
+    },
+  };
+}
+
 export function enterSkillMode(battleState) {
   const selectedUnit = getSelectedUnit(battleState);
   const skill = getSkillById(battleState.skills, selectedUnit?.skillId);
 
-  if (!selectedUnit || !skill || !canUseSkill(selectedUnit, skill) || skill.target !== "enemy") {
+  if (
+    !selectedUnit
+    || !skill
+    || !canUseSkill(selectedUnit, skill)
+    || skill.target !== "enemy"
+    || battleState.phase === "facing"
+  ) {
     return battleState;
   }
 
@@ -275,7 +435,9 @@ export function enterSkillMode(battleState) {
     phase: "skill",
     highlights: {
       ...battleState.highlights,
+      attack: [],
       skill: buildSkillHighlightPositions(battleState, selectedUnit),
+      facing: [],
     },
   };
 }
@@ -294,6 +456,7 @@ export function attackUnit(battleState, attackerUnitId, targetUnitId) {
     || !attacker.isAlive
     || !target.isAlive
     || attacker.hasActed
+    || battleState.phase === "facing"
   ) {
     return battleState;
   }
@@ -316,7 +479,7 @@ export function attackUnit(battleState, attackerUnitId, targetUnitId) {
 export function useSelectedUnitSkill(battleState, targetUnitId = null) {
   const selectedUnit = getSelectedUnit(battleState);
 
-  if (!selectedUnit) {
+  if (!selectedUnit || battleState.phase === "facing") {
     return battleState;
   }
 
@@ -347,6 +510,71 @@ export function useSelectedUnitSkill(battleState, targetUnitId = null) {
   }
 
   return clearBattleSelection(nextState);
+}
+
+export function defendSelectedUnit(battleState) {
+  const selectedUnit = getSelectedUnit(battleState);
+
+  if (
+    battleState.status !== "active"
+    || battleState.turnOwner !== "player"
+    || !selectedUnit
+    || selectedUnit.hasActed
+  ) {
+    return battleState;
+  }
+
+  let nextState = updateUnit(battleState, selectedUnit.id, (unit) => ({
+    ...unit,
+    isDefending: true,
+    hasActed: true,
+  }));
+  nextState = {
+    ...clearBattleSelection(nextState),
+    lastAction: {
+      type: "defend",
+      skillId: null,
+      actorUnitId: selectedUnit.id,
+      targetUnitIds: [selectedUnit.id],
+      effects: [
+        { unitId: selectedUnit.id, kind: "defend", text: "방어" },
+      ],
+    },
+  };
+
+  return appendLog(nextState, `${selectedUnit.name}이 방어 태세를 취했습니다.`);
+}
+
+export function waitSelectedUnit(battleState) {
+  const selectedUnit = getSelectedUnit(battleState);
+
+  if (
+    battleState.status !== "active"
+    || battleState.turnOwner !== "player"
+    || !selectedUnit
+    || selectedUnit.hasActed
+  ) {
+    return battleState;
+  }
+
+  let nextState = updateUnit(battleState, selectedUnit.id, (unit) => ({
+    ...unit,
+    hasActed: true,
+  }));
+  nextState = {
+    ...clearBattleSelection(nextState),
+    lastAction: {
+      type: "wait",
+      skillId: null,
+      actorUnitId: selectedUnit.id,
+      targetUnitIds: [],
+      effects: [
+        { unitId: selectedUnit.id, kind: "wait", text: "대기" },
+      ],
+    },
+  };
+
+  return appendLog(nextState, `${selectedUnit.name}이 대기했습니다.`);
 }
 
 export function endPlayerTurn(battleState) {
@@ -385,7 +613,16 @@ export function runEnemyTurn(battleState) {
     const action = getEnemyTurnAction(nextState, actingEnemy, playerUnits);
 
     if (action.type === "skill" && action.targetUnitId) {
+      const targetUnit = getUnitById(nextState, action.targetUnitId);
       nextState = applySkill(nextState, actingEnemy.id, action.targetUnitId);
+
+      if (targetUnit) {
+        nextState = updateUnit(nextState, actingEnemy.id, (unit) => ({
+          ...unit,
+          facing: getDirectionFromPositions(unit, targetUnit) ?? unit.facing,
+        }));
+      }
+
       nextState = setOutcomeStatus(nextState);
 
       if (nextState.status !== "active") {
@@ -406,11 +643,13 @@ export function runEnemyTurn(battleState) {
     }
 
     if (action.movePosition) {
+      const moveDirection = getDirectionFromPositions(actingEnemy, action.movePosition);
       nextState = updateUnit(nextState, actingEnemy.id, (unit) => ({
         ...unit,
         x: action.movePosition.x,
         y: action.movePosition.y,
         hasMoved: true,
+        facing: moveDirection ?? unit.facing,
       }));
       nextState = {
         ...nextState,
@@ -442,6 +681,10 @@ export function runEnemyTurn(battleState) {
 
         if (targetUnit) {
           nextState = applySkill(nextState, movedEnemy.id, targetUnit.id);
+          nextState = updateUnit(nextState, movedEnemy.id, (unit) => ({
+            ...unit,
+            facing: getDirectionFromPositions(unit, targetUnit) ?? unit.facing,
+          }));
           nextState = setOutcomeStatus(nextState);
 
           if (nextState.status !== "active") {
@@ -465,11 +708,25 @@ export function runEnemyTurn(battleState) {
       continue;
     }
 
+    const closestPlayer = playerUnits.sort((a, b) => getDistance(movedEnemy ?? actingEnemy, a) - getDistance(movedEnemy ?? actingEnemy, b))[0] ?? null;
     nextState = updateUnit(nextState, actingEnemy.id, (unit) => ({
       ...unit,
       hasActed: true,
+      facing: closestPlayer ? getDirectionFromPositions(unit, closestPlayer) ?? unit.facing : unit.facing,
     }));
-    nextState = appendLog(nextState, `${actingEnemy.name}가 공격 기회를 찾지 못했습니다.`);
+    nextState = {
+      ...nextState,
+      lastAction: {
+        type: "wait",
+        skillId: null,
+        actorUnitId: actingEnemy.id,
+        targetUnitIds: [],
+        effects: [
+          { unitId: actingEnemy.id, kind: "wait", text: "대기" },
+        ],
+      },
+    };
+    nextState = appendLog(nextState, `${actingEnemy.name}가 대기했습니다.`);
   }
 
   if (nextState.status !== "active") {

@@ -1,3 +1,4 @@
+import { getDirectionFromPositions } from "./battle_direction.js";
 import { getAttackableUnits, getDistance, getWalkablePositions } from "./battle_grid.js";
 import { canUseSkill, getSkillById, getSkillTargets } from "./battle_skills.js";
 
@@ -20,6 +21,7 @@ export function getEnemyTurnAction(battleState, enemyUnit, playerUnits) {
       type: "skill",
       targetUnitId: skillTargets[0].id,
       movePosition: null,
+      facingDirection: getDirectionFromPositions(enemyUnit, skillTargets[0]),
     };
   }
 
@@ -32,6 +34,7 @@ export function getEnemyTurnAction(battleState, enemyUnit, playerUnits) {
       type: "skill",
       targetUnitId: skillTargets[0].id,
       movePosition: null,
+      facingDirection: getDirectionFromPositions(enemyUnit, skillTargets[0]),
     };
   }
 
@@ -42,6 +45,7 @@ export function getEnemyTurnAction(battleState, enemyUnit, playerUnits) {
       type: "attack",
       targetUnitId: attackTargets[0].id,
       movePosition: null,
+      facingDirection: getDirectionFromPositions(enemyUnit, attackTargets[0]),
     };
   }
 
@@ -52,6 +56,7 @@ export function getEnemyTurnAction(battleState, enemyUnit, playerUnits) {
       type: "wait",
       targetUnitId: null,
       movePosition: null,
+      facingDirection: null,
     };
   }
 
@@ -72,5 +77,6 @@ export function getEnemyTurnAction(battleState, enemyUnit, playerUnits) {
     type: bestMove ? "move" : "wait",
     targetUnitId: null,
     movePosition: bestMove,
+    facingDirection: bestMove ? getDirectionFromPositions(bestMove, closestPlayer) : getDirectionFromPositions(enemyUnit, closestPlayer),
   };
 }

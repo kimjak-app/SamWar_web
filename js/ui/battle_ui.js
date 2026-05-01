@@ -1,3 +1,4 @@
+import { getAttackAngleType, getDirectionLabel } from "../core/battle_direction.js";
 import { canUseSkill, getEffectiveAttack, getEffectiveDefense, getSkillById } from "../core/battle_skills.js";
 import { getEnemyUnits, getPlayerUnits, getSelectedUnit } from "../core/battle_rules.js";
 import { mountBattleScene } from "../phaser/phaser_battle_mount.js";
@@ -15,11 +16,15 @@ function getBattleStatusCopy(battleState) {
     return "적군 행동 중입니다.";
   }
 
+  if (battleState.phase === "facing") {
+    return "이동을 마쳤습니다. 유닛의 방향을 정하세요.";
+  }
+
   if (battleState.phase === "skill") {
     return "스킬 대상이 되는 적 유닛을 선택하세요.";
   }
 
-  return "아군 유닛 선택 → 이동 → 기본 공격 또는 고유 특기 사용 순서로 전투를 진행합니다.";
+  return "아군 유닛 선택 → 이동 → 방향 결정 → 기본 공격 또는 고유 특기 사용 순서로 전투를 진행합니다.";
 }
 
 function getSkillHelpCopy(skill) {
@@ -46,12 +51,41 @@ function formatBuffStatus(unit) {
   return `개혁령 효과: 공격력 +${Math.round(unit.buffAttackBonus * 100)}% / ${unit.buffTurns}턴`;
 }
 
+function getAttackAngleHint(battleState, selectedUnit) {
+  if (!selectedUnit || battleState.highlights.attack.length === 0) {
+    return "공격 각도 힌트 없음";
+  }
+
+  const target = battleState.units.find((unit) => (
+    unit.isAlive
+    && unit.side !== selectedUnit.side
+    && battleState.highlights.attack.some((position) => position.x === unit.x && position.y === unit.y)
+  ));
+
+  if (!target) {
+    return "공격 각도 힌트 없음";
+  }
+
+  const angleType = getAttackAngleType(selectedUnit, target);
+  const angleLabel = angleType === "back" ? "후방" : angleType === "side" ? "측면" : "정면";
+
+  return `공격 각도 예상: ${angleLabel}`;
+}
+
 function renderBattleLog(logEntries) {
   return logEntries
     .slice()
     .reverse()
     .map((entry) => `<li class="battle-log-item">${entry}</li>`)
     .join("");
+}
+
+function renderDirectionButton(direction) {
+  return `
+    <button class="battle-direction-button" type="button" data-battle-facing="${direction}">
+      ${getDirectionLabel(direction)}
+    </button>
+  `;
 }
 
 function renderUnitCard(unit, sideLabel) {
@@ -61,7 +95,8 @@ function renderUnitCard(unit, sideLabel) {
       <strong class="battle-unit-name">${unit.name}</strong>
       <span class="battle-unit-hp">병력 ${unit.troops} / ${unit.maxTroops} · HP ${unit.hp} / ${unit.maxHp}</span>
       <span class="battle-unit-hp">공 ${Math.round(getEffectiveAttack(unit))} · 방 ${Math.round(getEffectiveDefense(unit))}</span>
-      <span class="battle-unit-cooldown">고유 특기 재사용 ${unit.currentSkillCooldown}턴</span>
+      <span class="battle-unit-cooldown">고유 특기 재사용 ${unit.currentSkillCooldown}턴 · 방향 ${getDirectionLabel(unit.facing)}</span>
+      ${unit.isDefending ? '<span class="battle-unit-buff">방어 태세</span>' : ""}
       ${
         unit.buffTurns > 0 && unit.buffAttackBonus > 0
           ? `<span class="battle-unit-buff">공격 상승 +${Math.round(unit.buffAttackBonus * 100)}% · ${unit.buffTurns}턴</span>`
@@ -92,7 +127,20 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
   const selectedUnit = getSelectedUnit(battleState);
   const selectedSkill = selectedUnit ? getSkillById(battleState.skills, selectedUnit.skillId) : null;
   const isActive = battleState.status === "active";
-  const canUseSelectedSkill = Boolean(selectedUnit && selectedSkill && canUseSkill(selectedUnit, selectedSkill));
+  const isFacingPhase = battleState.phase === "facing";
+  const canUseSelectedSkill = Boolean(
+    selectedUnit
+    && selectedSkill
+    && canUseSkill(selectedUnit, selectedSkill)
+    && !isFacingPhase
+  );
+  const canUsePostureCommand = Boolean(
+    isActive
+    && battleState.turnOwner === "player"
+    && selectedUnit
+    && !selectedUnit.hasActed
+    && !isFacingPhase
+  );
   const skillButtonLabel = selectedSkill?.name ?? "고유 특기";
   const selectedUnitSummary = selectedUnit
     ? `병력 ${selectedUnit.troops} / ${selectedUnit.maxTroops} · HP ${selectedUnit.hp} / ${selectedUnit.maxHp}`
@@ -107,7 +155,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
         <div class="battle-stage-panel battle-panel">
           <div class="battle-stage-header">
             <div>
-              <p class="eyebrow">Godot Balance Fidelity Patch</p>
+              <p class="eyebrow">Godot Facing / Counter Patch</p>
               <h1 id="battle-title" class="battle-screen-title">전투 테스트</h1>
               <p class="battle-screen-copy">
                 ${battleState.attackerCityName} 군이 ${battleState.defenderCityName} 공략을 시도하고 있습니다.
@@ -128,7 +176,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
             <div class="battle-turn-banner">
               ${battleState.turnOwner === "player" ? "아군 턴" : "적군 턴"}
               <span class="battle-turn-subcopy">
-                ${battleState.turnOwner === "player" ? "유닛 선택 · 이동 · 기본 공격 · 고유 특기" : "적군 행동 중"}
+                ${battleState.turnOwner === "player" ? "유닛 선택 · 이동 · 방향 · 공격 · 방어 · 대기" : "적군 행동 중"}
               </span>
             </div>
             <div class="battle-selected-card">
@@ -136,7 +184,13 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
               <strong class="battle-unit-name">${selectedUnit?.name ?? "없음"}</strong>
               <span class="battle-unit-hp">${selectedUnitSummary}</span>
               <span class="battle-unit-hp">${selectedUnitStats}</span>
+              ${
+                selectedUnit
+                  ? `<span class="battle-unit-buff">방향: ${getDirectionLabel(selectedUnit.facing)}${selectedUnit.isDefending ? " · 방어 태세" : ""}</span>`
+                  : ""
+              }
               ${selectedUnit ? `<span class="battle-unit-buff">${formatBuffStatus(selectedUnit)}</span>` : ""}
+              ${selectedUnit ? `<span class="battle-unit-cooldown">${getAttackAngleHint(battleState, selectedUnit)}</span>` : ""}
             </div>
             <div class="battle-skill-card">
               <span class="battle-unit-side">고유 특기</span>
@@ -154,11 +208,26 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
                   : ""
               }
             </div>
+            ${
+              isFacingPhase && selectedUnit
+                ? `
+                  <div class="battle-facing-panel">
+                    <span class="battle-unit-side">방향 선택</span>
+                    <div class="battle-direction-grid">
+                      ${renderDirectionButton("up")}
+                      ${renderDirectionButton("left")}
+                      ${renderDirectionButton("down")}
+                      ${renderDirectionButton("right")}
+                    </div>
+                  </div>
+                `
+                : ""
+            }
             <div class="battle-unit-stats">
               ${playerUnits.map((unit) => renderUnitCard(unit, "아군")).join("")}
               ${enemyUnits.map((unit) => renderUnitCard(unit, "적군")).join("")}
             </div>
-            <div class="battle-action-row battle-action-row-skill">
+            <div class="battle-action-row battle-action-row-main">
               <button
                 class="battle-action-button battle-action-button-skill ${battleState.phase === "skill" ? "is-active" : ""}"
                 type="button"
@@ -167,6 +236,14 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
               >
                 ${skillButtonLabel}
               </button>
+              <button class="battle-action-button" type="button" data-battle-action="defend" ${canUsePostureCommand ? "" : "disabled"}>
+                방어
+              </button>
+              <button class="battle-action-button" type="button" data-battle-action="wait" ${canUsePostureCommand ? "" : "disabled"}>
+                대기
+              </button>
+            </div>
+            <div class="battle-action-row battle-action-row-skill">
               <button class="battle-action-button" type="button" data-battle-action="end-turn" ${isActive ? "" : "disabled"}>
                 턴 종료
               </button>
@@ -210,15 +287,26 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
     mountBattleScene(mountElement, battleState, {
       onSelectUnit: handlers.onBattleSelectUnit,
       onMoveUnit: handlers.onBattleMoveUnit,
+      onSetFacing: handlers.onBattleSetFacing,
       onAttackUnit: handlers.onBattleAttackUnit,
       onUseSkill: handlers.onBattleUseSkill,
       onEndTurn: handlers.onBattleEndTurn,
+      onDefend: handlers.onBattleDefend,
+      onWait: handlers.onBattleWait,
       onRetreat: handlers.onBattleRetreat,
     });
   }
 
   rootElement.querySelector('[data-battle-action="skill"]')?.addEventListener("click", () => {
     handlers.onBattleEnterSkillMode?.();
+  });
+
+  rootElement.querySelector('[data-battle-action="defend"]')?.addEventListener("click", () => {
+    handlers.onBattleDefend?.();
+  });
+
+  rootElement.querySelector('[data-battle-action="wait"]')?.addEventListener("click", () => {
+    handlers.onBattleWait?.();
   });
 
   rootElement.querySelector('[data-battle-action="end-turn"]')?.addEventListener("click", () => {
@@ -231,5 +319,11 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
 
   rootElement.querySelector('[data-battle-action="return"]')?.addEventListener("click", () => {
     handlers.onBattleReturnToWorld?.();
+  });
+
+  rootElement.querySelectorAll("[data-battle-facing]").forEach((button) => {
+    button.addEventListener("click", () => {
+      handlers.onBattleSetFacing?.(button.getAttribute("data-battle-facing"));
+    });
   });
 }

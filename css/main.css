@@ -573,6 +573,37 @@ button {
   line-height: 1.45;
 }
 
+.battle-facing-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid rgba(248, 215, 152, 0.2);
+  border-radius: 16px;
+  background: rgba(16, 23, 34, 0.72);
+}
+
+.battle-direction-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.battle-direction-button {
+  padding: 10px 12px;
+  border: 1px solid rgba(248, 215, 152, 0.5);
+  border-radius: 12px;
+  background: rgba(27, 38, 55, 0.94);
+  color: var(--accent-strong);
+  cursor: pointer;
+}
+
+.battle-direction-button:hover,
+.battle-direction-button:focus-visible {
+  border-color: rgba(248, 215, 152, 0.82);
+  outline: none;
+}
+
 .battle-action-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -580,8 +611,12 @@ button {
   margin-top: 18px;
 }
 
-.battle-action-row-skill {
+.battle-action-row-main {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.battle-action-row-skill {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .battle-action-button {

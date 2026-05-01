@@ -8,13 +8,16 @@ import {
 } from "./core/app_state.js";
 import {
   attackUnit,
+  defendSelectedUnit,
   endPlayerTurn,
   enterSkillMode,
   getPlayerUnits,
   moveSelectedUnit,
   runEnemyTurn,
   selectBattleUnit,
+  setSelectedUnitFacing,
   useSelectedUnitSkill,
+  waitSelectedUnit,
 } from "./core/battle_rules.js";
 import { renderLayout } from "./ui/layout_ui.js";
 
@@ -86,6 +89,14 @@ function rerender() {
       appState = updateBattleState(appState, nextBattleState);
       rerender();
     },
+    onBattleSetFacing: (direction) => {
+      if (!appState.battle || appState.battle.status !== "active") {
+        return;
+      }
+
+      appState = updateBattleState(appState, setSelectedUnitFacing(appState.battle, direction));
+      rerender();
+    },
     onBattleUseSkill: (targetUnitId) => {
       if (!appState.battle || appState.battle.status !== "active" || !appState.battle.selectedUnitId) {
         return;
@@ -94,6 +105,24 @@ function rerender() {
       const nextBattleState = resolveAfterPlayerAction(
         useSelectedUnitSkill(appState.battle, targetUnitId),
       );
+      appState = updateBattleState(appState, nextBattleState);
+      rerender();
+    },
+    onBattleDefend: () => {
+      if (!appState.battle || appState.battle.status !== "active") {
+        return;
+      }
+
+      const nextBattleState = resolveAfterPlayerAction(defendSelectedUnit(appState.battle));
+      appState = updateBattleState(appState, nextBattleState);
+      rerender();
+    },
+    onBattleWait: () => {
+      if (!appState.battle || appState.battle.status !== "active") {
+        return;
+      }
+
+      const nextBattleState = resolveAfterPlayerAction(waitSelectedUnit(appState.battle));
       appState = updateBattleState(appState, nextBattleState);
       rerender();
     },

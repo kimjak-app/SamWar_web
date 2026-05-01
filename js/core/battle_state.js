@@ -46,6 +46,8 @@ function buildBattleUnit(heroId) {
     buffTurns: 0,
     x: spawnPosition.x,
     y: spawnPosition.y,
+    facing: hero.side === "player" ? "right" : "left",
+    isDefending: false,
     hasMoved: false,
     hasActed: false,
     isAlive: true,
@@ -82,6 +84,7 @@ export function createInitialBattleState({ attackerCity, defenderCity }) {
       move: [],
       attack: [],
       skill: [],
+      facing: [],
     },
     units,
   };

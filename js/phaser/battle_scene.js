@@ -1,3 +1,4 @@
+import { getDirectionLabel } from "../core/battle_direction.js";
 import { getSkillById } from "../core/battle_skills.js";
 
 function getEffectStyle(kind) {
@@ -7,6 +8,18 @@ function getEffectStyle(kind) {
 
   if (kind === "buff") {
     return { color: "#9ef3b0", stroke: "#0f3020", size: "22px" };
+  }
+
+  if (kind === "angle") {
+    return { color: "#ffd166", stroke: "#5a2d0c", size: "22px" };
+  }
+
+  if (kind === "counter") {
+    return { color: "#ffb86b", stroke: "#5a210f", size: "22px" };
+  }
+
+  if (kind === "defend" || kind === "wait" || kind === "facing") {
+    return { color: "#c7d2fe", stroke: "#202c5a", size: "20px" };
   }
 
   return { color: "#f8d798", stroke: "#4a2c0f", size: "24px" };
@@ -101,6 +114,27 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
         ).setStrokeStyle(2, 0xd8b4fe, 0.8);
       });
 
+      battleState.highlights.facing.forEach((position) => {
+        const rect = this.add.rectangle(
+          board.x + cellWidth * position.x + cellWidth / 2,
+          board.y + cellHeight * position.y + cellHeight / 2,
+          cellWidth - 12,
+          cellHeight - 12,
+          0xf8d798,
+          0.18,
+        ).setStrokeStyle(2, 0xf8d798, 0.8);
+        const label = this.add.text(rect.x, rect.y, getDirectionLabel(position.direction), {
+          color: "#f8d798",
+          fontFamily: "Segoe UI, sans-serif",
+          fontSize: "24px",
+          fontStyle: "bold",
+        }).setOrigin(0.5, 0.5);
+        rect.setInteractive({ useHandCursor: true });
+        rect.on("pointerdown", () => callbacks.onSetFacing?.(position.direction));
+        label.setInteractive({ useHandCursor: true });
+        label.on("pointerdown", () => callbacks.onSetFacing?.(position.direction));
+      });
+
       for (let x = 0; x <= battleState.grid.width; x += 1) {
         const lineX = board.x + cellWidth * x;
         this.add.line(0, 0, lineX, board.y, lineX, board.y + board.height, 0xf8d798, 0.16)
@@ -133,6 +167,13 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
           fontStyle: "bold",
           align: "center",
         }).setOrigin(0.5, 0.5);
+        const facingText = this.add.text(0, -38, getDirectionLabel(unit.facing), {
+          color: "#f8d798",
+          fontFamily: "Segoe UI, sans-serif",
+          fontSize: "20px",
+          fontStyle: "bold",
+          align: "center",
+        }).setOrigin(0.5, 0.5);
         const hpText = this.add.text(0, 44, `병력 ${unit.troops} / ${unit.maxTroops}`, {
           color: "#dbe6f3",
           fontFamily: "Segoe UI, sans-serif",
@@ -156,10 +197,21 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
           0.95,
         );
 
-        unitGroup.add([selectionRing, badge, label, hpText, cooldownText, hpBarTrack, hpBarFill]);
+        unitGroup.add([selectionRing, badge, label, facingText, hpText, cooldownText, hpBarTrack, hpBarFill]);
+
+        if (unit.isDefending) {
+          const defendChip = this.add.text(0, -84, "방어", {
+            color: "#c7d2fe",
+            fontFamily: "Segoe UI, sans-serif",
+            fontSize: "13px",
+            fontStyle: "bold",
+            align: "center",
+          }).setOrigin(0.5, 0.5);
+          unitGroup.add(defendChip);
+        }
 
         if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
-          const buffChip = this.add.text(0, -84, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
+          const buffChip = this.add.text(0, -102, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
             color: "#9ef3b0",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
@@ -207,20 +259,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
       });
 
       if (battleState.lastAction?.effects?.length) {
-        const actor = battleState.units.find((unit) => unit.id === battleState.lastAction.actorUnitId);
         const targetUnits = battleState.units.filter((unit) => battleState.lastAction.targetUnitIds?.includes(unit.id));
-
-        if (battleState.lastAction.type === "skill" && actor) {
-          const actorPoint = getUnitPoint(actor);
-          const actorFlash = this.add.circle(actorPoint.x, actorPoint.y, 48, 0xd8b4fe, 0.18);
-          this.tweens.add({
-            targets: actorFlash,
-            alpha: 0,
-            scale: 1.6,
-            duration: 320,
-            onComplete: () => actorFlash.destroy(),
-          });
-        }
 
         targetUnits.forEach((unit) => {
           const point = getUnitPoint(unit);
@@ -270,11 +309,13 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
       this.add.text(
         width - 96,
         54,
-        battleState.phase === "skill"
-          ? "특기 대상 적 유닛 선택"
-          : battleState.turnOwner === "player"
-            ? "유닛 선택 · 이동 · 기본 공격 · 고유 특기"
-            : "적군 행동 중",
+        battleState.phase === "facing"
+          ? "이동 후 방향 선택"
+          : battleState.phase === "skill"
+            ? "특기 대상 적 유닛 선택"
+            : battleState.turnOwner === "player"
+              ? "유닛 선택 · 이동 · 방향 · 공격 · 방어 · 대기"
+              : "적군 행동 중",
         {
           color: "#aeb7c3",
           fontFamily: "Segoe UI, sans-serif",
@@ -285,6 +326,18 @@ export function createBattleSceneDefinition({ battleState, callbacks = {} }) {
       this.input.keyboard?.on("keydown-S", () => {
         if (battleState.status === "active") {
           callbacks.onUseSkill?.(null);
+        }
+      });
+
+      this.input.keyboard?.on("keydown-D", () => {
+        if (battleState.status === "active") {
+          callbacks.onDefend?.();
+        }
+      });
+
+      this.input.keyboard?.on("keydown-W", () => {
+        if (battleState.status === "active") {
+          callbacks.onWait?.();
         }
       });
 

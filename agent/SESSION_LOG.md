@@ -68,3 +68,13 @@
 - Reworked `js/ui/battle_ui.js` and `js/phaser/battle_scene.js` so the selected-unit panel shows effective stats/buff state, skill buttons display unique skill names, and Phaser now renders floating skill/damage/buff text over affected units.
 - Updated `js/main.js` so immediate-use skills like `학익진 포격` and `개혁령` fire correctly from the skill button without the older generic single-target flow.
 - Re-ran `node --check` on the touched battle modules and a runtime sanity script covering Yi AoE hits, Jeong percentage buff application, owner-lock rejection logging, enemy skill usage, and preserved battle/world-map return behavior.
+- Added `js/core/battle_direction.js` for facing vectors, direction labels, and front/side/back attack-angle classification using the Godot `1.0 / 1.15 / 1.30` baseline.
+- Upgraded `js/core/battle_state.js` so all battle units now track facing direction and temporary defend posture, and battle highlights now support facing-choice tiles.
+- Reworked `js/core/battle_rules.js` so movement now enters a facing phase, basic attacks apply angle bonuses, basic counterattacks can occur once, and player units now support defend/wait commands with visible logs/feedback.
+- Updated turn-start handling so cooldowns/buff durations remain side-specific while action flags reset in a way that still allows counters during the opposing side's turn.
+- Updated `js/core/battle_ai.js` so enemy turns preserve the simple skill priority but now also face toward movement/attack targets and can fall back to a real wait action.
+- Reworked `js/ui/battle_ui.js` so the battle HUD now shows current facing, defend status, angle hints, facing-direction buttons, and defend/wait controls alongside the existing unique-skill UI.
+- Reworked `js/phaser/battle_scene.js` so each unit now displays a facing arrow, defending marker, clickable facing-choice tiles, and floating text for angle attacks, counters, defend, and wait.
+- Updated `js/main.js` to wire `onBattleSetFacing`, `onBattleDefend`, and `onBattleWait` into the existing world-map → battle → world-map loop.
+- Extended `css/main.css` with facing-panel and direction-button styling while keeping the fullscreen world map and laptop HUD layout intact.
+- Re-ran `node --check` on the new/updated battle modules and a runtime sanity script covering move→facing flow, side/back damage ordering, counterattack, defend clear timing, wait behavior, and preserved Yi/Jeong skill fidelity.
