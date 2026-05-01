@@ -95,3 +95,11 @@
 - Reworked `js/ui/battle_ui.js` so 정도전 now shows a single `책략` button plus tier-based possible-outcome info instead of separate `혼란` / `동요` buttons.
 - Updated `js/phaser/battle_scene.js` to keep the same battlefield strategy feedback while accepting the new generic strategy flow and `실패` result text.
 - Re-ran `node --check` on the updated strategy/UI modules and a deterministic runtime sanity script covering master-tier confusion/shake durations, generic strategy mode entry, failure-without-status, preserved action consumption, and preserved Yi AoE behavior.
+- Added `js/core/battle_balance.js` to centralize damage scale, angle bonuses, defend reduction, shake penalty, minimum damage floors, and counter scaling.
+- Reworked `js/core/battle_ai.js` so both enemy turns and player auto battle use the same role-based AI target scoring, move scoring, skill priority, and future generic strategy hooks.
+- Updated `js/core/battle_rules.js` to consume centralized balance constants, add side-turn helpers, add player auto-battle stepping, and replace the older enemy-only action flow with a shared AI action executor.
+- Updated `js/core/battle_state.js` so battle state now tracks `autoBattleEnabled` directly.
+- Updated `js/main.js` to add auto-battle toggling, timed player auto steps, safer rerender/timer cleanup, and manual-control locking while auto battle is active.
+- Reworked `js/ui/battle_ui.js` so the battle HUD now shows compact balance/debug values, a dedicated auto-battle toggle, and disabled manual buttons while auto battle is running.
+- Extended `css/main.css` with auto-battle button styling and a third battle action row while preserving the fullscreen world map and laptop-safe HUD layout.
+- Re-ran `node --check` on the updated AI/rules/UI modules and a deterministic runtime sanity script covering `개혁령` effective-attack increase, `동요` effective stat reduction, enemy turn return flow, and player auto-battle step advancement.

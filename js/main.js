@@ -10,13 +10,15 @@ import {
   attackUnit,
   defendSelectedUnit,
   endPlayerTurn,
+  performAutoBattleStep,
   enterSkillMode,
   enterStrategyMode,
-  getPlayerUnits,
   moveSelectedUnit,
   runEnemyTurn,
   selectBattleUnit,
+  setAutoBattleEnabled,
   setSelectedUnitFacing,
+  shouldAutoAdvanceTurn,
   useSelectedUnitSkill,
   useSelectedUnitStrategy,
   waitSelectedUnit,
@@ -30,16 +32,21 @@ if (!appRoot) {
 }
 
 let appState = createInitialAppState();
+let autoBattleTimerId = null;
+
+function clearAutoBattleTimer() {
+  if (autoBattleTimerId) {
+    window.clearTimeout(autoBattleTimerId);
+    autoBattleTimerId = null;
+  }
+}
 
 function maybeRunAutoEnemyTurn(battleState) {
   if (!battleState || battleState.status !== "active") {
     return battleState;
   }
 
-  const playerUnits = getPlayerUnits(battleState);
-  const allPlayerUnitsActed = playerUnits.length > 0 && playerUnits.every((unit) => unit.hasActed);
-
-  if (!allPlayerUnitsActed) {
+  if (!shouldAutoAdvanceTurn(battleState) || battleState.turnOwner !== "player") {
     return battleState;
   }
 
@@ -54,7 +61,46 @@ function resolveAfterPlayerAction(battleState) {
   return maybeRunAutoEnemyTurn(battleState);
 }
 
+function canUseManualBattleControls() {
+  return Boolean(
+    appState.battle
+    && appState.battle.status === "active"
+    && !appState.battle.autoBattleEnabled,
+  );
+}
+
+function scheduleAutoBattleStep() {
+  clearAutoBattleTimer();
+
+  if (
+    !appState.battle
+    || !appState.battle.autoBattleEnabled
+    || appState.battle.status !== "active"
+    || appState.battle.turnOwner !== "player"
+  ) {
+    return;
+  }
+
+  autoBattleTimerId = window.setTimeout(() => {
+    autoBattleTimerId = null;
+
+    if (
+      !appState.battle
+      || !appState.battle.autoBattleEnabled
+      || appState.battle.status !== "active"
+      || appState.battle.turnOwner !== "player"
+    ) {
+      return;
+    }
+
+    appState = updateBattleState(appState, performAutoBattleStep(appState.battle));
+    rerender();
+  }, 360);
+}
+
 function rerender() {
+  clearAutoBattleTimer();
+
   renderLayout(appRoot, appState, {
     onCitySelect: (cityId) => {
       appState = selectCity(appState, cityId);
@@ -65,7 +111,7 @@ function rerender() {
       rerender();
     },
     onBattleSelectUnit: (unitId) => {
-      if (!appState.battle || appState.battle.status !== "active") {
+      if (!canUseManualBattleControls()) {
         return;
       }
 
@@ -73,7 +119,7 @@ function rerender() {
       rerender();
     },
     onBattleMoveUnit: (position) => {
-      if (!appState.battle || appState.battle.status !== "active") {
+      if (!canUseManualBattleControls()) {
         return;
       }
 
@@ -81,7 +127,7 @@ function rerender() {
       rerender();
     },
     onBattleAttackUnit: (targetUnitId) => {
-      if (!appState.battle || appState.battle.status !== "active" || !appState.battle.selectedUnitId) {
+      if (!canUseManualBattleControls() || !appState.battle.selectedUnitId) {
         return;
       }
 
@@ -92,7 +138,7 @@ function rerender() {
       rerender();
     },
     onBattleSetFacing: (direction) => {
-      if (!appState.battle || appState.battle.status !== "active") {
+      if (!canUseManualBattleControls()) {
         return;
       }
 
@@ -100,7 +146,7 @@ function rerender() {
       rerender();
     },
     onBattleUseSkill: (targetUnitId) => {
-      if (!appState.battle || appState.battle.status !== "active" || !appState.battle.selectedUnitId) {
+      if (!canUseManualBattleControls() || !appState.battle.selectedUnitId) {
         return;
       }
 
@@ -111,7 +157,7 @@ function rerender() {
       rerender();
     },
     onBattleEnterStrategyMode: () => {
-      if (!appState.battle || appState.battle.status !== "active") {
+      if (!canUseManualBattleControls()) {
         return;
       }
 
@@ -119,7 +165,7 @@ function rerender() {
       rerender();
     },
     onBattleUseStrategy: (targetUnitId) => {
-      if (!appState.battle || appState.battle.status !== "active" || !appState.battle.selectedUnitId) {
+      if (!canUseManualBattleControls() || !appState.battle.selectedUnitId) {
         return;
       }
 
@@ -130,7 +176,7 @@ function rerender() {
       rerender();
     },
     onBattleDefend: () => {
-      if (!appState.battle || appState.battle.status !== "active") {
+      if (!canUseManualBattleControls()) {
         return;
       }
 
@@ -139,7 +185,7 @@ function rerender() {
       rerender();
     },
     onBattleWait: () => {
-      if (!appState.battle || appState.battle.status !== "active") {
+      if (!canUseManualBattleControls()) {
         return;
       }
 
@@ -148,7 +194,7 @@ function rerender() {
       rerender();
     },
     onBattleEnterSkillMode: () => {
-      if (!appState.battle || appState.battle.status !== "active") {
+      if (!canUseManualBattleControls()) {
         return;
       }
 
@@ -177,22 +223,39 @@ function rerender() {
       rerender();
     },
     onBattleEndTurn: () => {
-      if (!appState.battle || appState.battle.status !== "active") {
+      if (!canUseManualBattleControls()) {
         return;
       }
 
       appState = updateBattleState(appState, runEnemyTurn(endPlayerTurn(appState.battle)));
       rerender();
     },
+    onBattleToggleAutoBattle: () => {
+      if (!appState.battle || appState.battle.status !== "active") {
+        return;
+      }
+
+      appState = updateBattleState(
+        appState,
+        setAutoBattleEnabled(appState.battle, !appState.battle.autoBattleEnabled),
+      );
+      rerender();
+    },
     onBattleRetreat: () => {
+      clearAutoBattleTimer();
       appState = retreatFromBattle(appState);
       rerender();
     },
     onBattleReturnToWorld: () => {
+      clearAutoBattleTimer();
       appState = returnFromBattle(appState);
       rerender();
     },
   });
+
+  if (appState.battle?.autoBattleEnabled && appState.battle.status === "active" && appState.battle.turnOwner === "player") {
+    scheduleAutoBattleStep();
+  }
 }
 
 rerender();

@@ -1,5 +1,12 @@
 import { getAttackAngleType, getDirectionLabel } from "../core/battle_direction.js";
-import { canUseSkill, getEffectiveAttack, getEffectiveDefense, getSkillById } from "../core/battle_skills.js";
+import {
+  canUseSkill,
+  getEffectiveAttack,
+  getEffectiveDefense,
+  getGodotAttackValue,
+  getGodotDefenseValue,
+  getSkillById,
+} from "../core/battle_skills.js";
 import { canUseStrategy, getStrategyRange, getStrategyTier, hasStatus } from "../core/battle_strategy.js";
 import { getEnemyUnits, getPlayerUnits, getSelectedUnit } from "../core/battle_rules.js";
 import { mountBattleScene } from "../phaser/phaser_battle_mount.js";
@@ -15,6 +22,10 @@ function getBattleStatusCopy(battleState) {
 
   if (battleState.turnOwner === "enemy") {
     return "적군 행동 중입니다.";
+  }
+
+  if (battleState.autoBattleEnabled) {
+    return "자동전투가 아군 행동을 진행 중입니다.";
   }
 
   if (battleState.phase === "facing") {
@@ -183,6 +194,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
     && !selectedUnit.hasActed
     && !isFacingPhase
   );
+  const manualControlsLocked = Boolean(isActive && battleState.autoBattleEnabled);
   const canUseSelectedStrategy = Boolean(
     selectedUnit
     && canUseStrategy(selectedUnit)
@@ -194,8 +206,11 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
     ? `병력 ${selectedUnit.troops} / ${selectedUnit.maxTroops} · HP ${selectedUnit.hp} / ${selectedUnit.maxHp}`
     : "유닛을 선택하면 병력/사거리 정보가 표시됩니다.";
   const selectedUnitStats = selectedUnit
-    ? `공 ${Math.round(getEffectiveAttack(selectedUnit))} · 방 ${Math.round(getEffectiveDefense(selectedUnit))} · 지력 ${selectedUnit.intelligence} · 이동 ${selectedUnit.moveRange} · 기본 사거리 ${selectedUnit.attackRange} · 특기 사거리 ${selectedUnit.skillRange}`
+    ? `공격력 ${Math.round(getGodotAttackValue(selectedUnit))} · 방어력 ${Math.round(getGodotDefenseValue(selectedUnit))} · 실효공격 ${Math.round(getEffectiveAttack(selectedUnit))} · 실효방어 ${Math.round(getEffectiveDefense(selectedUnit))} · 지력 ${selectedUnit.intelligence}`
     : "유닛을 선택하면 전술 정보가 표시됩니다.";
+  const selectedUnitRanges = selectedUnit
+    ? `이동 ${selectedUnit.moveRange} · 기본 사거리 ${selectedUnit.attackRange} · 특기 사거리 ${selectedUnit.skillRange}`
+    : "유닛을 선택하면 사거리 정보가 표시됩니다.";
   const strategyRangeText = selectedUnit && selectedUnit.intelligence >= 80
     ? `책략 사거리 ${getStrategyRange(selectedUnit)}`
     : "지력 80 이상 장수만 책략 사용 가능";
@@ -235,6 +250,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
               <strong class="battle-unit-name">${selectedUnit?.name ?? "없음"}</strong>
               <span class="battle-unit-hp">${selectedUnitSummary}</span>
               <span class="battle-unit-hp">${selectedUnitStats}</span>
+              <span class="battle-unit-cooldown">${selectedUnitRanges}</span>
               ${selectedUnit ? `<span class="battle-unit-buff">방향: ${getDirectionLabel(selectedUnit.facing)}</span>` : ""}
               ${selectedUnit ? `<span class="battle-unit-buff">${formatBuffStatus(selectedUnit)}</span>` : ""}
               ${selectedUnit ? `<span class="battle-unit-buff">${formatStatusList(selectedUnit)}</span>` : ""}
@@ -289,7 +305,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
                 class="battle-action-button battle-action-button-skill ${battleState.phase === "skill" ? "is-active" : ""}"
                 type="button"
                 data-battle-action="skill"
-                ${isActive && canUseSelectedSkill ? "" : "disabled"}
+                ${isActive && canUseSelectedSkill && !manualControlsLocked ? "" : "disabled"}
               >
                 ${skillButtonLabel}
               </button>
@@ -297,21 +313,26 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
                 class="battle-action-button ${battleState.phase === "strategy" ? "battle-action-button-skill is-active" : ""}"
                 type="button"
                 data-battle-action="strategy"
-                ${isActive && canUseSelectedStrategy ? "" : "disabled"}
+                ${isActive && canUseSelectedStrategy && !manualControlsLocked ? "" : "disabled"}
               >
                 책략
               </button>
-              <button class="battle-action-button" type="button" data-battle-action="defend" ${canUsePostureCommand ? "" : "disabled"}>
+              <button class="battle-action-button" type="button" data-battle-action="defend" ${canUsePostureCommand && !manualControlsLocked ? "" : "disabled"}>
                 방어
               </button>
             </div>
             <div class="battle-action-row battle-action-row-skill">
-              <button class="battle-action-button" type="button" data-battle-action="wait" ${canUsePostureCommand ? "" : "disabled"}>
+              <button class="battle-action-button" type="button" data-battle-action="wait" ${canUsePostureCommand && !manualControlsLocked ? "" : "disabled"}>
                 대기
               </button>
-              <button class="battle-action-button" type="button" data-battle-action="end-turn" ${isActive ? "" : "disabled"}>
+              <button class="battle-action-button" type="button" data-battle-action="end-turn" ${isActive && !manualControlsLocked ? "" : "disabled"}>
                 턴 종료
               </button>
+              <button class="battle-action-button battle-action-button-auto ${battleState.autoBattleEnabled ? "is-active" : ""}" type="button" data-battle-action="auto" ${isActive ? "" : "disabled"}>
+                ${battleState.autoBattleEnabled ? "자동전투 중지" : "자동전투"}
+              </button>
+            </div>
+            <div class="battle-action-row battle-action-row-tertiary">
               <button class="battle-action-button battle-action-button-muted" type="button" data-battle-action="retreat" ${isActive ? "" : "disabled"}>
                 후퇴
               </button>
@@ -382,6 +403,10 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
 
   rootElement.querySelector('[data-battle-action="end-turn"]')?.addEventListener("click", () => {
     handlers.onBattleEndTurn?.();
+  });
+
+  rootElement.querySelector('[data-battle-action="auto"]')?.addEventListener("click", () => {
+    handlers.onBattleToggleAutoBattle?.();
   });
 
   rootElement.querySelector('[data-battle-action="retreat"]')?.addEventListener("click", () => {

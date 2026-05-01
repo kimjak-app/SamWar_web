@@ -1,7 +1,8 @@
 import { getDistance } from "./battle_grid.js";
 import { hasStatus } from "./battle_strategy.js";
+import { BATTLE_BALANCE } from "./battle_balance.js";
 
-export const DAMAGE_SCALE = 0.32;
+export const DAMAGE_SCALE = BATTLE_BALANCE.damageScale;
 
 export function getSkillById(skills, skillId) {
   return skills.find((skill) => skill.id === skillId) ?? null;
@@ -19,7 +20,7 @@ export function getEffectiveAttack(unit) {
   let value = getGodotAttackValue(unit) * (1 + (unit.buffAttackBonus ?? 0));
 
   if (hasStatus(unit, "shake")) {
-    value *= 0.7;
+    value *= BATTLE_BALANCE.shakeMultiplier;
   }
 
   return value;
@@ -29,7 +30,7 @@ export function getEffectiveDefense(unit) {
   let value = getGodotDefenseValue(unit);
 
   if (hasStatus(unit, "shake")) {
-    value *= 0.7;
+    value *= BATTLE_BALANCE.shakeMultiplier;
   }
 
   return value;
@@ -104,7 +105,7 @@ export function getSkillTargets(battleState, unit, skill) {
 
 function buildSkillDamage(caster, target, skillBonus = 0) {
   const rawDamage = (getEffectiveAttack(caster) - getEffectiveDefense(target) * 0.35) * DAMAGE_SCALE + skillBonus;
-  return Math.max(8, Math.round(rawDamage));
+  return Math.max(BATTLE_BALANCE.minimumSkillDamage, Math.round(rawDamage));
 }
 
 export function applyHakikjinBarrage(battleState, casterUnit, skill) {

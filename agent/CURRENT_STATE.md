@@ -9,8 +9,8 @@ GitHub is used for backup and version control.
 Each completed Codex task now ends with a ChatCoach handoff report.
 
 ## Current Phase
-Phaser-based v0.2-4a hero battle now uses a generic Godot-inspired strategy action with intelligence-tier random outcomes on top of the existing balance, skill, and facing baseline while staying connected to the fullscreen world map loop.
-The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skills, cooldowns, visible battlefield feedback, facing direction, angle-based damage, basic counterattack, defend/wait commands, and intelligence/probability-based strategy actions with random status outcomes, but it is still intentionally far smaller than the full Godot battle engine.
+Phaser-based v0.2-5 hero battle now adds centralized balance constants, role-based AI refinement, player auto battle, and safer turn transitions on top of the existing Godot-inspired tactical baseline while staying connected to the fullscreen world map loop.
+The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skills, cooldowns, visible battlefield feedback, facing direction, angle-based damage, basic counterattack, defend/wait commands, intelligence/probability-based strategy actions with random status outcomes, and optional player auto battle, but it is still intentionally far smaller than the full Godot battle engine.
 
 ## Implemented Structure
 - `index.html` bootstraps the browser MVP, keeps the favicon link, and still loads Phaser 3.86.0 from CDN before the app module.
@@ -23,11 +23,12 @@ The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skil
 - `js/core/battle_grid.js` owns grid size, Manhattan distance, walkable tile, occupancy, and attack-range helpers.
 - `js/core/battle_skills.js` owns skill lookup, Godot-style attack/defense helpers, owner-locked unique skill validation, AoE/buff skill fidelity, and immutable skill effect application.
 - `js/core/battle_strategy.js` owns generic strategy availability/range checks, intelligence-tier outcome pools, success-rate logic, random outcome rolling, status application, and status-duration ticking for confusion/shake.
-- `js/core/battle_ai.js` owns the current simple enemy turn decision helper for chase/attack behavior, owner-checked enemy unique-skill use, generic future strategy use, and basic facing updates without manually choosing specific status outcomes.
-- `js/core/battle_rules.js` owns the pure tactical rule helpers for selection, movement, choose-facing flow, basic attack resolution, angle bonuses, basic counterattack, defend/wait commands, skill mode/skill use, generic strategy mode/strategy use, enemy turns, outcome checks, cooldown/buff/status turn handling, Godot-inspired damage scaling, and Korean battle logs.
+- `js/core/battle_balance.js` centralizes Godot-inspired damage, angle, defend, shake, counter, and AI tuning constants so the battle engine no longer relies on scattered magic numbers.
+- `js/core/battle_ai.js` owns role-based AI target scoring, move scoring, unique-skill priority, future generic strategy support, and the shared decision helper now used by both enemy turns and player auto battle.
+- `js/core/battle_rules.js` owns the pure tactical rule helpers for selection, movement, choose-facing flow, basic attack resolution, angle bonuses, basic counterattack, defend/wait commands, skill mode/skill use, generic strategy mode/strategy use, enemy turns, auto-battle stepping, outcome checks, cooldown/buff/status turn handling, and Korean battle logs.
 - `js/ui/layout_ui.js` routes rendering between the fullscreen world map UI and the battle UI, and cleans up Phaser on return to the map.
 - `js/ui/world_map_ui.js` keeps the fullscreen map stage stable while changing the attack CTA to enter battle mode instead of direct occupation.
-- `js/ui/battle_ui.js` renders the SamWar hero battle shell, HP/troop/status/log panels, selected-unit and unique-skill panels, a single strategy action, buff/cooldown state, direction controls, defend/wait controls, and Phaser mount container.
+- `js/ui/battle_ui.js` renders the SamWar hero battle shell, HP/troop/status/log panels, compact debug/effective-stat visibility, selected-unit and unique-skill panels, a single strategy action, auto-battle controls, buff/cooldown state, direction controls, defend/wait controls, and Phaser mount container.
 - `js/phaser/phaser_battle_mount.js` mounts or destroys the contained Phaser instance safely and falls back gracefully if Phaser is unavailable.
 - `js/phaser/battle_scene.js` visualizes the 10x6 battle board, move/attack/skill/facing/strategy highlights, facing arrows, status markers, defend markers, clickable unit/tile input, and floating skill/damage/angle/counter/status feedback without owning the battle rules.
 - `data/heroes.js`, `data/skills.js`, `data/strategies.js`, and `data/battle_rosters.js` now define the fixed MVP hero roster, Godot-inspired hero baseline stats, owner-locked unique skills, a generic strategy action plus random outcome pool, and spawn points instead of placeholder data.
@@ -59,3 +60,10 @@ The battle engine now supports a fixed 2v2 hero roster, owner-locked unique skil
 - Intelligence 90+ unlocks confusion.
 - Intelligence 95+ increases status duration.
 - Strategy remains probability-based, not cooldown/count-based.
+
+## v0.2-5 Notes
+- v0.2-5 added role-based AI refinement for ranged, support, and aggressive unit behavior.
+- v0.2-5 added player auto battle using the same shared AI action path as the enemy side.
+- v0.2-5 centralized balance constants in `js/core/battle_balance.js`.
+- v0.2-5 stabilized turn flow with explicit side-turn start helpers and safer auto-advance handling.
+- Full UI polish is still intentionally deferred.

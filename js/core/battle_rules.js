@@ -5,12 +5,12 @@ import {
   getDirectionLabel,
   getFacingOptions as getFacingOptionsFromDirection,
 } from "./battle_direction.js";
-import { getEnemyTurnAction } from "./battle_ai.js";
+import { BATTLE_BALANCE } from "./battle_balance.js";
+import { getAiTurnAction } from "./battle_ai.js";
 import { getAttackableUnits, getDistance, getWalkablePositions, isSamePosition } from "./battle_grid.js";
 import {
   applySkill,
   canUseSkill,
-  DAMAGE_SCALE,
   getEffectiveAttack,
   getEffectiveDefense,
   getGodotAttackValue,
@@ -21,7 +21,6 @@ import {
   applyStrategy,
   canUseStrategy,
   decrementStatusEffectsForSide,
-  getStrategyRange,
   getStrategyTargets,
 } from "./battle_strategy.js";
 
@@ -45,6 +44,10 @@ function getUnitById(battleState, unitId) {
 
 function getAliveUnitsBySide(battleState, side) {
   return battleState.units.filter((unit) => unit.side === side && unit.isAlive);
+}
+
+function getOpposingSide(side) {
+  return side === "player" ? "enemy" : "player";
 }
 
 function buildEmptyHighlights() {
@@ -93,12 +96,19 @@ function buildBasicAttackResult(attacker, defender, options = {}) {
   const rawDamage = (
     getEffectiveAttack(attacker)
     - getEffectiveDefense(defender) * 0.45
-  ) * DAMAGE_SCALE * angleBonus;
+  ) * BATTLE_BALANCE.damageScale * angleBonus;
 
-  let damage = Math.max(8, Math.round(rawDamage));
+  let damage = Math.max(BATTLE_BALANCE.minimumBasicDamage, Math.round(rawDamage));
+
+  if (isCounter) {
+    damage = Math.max(
+      BATTLE_BALANCE.minimumBasicDamage,
+      Math.round(damage * BATTLE_BALANCE.counterDamageMultiplier),
+    );
+  }
 
   if (defender.isDefending) {
-    damage = Math.max(4, Math.round(damage * 0.65));
+    damage = Math.max(4, Math.round(damage * BATTLE_BALANCE.defendDamageMultiplier));
   }
 
   const angleLabel = angleType === "back" ? "후방" : angleType === "side" ? "측면" : "정면";
@@ -121,25 +131,21 @@ function applyTurnStartEffects(battleState, side) {
         return unit;
       }
 
-      if (unit.side !== side) {
+      if (unit.side === side) {
+        const nextBuffTurns = Math.max(0, unit.buffTurns - 1);
+
         return {
           ...unit,
+          currentSkillCooldown: unit.currentSkillCooldown > 0 ? unit.currentSkillCooldown - 1 : 0,
+          buffTurns: nextBuffTurns,
+          buffAttackBonus: nextBuffTurns > 0 ? unit.buffAttackBonus : 0,
           hasMoved: false,
           hasActed: false,
+          isDefending: false,
         };
       }
 
-      const nextBuffTurns = Math.max(0, unit.buffTurns - 1);
-
-      return {
-        ...unit,
-        currentSkillCooldown: unit.currentSkillCooldown > 0 ? unit.currentSkillCooldown - 1 : 0,
-        buffTurns: nextBuffTurns,
-        buffAttackBonus: nextBuffTurns > 0 ? unit.buffAttackBonus : 0,
-        hasMoved: false,
-        hasActed: false,
-        isDefending: false,
-      };
+      return unit;
     }),
   };
 
@@ -331,6 +337,33 @@ export function getBattleOutcome(battleState) {
   return "active";
 }
 
+export function areAllUnitsActed(battleState, side) {
+  const aliveUnits = getAliveUnitsBySide(battleState, side);
+  return aliveUnits.length > 0 && aliveUnits.every((unit) => unit.hasActed);
+}
+
+export function shouldAutoAdvanceTurn(battleState) {
+  return battleState?.status === "active" && areAllUnitsActed(battleState, battleState.turnOwner);
+}
+
+export function beginSideTurn(battleState, side) {
+  const nextState = applyTurnStartEffects({
+    ...clearBattleSelection(battleState),
+    turnOwner: side,
+    phase: side === "player" ? "select" : "enemy",
+  }, side);
+
+  if (nextState.status !== "active") {
+    return nextState;
+  }
+
+  return {
+    ...nextState,
+    turnOwner: side,
+    phase: side === "player" ? "select" : "enemy",
+  };
+}
+
 export function getFacingOptions(unit) {
   return getFacingOptionsFromDirection(unit);
 }
@@ -343,6 +376,34 @@ export function clearBattleSelection(battleState) {
     phase: battleState.status === "active" && battleState.turnOwner === "player" ? "select" : battleState.phase,
     highlights: buildEmptyHighlights(),
   };
+}
+
+export function setAutoBattleEnabled(battleState, enabled) {
+  const nextState = {
+    ...clearBattleSelection(battleState),
+    autoBattleEnabled: enabled,
+    lastAction: enabled
+      ? {
+        type: "system",
+        skillId: null,
+        actorUnitId: null,
+        targetUnitIds: [],
+        effects: [
+          { unitId: null, kind: "strategy", text: "자동전투 시작" },
+        ],
+      }
+      : {
+        type: "system",
+        skillId: null,
+        actorUnitId: null,
+        targetUnitIds: [],
+        effects: [
+          { unitId: null, kind: "wait", text: "자동전투 중지" },
+        ],
+      },
+  };
+
+  return appendLog(nextState, enabled ? "자동전투를 시작합니다." : "자동전투를 중지했습니다.");
 }
 
 export function selectBattleUnit(battleState, unitId) {
@@ -657,6 +718,127 @@ export function waitSelectedUnit(battleState) {
   return appendLog(nextState, `${selectedUnit.name}이 대기했습니다.`);
 }
 
+function applyAiWait(battleState, unitId, facingDirection = null) {
+  const actingUnit = getUnitById(battleState, unitId);
+
+  if (!actingUnit || !actingUnit.isAlive) {
+    return battleState;
+  }
+
+  let nextState = updateUnit(battleState, unitId, (unit) => ({
+    ...unit,
+    hasActed: true,
+    facing: facingDirection ?? unit.facing,
+  }));
+  nextState = {
+    ...clearBattleSelection(nextState),
+    lastAction: {
+      type: "wait",
+      skillId: null,
+      actorUnitId: unitId,
+      targetUnitIds: [],
+      effects: [
+        { unitId, kind: "wait", text: "대기" },
+      ],
+    },
+  };
+
+  return appendLog(nextState, `${actingUnit.name}이 대기했습니다.`);
+}
+
+function applyAiMove(battleState, unitId, movePosition, facingDirection = null) {
+  const actingUnit = getUnitById(battleState, unitId);
+
+  if (!actingUnit || !actingUnit.isAlive || !movePosition) {
+    return battleState;
+  }
+
+  let nextState = updateUnit(battleState, unitId, (unit) => ({
+    ...unit,
+    x: movePosition.x,
+    y: movePosition.y,
+    hasMoved: true,
+  }));
+
+  if (facingDirection) {
+    nextState = updateUnit(nextState, unitId, (unit) => ({
+      ...unit,
+      facing: facingDirection,
+    }));
+  }
+
+  nextState = {
+    ...clearBattleSelection(nextState),
+    lastAction: {
+      type: "move",
+      skillId: null,
+      actorUnitId: unitId,
+      targetUnitIds: [],
+      effects: [],
+    },
+  };
+
+  return appendLog(nextState, `${actingUnit.name}가 (${movePosition.x + 1}, ${movePosition.y + 1}) 위치로 이동했습니다.`);
+}
+
+function applyAiAction(battleState, unitId) {
+  const actingUnit = getUnitById(battleState, unitId);
+
+  if (!actingUnit || !actingUnit.isAlive || actingUnit.hasActed) {
+    return battleState;
+  }
+
+  const action = getAiTurnAction(battleState, actingUnit);
+
+  if (action.type === "skill") {
+    let nextState = applySkill(battleState, actingUnit.id, action.targetUnitId ?? null);
+
+    if (action.facingDirection) {
+      nextState = updateUnit(nextState, actingUnit.id, (unit) => ({
+        ...unit,
+        facing: action.facingDirection,
+      }));
+    }
+
+    return setOutcomeStatus(nextState);
+  }
+
+  if (action.type === "strategy" && action.targetUnitId) {
+    return setOutcomeStatus(applyStrategy(battleState, actingUnit.id, action.targetUnitId));
+  }
+
+  if (action.type === "attack" && action.targetUnitId) {
+    return applyResolvedBasicAttack(battleState, actingUnit.id, action.targetUnitId);
+  }
+
+  if (action.type === "move" && action.movePosition) {
+    let nextState = applyAiMove(battleState, actingUnit.id, action.movePosition, action.facingDirection);
+
+    if (nextState.status !== "active") {
+      return nextState;
+    }
+
+    const movedUnit = getUnitById(nextState, actingUnit.id);
+    const followUpAction = movedUnit ? getAiTurnAction(nextState, movedUnit) : null;
+
+    if (followUpAction?.type === "skill") {
+      return applyAiAction(nextState, actingUnit.id);
+    }
+
+    if (followUpAction?.type === "attack") {
+      return applyResolvedBasicAttack(nextState, actingUnit.id, followUpAction.targetUnitId);
+    }
+
+    if (followUpAction?.type === "strategy" && followUpAction.targetUnitId) {
+      return setOutcomeStatus(applyStrategy(nextState, actingUnit.id, followUpAction.targetUnitId));
+    }
+
+    return applyAiWait(nextState, actingUnit.id, followUpAction?.facingDirection ?? action.facingDirection);
+  }
+
+  return applyAiWait(battleState, actingUnit.id, action.facingDirection);
+}
+
 export function endPlayerTurn(battleState) {
   if (battleState.status !== "active") {
     return battleState;
@@ -674,9 +856,11 @@ export function runEnemyTurn(battleState) {
     return battleState;
   }
 
-  let nextState = applyTurnStartEffects(battleState, "enemy");
+  let nextState = beginSideTurn(battleState, "enemy");
+  let stepCount = 0;
 
-  while (nextState.status === "active") {
+  while (nextState.status === "active" && stepCount < 20) {
+    stepCount += 1;
     const actingEnemy = nextState.units.find((unit) => unit.side === "enemy" && unit.isAlive && !unit.hasActed) ?? null;
 
     if (!actingEnemy) {
@@ -690,146 +874,44 @@ export function runEnemyTurn(battleState) {
       break;
     }
 
-    const action = getEnemyTurnAction(nextState, actingEnemy, playerUnits);
-
-    if (action.type === "skill" && action.targetUnitId) {
-      const targetUnit = getUnitById(nextState, action.targetUnitId);
-      nextState = applySkill(nextState, actingEnemy.id, action.targetUnitId);
-
-      if (targetUnit) {
-        nextState = updateUnit(nextState, actingEnemy.id, (unit) => ({
-          ...unit,
-          facing: getDirectionFromPositions(unit, targetUnit) ?? unit.facing,
-        }));
-      }
-
-      nextState = setOutcomeStatus(nextState);
-
-      if (nextState.status !== "active") {
-        break;
-      }
-
-      continue;
-    }
-
-    if (action.type === "strategy" && action.targetUnitId) {
-      nextState = applyStrategy(nextState, actingEnemy.id, action.targetUnitId);
-
-      if (nextState.status !== "active") {
-        break;
-      }
-
-      continue;
-    }
-
-    if (action.type === "attack" && action.targetUnitId) {
-      nextState = applyResolvedBasicAttack(nextState, actingEnemy.id, action.targetUnitId);
-
-      if (nextState.status !== "active") {
-        break;
-      }
-
-      continue;
-    }
-
-    if (action.movePosition) {
-      const moveDirection = getDirectionFromPositions(actingEnemy, action.movePosition);
-      nextState = updateUnit(nextState, actingEnemy.id, (unit) => ({
-        ...unit,
-        x: action.movePosition.x,
-        y: action.movePosition.y,
-        hasMoved: true,
-        facing: moveDirection ?? unit.facing,
-      }));
-      nextState = {
-        ...nextState,
-        lastAction: {
-          type: "move",
-          skillId: null,
-          actorUnitId: actingEnemy.id,
-          targetUnitIds: [],
-          effects: [],
-        },
-      };
-      nextState = appendLog(nextState, `${actingEnemy.name}가 (${action.movePosition.x + 1}, ${action.movePosition.y + 1}) 위치로 이동했습니다.`);
-    }
-
-    const movedEnemy = getUnitById(nextState, actingEnemy.id);
-    const movedSkill = movedEnemy ? getSkillById(nextState.skills, movedEnemy.skillId) : null;
-
-    if (
-      movedEnemy
-      && movedSkill
-      && canUseSkill(movedEnemy, movedSkill)
-      && movedEnemy.heroId !== "jeong_do_jeon"
-      && movedSkill.target === "enemy"
-    ) {
-      const skillTargets = buildSkillHighlightPositions(nextState, movedEnemy);
-
-      if (skillTargets.length > 0) {
-        const targetUnit = nextState.units.find((unit) => unit.isAlive && unit.side === "player" && skillTargets.some((position) => isSamePosition(position, unit)));
-
-        if (targetUnit) {
-          nextState = applySkill(nextState, movedEnemy.id, targetUnit.id);
-          nextState = updateUnit(nextState, movedEnemy.id, (unit) => ({
-            ...unit,
-            facing: getDirectionFromPositions(unit, targetUnit) ?? unit.facing,
-          }));
-          nextState = setOutcomeStatus(nextState);
-
-          if (nextState.status !== "active") {
-            break;
-          }
-
-          continue;
-        }
-      }
-    }
-
-    const attackTargets = movedEnemy ? getAttackableUnits(movedEnemy, nextState.units) : [];
-
-    if (movedEnemy && attackTargets.length > 0) {
-      nextState = applyResolvedBasicAttack(nextState, movedEnemy.id, attackTargets[0].id);
-
-      if (nextState.status !== "active") {
-        break;
-      }
-
-      continue;
-    }
-
-    const closestPlayer = playerUnits.sort((a, b) => getDistance(movedEnemy ?? actingEnemy, a) - getDistance(movedEnemy ?? actingEnemy, b))[0] ?? null;
-    nextState = updateUnit(nextState, actingEnemy.id, (unit) => ({
-      ...unit,
-      hasActed: true,
-      facing: closestPlayer ? getDirectionFromPositions(unit, closestPlayer) ?? unit.facing : unit.facing,
-    }));
-    nextState = {
-      ...nextState,
-      lastAction: {
-        type: "wait",
-        skillId: null,
-        actorUnitId: actingEnemy.id,
-        targetUnitIds: [],
-        effects: [
-          { unitId: actingEnemy.id, kind: "wait", text: "대기" },
-        ],
-      },
-    };
-    nextState = appendLog(nextState, `${actingEnemy.name}가 대기했습니다.`);
+    nextState = applyAiAction(nextState, actingEnemy.id);
   }
 
   if (nextState.status !== "active") {
     return nextState;
   }
 
-  nextState = applyTurnStartEffects(nextState, "player");
+  if (stepCount >= 20) {
+    nextState = appendLog(nextState, "적군 턴 반복이 안전 한도에 도달해 종료되었습니다.");
+  }
 
-  return {
-    ...nextState,
-    turnOwner: "player",
-    phase: "select",
-    selectedUnitId: null,
-    highlights: buildEmptyHighlights(),
-  };
+  return beginSideTurn(nextState, getOpposingSide("enemy"));
+}
+
+export function performAutoBattleStep(battleState) {
+  if (
+    battleState.status !== "active"
+    || battleState.turnOwner !== "player"
+    || !battleState.autoBattleEnabled
+  ) {
+    return battleState;
+  }
+
+  const actingPlayer = battleState.units.find((unit) => unit.side === "player" && unit.isAlive && !unit.hasActed) ?? null;
+
+  if (!actingPlayer) {
+    return runEnemyTurn(endPlayerTurn(battleState));
+  }
+
+  let nextState = applyAiAction(battleState, actingPlayer.id);
+
+  if (nextState.status !== "active") {
+    return nextState;
+  }
+
+  if (areAllUnitsActed(nextState, "player")) {
+    nextState = runEnemyTurn(endPlayerTurn(nextState));
+  }
+
+  return nextState;
 }

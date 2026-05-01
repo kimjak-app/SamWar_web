@@ -1,95 +1,314 @@
+import { BATTLE_BALANCE } from "./battle_balance.js";
 import { getDirectionFromPositions } from "./battle_direction.js";
 import { getAttackableUnits, getDistance, getWalkablePositions } from "./battle_grid.js";
-import { canUseSkill, getSkillById, getSkillTargets } from "./battle_skills.js";
+import {
+  canUseSkill,
+  getEffectiveAttack,
+  getEffectiveDefense,
+  getSkillById,
+  getSkillTargets,
+} from "./battle_skills.js";
 import { canUseStrategy, getStrategyTargets } from "./battle_strategy.js";
 
-function getClosestPlayerUnit(enemyUnit, playerUnits) {
-  return playerUnits
-    .filter((unit) => unit.isAlive)
-    .sort((leftUnit, rightUnit) => getDistance(enemyUnit, leftUnit) - getDistance(enemyUnit, rightUnit))[0] ?? null;
+function getOpposingUnits(battleState, unit) {
+  return battleState.units.filter((candidate) => candidate.isAlive && candidate.side !== unit.side);
 }
 
-export function getEnemyTurnAction(battleState, enemyUnit, playerUnits) {
-  const skill = getSkillById(battleState.skills, enemyUnit?.skillId);
-  const skillTargets = skill && canUseSkill(enemyUnit, skill) ? getSkillTargets(battleState, enemyUnit, skill) : [];
-  const genericStrategy = (battleState.strategies ?? []).find((strategy) => strategy.id === "strategy") ?? null;
-  const strategyTargets = genericStrategy && canUseStrategy(enemyUnit) ? getStrategyTargets(battleState, enemyUnit) : [];
+function getAlliedUnits(battleState, unit) {
+  return battleState.units.filter((candidate) => candidate.isAlive && candidate.side === unit.side);
+}
 
-  if (
-    enemyUnit?.heroId === "nobunaga"
-    && skill?.id === "matchlock_volley"
-    && skillTargets.length > 0
-  ) {
-    return {
-      type: "skill",
-      targetUnitId: skillTargets[0].id,
-      movePosition: null,
-      facingDirection: getDirectionFromPositions(enemyUnit, skillTargets[0]),
-    };
+function estimateBasicDamage(attacker, target) {
+  const rawDamage = (
+    getEffectiveAttack(attacker)
+    - getEffectiveDefense(target) * 0.45
+  ) * BATTLE_BALANCE.damageScale;
+
+  return Math.max(BATTLE_BALANCE.minimumBasicDamage, Math.round(rawDamage));
+}
+
+function estimateSkillDamage(attacker, target, skill) {
+  const rawDamage = (
+    getEffectiveAttack(attacker)
+    - getEffectiveDefense(target) * 0.35
+  ) * BATTLE_BALANCE.damageScale + (skill?.bonusDamage ?? 0);
+
+  return Math.max(BATTLE_BALANCE.minimumSkillDamage, Math.round(rawDamage));
+}
+
+function getPreferredRange(unit, skill) {
+  if (unit.aiType === "aggressive" || unit.role === "melee") {
+    return 1;
   }
 
-  if (
-    enemyUnit?.heroId === "kenshin"
-    && skill?.id === "cavalry_charge"
-    && skillTargets.length > 0
-  ) {
-    return {
-      type: "skill",
-      targetUnitId: skillTargets[0].id,
-      movePosition: null,
-      facingDirection: getDirectionFromPositions(enemyUnit, skillTargets[0]),
-    };
+  if (unit.aiType === "support") {
+    return Math.max(1, unit.attackRange);
   }
 
-  const attackTargets = getAttackableUnits(enemyUnit, battleState.units);
-
-  if (attackTargets.length > 0) {
-    return {
-      type: "attack",
-      targetUnitId: attackTargets[0].id,
-      movePosition: null,
-      facingDirection: getDirectionFromPositions(enemyUnit, attackTargets[0]),
-    };
+  if (skill && skill.target === "enemy" && skill.rangeSource === "unit.skillRange") {
+    return unit.skillRange;
   }
 
-  if (genericStrategy && strategyTargets.length > 0) {
-    return {
-      type: "strategy",
-      strategyId: genericStrategy.id,
-      targetUnitId: strategyTargets[0].id,
-      movePosition: null,
-      facingDirection: getDirectionFromPositions(enemyUnit, strategyTargets[0]),
-    };
+  return unit.attackRange;
+}
+
+export function scoreTargetForUnit(unit, target, battleState, options = {}) {
+  if (!unit || !target || !target.isAlive || unit.side === target.side) {
+    return Number.NEGATIVE_INFINITY;
   }
 
-  const closestPlayer = getClosestPlayerUnit(enemyUnit, playerUnits);
+  const skill = options.skill ?? null;
+  const estimatedDamage = skill
+    ? estimateSkillDamage(unit, target, skill)
+    : estimateBasicDamage(unit, target);
+  const distance = getDistance(unit, target);
+  let score = 0;
 
-  if (!closestPlayer) {
-    return {
-      type: "wait",
-      targetUnitId: null,
-      movePosition: null,
-      facingDirection: null,
-    };
+  score += target.maxHp - target.hp;
+  score += Math.max(0, 12 - distance * 2);
+
+  if (target.hp <= estimatedDamage) {
+    score += 40;
   }
 
-  const walkablePositions = getWalkablePositions(enemyUnit, battleState.units, battleState.grid);
+  if (target.role === "support") {
+    score += 15;
+  }
+
+  if (target.role === "ranged") {
+    score += 10;
+  }
+
+  if (skill?.id === "hakikjin_barrage") {
+    const splashTargets = getSkillTargets(battleState, unit, skill);
+    score += splashTargets.length * 12;
+  }
+
+  if (unit.aiType === "aggressive") {
+    score += Math.max(0, 8 - distance);
+  }
+
+  return score;
+}
+
+function pickBestTarget(unit, targets, battleState, options = {}) {
+  return targets
+    .slice()
+    .sort((leftTarget, rightTarget) => (
+      scoreTargetForUnit(unit, rightTarget, battleState, options)
+      - scoreTargetForUnit(unit, leftTarget, battleState, options)
+    ))[0] ?? null;
+}
+
+function shouldUseSupportSkill(unit, allies) {
+  return unit.aiType === "support" && allies.some((ally) => ally.buffTurns <= 0 || ally.buffAttackBonus <= 0);
+}
+
+function scoreMovePosition(unit, position, target, battleState, skill = null) {
+  const preferredRange = getPreferredRange(unit, skill);
+  const distance = getDistance(position, target);
+  const attackReach = position && distance <= unit.attackRange;
+  const skillReach = skill && skill.rangeSource === "unit.skillRange" && distance <= unit.skillRange;
+  let score = 0;
+
+  if (skillReach) {
+    score += 42;
+  }
+
+  if (attackReach) {
+    score += 34;
+  }
+
+  if (unit.aiType === "aggressive" || unit.role === "melee") {
+    score += 22 - distance * 4;
+  } else if (unit.aiType === "ranged" || unit.role === "ranged") {
+    score += 20 - Math.abs(distance - preferredRange) * 5;
+
+    if (distance <= 1) {
+      score -= 18;
+    }
+  } else {
+    score += 14 - Math.abs(distance - preferredRange) * 3;
+  }
+
+  if (position.y === target.y) {
+    score += 2;
+  }
+
+  const occupiedOpponentsNearby = getOpposingUnits(battleState, unit)
+    .filter((candidate) => getDistance(position, candidate) <= 1)
+    .length;
+
+  if ((unit.aiType === "ranged" || unit.role === "ranged") && occupiedOpponentsNearby > 0) {
+    score -= occupiedOpponentsNearby * 10;
+  }
+
+  return score;
+}
+
+export function getBestMoveTowardTarget(unit, target, battleState) {
+  const skill = getSkillById(battleState.skills ?? [], unit.skillId);
+  const walkablePositions = getWalkablePositions(unit, battleState.units, battleState.grid);
   let bestMove = null;
-  let bestDistance = getDistance(enemyUnit, closestPlayer);
+  let bestScore = Number.NEGATIVE_INFINITY;
 
   for (const position of walkablePositions) {
-    const distance = getDistance(position, closestPlayer);
+    const score = scoreMovePosition(unit, position, target, battleState, skill);
 
-    if (distance < bestDistance) {
-      bestDistance = distance;
+    if (score > bestScore) {
+      bestScore = score;
       bestMove = position;
     }
   }
 
+  return bestMove;
+}
+
+function getBestOpponent(unit, battleState) {
+  return pickBestTarget(unit, getOpposingUnits(battleState, unit), battleState);
+}
+
+function buildSkillAction(battleState, unit) {
+  const skill = getSkillById(battleState.skills ?? [], unit.skillId);
+
+  if (!skill || !canUseSkill(unit, skill)) {
+    return null;
+  }
+
+  const skillTargets = getSkillTargets(battleState, unit, skill);
+
+  if (skillTargets.length === 0) {
+    return null;
+  }
+
+  if (skill.effectType === "ally_attack_buff") {
+    const allies = getAlliedUnits(battleState, unit);
+
+    if (!shouldUseSupportSkill(unit, allies)) {
+      return null;
+    }
+
+    return {
+      type: "skill",
+      targetUnitId: null,
+      movePosition: null,
+      facingDirection: unit.facing,
+    };
+  }
+
+  if (skill.effectType === "cannon_aoe") {
+    return {
+      type: "skill",
+      targetUnitId: null,
+      movePosition: null,
+      facingDirection: getDirectionFromPositions(unit, skillTargets[0]) ?? unit.facing,
+    };
+  }
+
+  const target = pickBestTarget(unit, skillTargets, battleState, { skill });
+
+  if (!target) {
+    return null;
+  }
+
   return {
-    type: bestMove ? "move" : "wait",
+    type: "skill",
+    targetUnitId: target.id,
+    movePosition: null,
+    facingDirection: getDirectionFromPositions(unit, target) ?? unit.facing,
+  };
+}
+
+function buildAttackAction(battleState, unit) {
+  const attackTargets = getAttackableUnits(unit, battleState.units);
+  const target = pickBestTarget(unit, attackTargets, battleState);
+
+  if (!target) {
+    return null;
+  }
+
+  return {
+    type: "attack",
+    targetUnitId: target.id,
+    movePosition: null,
+    facingDirection: getDirectionFromPositions(unit, target) ?? unit.facing,
+  };
+}
+
+function buildStrategyAction(battleState, unit) {
+  if (!canUseStrategy(unit)) {
+    return null;
+  }
+
+  const strategyTargets = getStrategyTargets(battleState, unit);
+  const target = pickBestTarget(unit, strategyTargets, battleState);
+
+  if (!target) {
+    return null;
+  }
+
+  return {
+    type: "strategy",
+    targetUnitId: target.id,
+    movePosition: null,
+    facingDirection: getDirectionFromPositions(unit, target) ?? unit.facing,
+  };
+}
+
+export function getAiTurnAction(battleState, unit) {
+  if (!unit || !unit.isAlive || unit.hasActed) {
+    return {
+      type: "wait",
+      targetUnitId: null,
+      movePosition: null,
+      facingDirection: unit?.facing ?? null,
+    };
+  }
+
+  const skillAction = buildSkillAction(battleState, unit);
+
+  if (skillAction) {
+    return skillAction;
+  }
+
+  const attackAction = buildAttackAction(battleState, unit);
+
+  if (attackAction) {
+    return attackAction;
+  }
+
+  const strategyAction = buildStrategyAction(battleState, unit);
+
+  if (strategyAction) {
+    return strategyAction;
+  }
+
+  const bestTarget = getBestOpponent(unit, battleState);
+
+  if (!bestTarget) {
+    return {
+      type: "wait",
+      targetUnitId: null,
+      movePosition: null,
+      facingDirection: unit.facing,
+    };
+  }
+
+  const bestMove = getBestMoveTowardTarget(unit, bestTarget, battleState);
+
+  if (bestMove) {
+    return {
+      type: "move",
+      targetUnitId: null,
+      movePosition: bestMove,
+      facingDirection: getDirectionFromPositions(bestMove, bestTarget) ?? unit.facing,
+    };
+  }
+
+  return {
+    type: "wait",
     targetUnitId: null,
-    movePosition: bestMove,
-    facingDirection: bestMove ? getDirectionFromPositions(bestMove, closestPlayer) : getDirectionFromPositions(enemyUnit, closestPlayer),
+    movePosition: null,
+    facingDirection: getDirectionFromPositions(unit, bestTarget) ?? unit.facing,
   };
 }

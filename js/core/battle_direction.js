@@ -1,4 +1,5 @@
 import { isInBounds } from "./battle_grid.js";
+import { BATTLE_BALANCE } from "./battle_balance.js";
 
 export const DIRECTIONS = {
   up: { x: 0, y: -1 },
@@ -70,14 +71,14 @@ export function getAttackAngleType(attacker, defender) {
 
 export function getAttackAngleBonus(angleType) {
   if (angleType === "back") {
-    return 1.3;
+    return BATTLE_BALANCE.backAttackBonus;
   }
 
   if (angleType === "side") {
-    return 1.15;
+    return BATTLE_BALANCE.sideAttackBonus;
   }
 
-  return 1.0;
+  return BATTLE_BALANCE.frontAttackBonus;
 }
 
 export function getDirectionLabel(direction) {

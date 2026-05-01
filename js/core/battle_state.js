@@ -78,6 +78,7 @@ export function createInitialBattleState({ attackerCity, defenderCity }) {
     turnOwner: "player",
     selectedUnitId: null,
     selectedStrategyId: null,
+    autoBattleEnabled: false,
     phase: "select",
     log: [`${attackerCity.name}에서 ${defenderCity.name} 공격을 개시했습니다.`],
     lastAction: null,
