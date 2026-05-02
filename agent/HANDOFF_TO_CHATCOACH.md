@@ -80,4 +80,26 @@ Main candidates:
    - Defer until after UI, BGM, and board-size testing.
 
 ## New Chat Start Prompt
-Continue SamWar_web from the latest recorded state after `v0.2-6b Battle Command Bar + Side Info Layout Patch`. This is a Direct Codex Paste Mode workflow, so do not use `agent/CODEX_INBOX.md` as the main task source. Preserve the current fullscreen 4-city world map flow, preserve the Phaser battle renderer with JS core rule separation, and use the handoff docs as the source of truth. Suggested next task is `v0.2-7`, with highest priority on battle UI improvement, then BGM integration testing, then battlefield size testing.
+채코치, SamWar_web v0.2-7 세션 시작.
+
+GitHub 저장소는 kimjak-app/SamWar_web이고, 공통 룰은 kimjak-app/_rules를 참고해줘.
+프로젝트 상태는 agent/CURRENT_STATE.md, agent/SESSION_LOG.md, agent/HANDOFF_TO_CHATCOACH.md, agent/NEXT_TASKS.md 기준으로 이어가자.
+
+현재 상태:
+- v0.2-6b까지 완료.
+- 월드맵 4도시 MVP 작동.
+- 월드맵 → 전투 → 승리/후퇴 → 월드맵 복귀 루프 작동.
+- 전투 엔진은 Phaser + JS core rules 구조.
+- 전투 기능은 이동, 방향, 측후방, 반격, 방어, 대기, 고유특기, 책략, 상태이상, AI, 자동전투까지 1차 구현 완료.
+- 자동전투 깜빡임은 v0.2-5a에서 해결됨.
+- 전투 비주얼은 부대 토큰 이미지와 전장 배경 적용 완료.
+- 전투 UI는 좌측 로그 / 중앙 전투판 / 우측 정보 / 하단 커맨드 바 구조로 정리됨.
+- Direct Codex Paste Mode로 작업 중이고 CODEX_INBOX.md는 메인 작업 소스로 쓰지 않음.
+
+오늘 논의할 것:
+1. 전투 UI 개선을 v0.2-7 1순위로 진행할지
+2. 월드맵 BGM / 전투 BGM 적용을 같이 할지
+3. 전장 크기를 14x8 또는 16x8로 테스트할지
+4. 병력 감소에 따른 부대 이미지 변화는 오늘 할지, 다음 차수로 미룰지
+
+먼저 agent 문서 기준으로 현재 상태를 요약하고, 오늘 작업 우선순위를 판단해줘.
