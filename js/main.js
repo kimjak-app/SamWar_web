@@ -31,6 +31,11 @@ import {
   useSelectedUnitStrategy,
   waitSelectedUnit,
 } from "./core/battle_rules.js";
+import {
+  initializeBgmManager,
+  playBattleBgm,
+  playWorldMapBgm,
+} from "./audio/bgm_manager.js";
 import { renderLayout } from "./ui/layout_ui.js";
 
 const appRoot = document.querySelector("#app");
@@ -50,6 +55,17 @@ const BATTLE_TEMPO = {
   enemyActionDelayMs: 900,
   autoBattleDelayMs: 800,
 };
+
+initializeBgmManager();
+
+function syncBgmWithMode() {
+  if (appState.mode === "battle" && appState.battle) {
+    playBattleBgm();
+    return;
+  }
+
+  playWorldMapBgm();
+}
 
 function clearAutoBattleTimer() {
   if (autoBattleTimerId) {
@@ -228,6 +244,7 @@ function scheduleAutoBattleStep() {
 
 function rerender() {
   clearAutoBattleTimer();
+  syncBgmWithMode();
 
   renderLayout(appRoot, getRenderableAppState(), {
     onCitySelect: (cityId) => {

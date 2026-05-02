@@ -125,4 +125,47 @@
 - Re-ran `node --check` on `js/ui/battle_ui.js` and `js/main.js` after the layout restructure.
 - Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` for a documentation-only session close handoff after `v0.2-6b`.
 - Recorded the latest completed milestone, preserved design decisions, current battle/world-map state, known issues, and the proposed `v0.2-7` agenda for the next ChatGPT session.
-- Kept this task documentation-only and did not modify game code, CSS, assets, battle logic, or world map logic.
+- Kept that task documentation-only and did not modify game code, CSS, assets, battle logic, or world map logic.
+
+## 2026-05-02
+
+- Completed `v0.2-7a` battle command bar center alignment patch so bottom command buttons are centered, grouped cleanly, and remain visible at `100%` zoom.
+- Completed `v0.2-7b` facing tile input priority patch by removing the bottom HTML facing panel and keeping facing selection inside the battlefield only.
+- Fixed facing tile input priority so facing tiles remain clickable even when overlapping unit hit zones.
+- Completed `v0.2-7c` selected-unit summary relocation and command button scale patch.
+- Moved selected-unit summary out of the bottom command area and into the battle board header area.
+- Completed `v0.2-7c-hotfix` so the selected-unit summary appears in the battle board header right area rather than the global top-right HUD.
+- Completed `v0.2-7d` panel role cleanup by moving `STATUS / 전황 보고` above `BATTLE LOG / 전투 기록` on the left.
+- Kept battle log internally scrollable so it no longer pushes the command bar downward.
+- Simplified the right panel structure toward unit-focused information only.
+- Completed `v0.2-7e` right-click move rollback before facing confirm.
+- Added pending-move rollback so right-click during facing phase returns the unit to its original position and original facing without consuming action or turn.
+- Completed `v0.2-7f` right-click action-mode cancel for `attack`, `skill`, and `strategy` phases.
+- Preserved movement after facing confirmation while allowing mistaken command-mode entry to be cancelled without consuming cooldown, action, or turn.
+- Completed `v0.2-7g` action range highlight + skill trigger target patch.
+- Changed unique skills to click-to-trigger instead of immediate activation.
+- Added full-range and valid-target distinction for attack, skill, and strategy targeting UX.
+- Completed `v0.2-7h` hold-position facing + full action range display patch.
+- Added hold-position facing by allowing the selected unit's current tile to enter facing selection.
+- Ensured full attack, skill, and strategy ranges display even when no valid target exists.
+- Completed `v0.2-7i` data-driven skill targeting + strategy full range hotfix.
+- Moved skill targeting behavior to metadata-driven handling using skill-side/area metadata rather than hero-name hardcoding.
+- Ensured strategy displays full range even when no enemy target exists.
+- Completed `v0.2-7j` ally-area skill range display fix for `개혁령`.
+- Preserved `개혁령` as an ally area buff with full range display, valid allied target highlighting, clicked-ally trigger behavior, and area buff application.
+- Completed `v0.2-7k` right UNIT panel simplification.
+- Removed duplicate selected-unit / skill / strategy detail cards from the right panel.
+- Simplified the right panel to roster cards only and highlighted the currently selected unit card.
+- Renamed visible `HP` UI label to `전열` while preserving internal `hp/maxHp` data and logic.
+- Completed `v0.2-7l` battle action tempo delay patch.
+- Added delayed counter timing after player attack and staged enemy-turn pacing with controller-level timing locks.
+- Completed `v0.2-7m` battle tempo slowdown tuning by increasing counter, enemy-action, and auto-battle delays.
+- Completed `v0.2-7n` simple BGM integration.
+- Added `js/audio/bgm_manager.js` singleton BGM manager for world map and battle tracks.
+- Integrated:
+  - `assets/audio/world_map_bgm.mp3`
+  - `assets/audio/battle_bgm.mp3`
+- Added first-user-interaction autoplay unlock handling for browser audio.
+- Ensured only one BGM track plays at a time and mode switching does not overlap or recreate tracks.
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` for the `v0.2-7` session-close handoff.
+- Kept this final task documentation-only and did not modify game code, CSS, assets, audio files, battle logic, or world map logic.
