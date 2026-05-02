@@ -8,16 +8,24 @@ import {
 } from "./core/app_state.js";
 import {
   attackUnit,
+  canResolveCounterattack,
+  cancelBattleActionMode,
+  cancelPendingMove,
   defendSelectedUnit,
+  finishEnemyTurn,
+  enterAttackMode,
   endPlayerTurn,
+  hasPendingEnemyActions,
   performAutoBattleStep,
+  resolvePendingCounter,
+  runNextEnemyAction,
   enterSkillMode,
   enterStrategyMode,
   moveSelectedUnit,
-  runEnemyTurn,
   selectBattleUnit,
   setAutoBattleEnabled,
   setSelectedUnitFacing,
+  startEnemyTurn,
   shouldAutoAdvanceTurn,
   useSelectedUnitSkill,
   useSelectedUnitStrategy,
@@ -33,6 +41,15 @@ if (!appRoot) {
 
 let appState = createInitialAppState();
 let autoBattleTimerId = null;
+let battleTempoLocked = false;
+const battleTempoTimerIds = new Set();
+
+const BATTLE_TEMPO = {
+  counterDelayMs: 800,
+  enemyActionLeadMs: 750,
+  enemyActionDelayMs: 900,
+  autoBattleDelayMs: 800,
+};
 
 function clearAutoBattleTimer() {
   if (autoBattleTimerId) {
@@ -41,30 +58,139 @@ function clearAutoBattleTimer() {
   }
 }
 
-function maybeRunAutoEnemyTurn(battleState) {
-  if (!battleState || battleState.status !== "active") {
-    return battleState;
+function clearBattleTempoTimers({ unlock = true } = {}) {
+  for (const timerId of battleTempoTimerIds) {
+    window.clearTimeout(timerId);
   }
 
-  if (!shouldAutoAdvanceTurn(battleState) || battleState.turnOwner !== "player") {
-    return battleState;
-  }
+  battleTempoTimerIds.clear();
 
-  return runEnemyTurn(endPlayerTurn(battleState));
+  if (unlock) {
+    battleTempoLocked = false;
+  }
 }
 
-function resolveAfterPlayerAction(battleState) {
-  if (!battleState || battleState.status !== "active") {
-    return battleState;
+function scheduleBattleTempoTimer(callback, delayMs, battleId = appState.battle?.id ?? null) {
+  const timerId = window.setTimeout(() => {
+    battleTempoTimerIds.delete(timerId);
+
+    if (!appState.battle || appState.battle.id !== battleId) {
+      return;
+    }
+
+    callback();
+  }, delayMs);
+
+  battleTempoTimerIds.add(timerId);
+  return timerId;
+}
+
+function getRenderableAppState() {
+  if (!appState.battle) {
+    return appState;
   }
 
-  return maybeRunAutoEnemyTurn(battleState);
+  return {
+    ...appState,
+    battle: {
+      ...appState.battle,
+      tempoLockActive: battleTempoLocked,
+    },
+  };
+}
+
+function applyBattleState(nextBattleState) {
+  appState = updateBattleState(appState, nextBattleState);
+  rerender();
+}
+
+function finishPlayerFlow(nextBattleState) {
+  if (!nextBattleState || nextBattleState.status !== "active") {
+    applyBattleState(nextBattleState);
+    return;
+  }
+
+  if (shouldAutoAdvanceTurn(nextBattleState) && nextBattleState.turnOwner === "player") {
+    startEnemyTurnSequence(endPlayerTurn(nextBattleState));
+    return;
+  }
+
+  applyBattleState(nextBattleState);
+}
+
+function finalizeBattleTempo(nextBattleState) {
+  battleTempoLocked = false;
+  finishPlayerFlow(nextBattleState);
+}
+
+function resolveDelayedCounterattack(attackerUnitId, defenderUnitId, battleId) {
+  scheduleBattleTempoTimer(() => {
+    const resolvedBattleState = resolvePendingCounter(appState.battle, attackerUnitId, defenderUnitId);
+    finalizeBattleTempo(resolvedBattleState);
+  }, BATTLE_TEMPO.counterDelayMs, battleId);
+}
+
+function stepEnemyTurnSequence(battleId) {
+  if (!appState.battle || appState.battle.id !== battleId || appState.battle.turnOwner !== "enemy") {
+    battleTempoLocked = false;
+    rerender();
+    return;
+  }
+
+  const nextBattleState = runNextEnemyAction(appState.battle);
+  applyBattleState(nextBattleState);
+
+  if (nextBattleState.status !== "active") {
+    battleTempoLocked = false;
+    rerender();
+    return;
+  }
+
+  if (!hasPendingEnemyActions(nextBattleState)) {
+    battleTempoLocked = false;
+    applyBattleState(finishEnemyTurn(nextBattleState));
+    return;
+  }
+
+  scheduleBattleTempoTimer(
+    () => stepEnemyTurnSequence(battleId),
+    BATTLE_TEMPO.enemyActionDelayMs,
+    battleId,
+  );
+}
+
+function startEnemyTurnSequence(enemyTurnState) {
+  clearAutoBattleTimer();
+  clearBattleTempoTimers();
+  battleTempoLocked = true;
+
+  const startedEnemyTurnState = startEnemyTurn(enemyTurnState);
+  applyBattleState(startedEnemyTurnState);
+
+  if (startedEnemyTurnState.status !== "active") {
+    battleTempoLocked = false;
+    rerender();
+    return;
+  }
+
+  if (!hasPendingEnemyActions(startedEnemyTurnState)) {
+    battleTempoLocked = false;
+    applyBattleState(finishEnemyTurn(startedEnemyTurnState));
+    return;
+  }
+
+  scheduleBattleTempoTimer(
+    () => stepEnemyTurnSequence(startedEnemyTurnState.id),
+    BATTLE_TEMPO.enemyActionLeadMs,
+    startedEnemyTurnState.id,
+  );
 }
 
 function canUseManualBattleControls() {
   return Boolean(
     appState.battle
     && appState.battle.status === "active"
+    && !battleTempoLocked
     && !appState.battle.autoBattleEnabled,
   );
 }
@@ -77,6 +203,7 @@ function scheduleAutoBattleStep() {
     || !appState.battle.autoBattleEnabled
     || appState.battle.status !== "active"
     || appState.battle.turnOwner !== "player"
+    || battleTempoLocked
   ) {
     return;
   }
@@ -89,24 +216,28 @@ function scheduleAutoBattleStep() {
       || !appState.battle.autoBattleEnabled
       || appState.battle.status !== "active"
       || appState.battle.turnOwner !== "player"
+      || battleTempoLocked
     ) {
       return;
     }
 
-    appState = updateBattleState(appState, performAutoBattleStep(appState.battle));
-    rerender();
-  }, 360);
+    const nextBattleState = performAutoBattleStep(appState.battle);
+    finishPlayerFlow(nextBattleState);
+  }, BATTLE_TEMPO.autoBattleDelayMs);
 }
 
 function rerender() {
   clearAutoBattleTimer();
 
-  renderLayout(appRoot, appState, {
+  renderLayout(appRoot, getRenderableAppState(), {
     onCitySelect: (cityId) => {
+      clearBattleTempoTimers();
       appState = selectCity(appState, cityId);
       rerender();
     },
     onAttackCity: (cityId) => {
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
       appState = startBattle(appState, cityId);
       rerender();
     },
@@ -131,11 +262,27 @@ function rerender() {
         return;
       }
 
-      const nextBattleState = resolveAfterPlayerAction(
-        attackUnit(appState.battle, appState.battle.selectedUnitId, targetUnitId),
+      const attackerUnitId = appState.battle.selectedUnitId;
+      const nextBattleState = attackUnit(
+        appState.battle,
+        attackerUnitId,
+        targetUnitId,
+        { deferCounter: true },
       );
-      appState = updateBattleState(appState, nextBattleState);
-      rerender();
+
+      if (nextBattleState.status !== "active") {
+        applyBattleState(nextBattleState);
+        return;
+      }
+
+      if (canResolveCounterattack(nextBattleState, attackerUnitId, targetUnitId)) {
+        battleTempoLocked = true;
+        applyBattleState(nextBattleState);
+        resolveDelayedCounterattack(attackerUnitId, targetUnitId, nextBattleState.id);
+        return;
+      }
+
+      finishPlayerFlow(nextBattleState);
     },
     onBattleSetFacing: (direction) => {
       if (!canUseManualBattleControls()) {
@@ -145,12 +292,28 @@ function rerender() {
       appState = updateBattleState(appState, setSelectedUnitFacing(appState.battle, direction));
       rerender();
     },
+    onBattleCancelPendingMove: () => {
+      if (!canUseManualBattleControls()) {
+        return;
+      }
+
+      appState = updateBattleState(appState, cancelPendingMove(appState.battle));
+      rerender();
+    },
+    onBattleCancelActionMode: () => {
+      if (!canUseManualBattleControls()) {
+        return;
+      }
+
+      appState = updateBattleState(appState, cancelBattleActionMode(appState.battle));
+      rerender();
+    },
     onBattleEnterAttackMode: () => {
       if (!canUseManualBattleControls() || !appState.battle?.selectedUnitId) {
         return;
       }
 
-      appState = updateBattleState(appState, selectBattleUnit(appState.battle, appState.battle.selectedUnitId));
+      appState = updateBattleState(appState, enterAttackMode(appState.battle));
       rerender();
     },
     onBattleUseSkill: (targetUnitId) => {
@@ -158,11 +321,7 @@ function rerender() {
         return;
       }
 
-      const nextBattleState = resolveAfterPlayerAction(
-        useSelectedUnitSkill(appState.battle, targetUnitId),
-      );
-      appState = updateBattleState(appState, nextBattleState);
-      rerender();
+      finishPlayerFlow(useSelectedUnitSkill(appState.battle, targetUnitId));
     },
     onBattleEnterStrategyMode: () => {
       if (!canUseManualBattleControls()) {
@@ -177,29 +336,21 @@ function rerender() {
         return;
       }
 
-      const nextBattleState = resolveAfterPlayerAction(
-        useSelectedUnitStrategy(appState.battle, targetUnitId),
-      );
-      appState = updateBattleState(appState, nextBattleState);
-      rerender();
+      finishPlayerFlow(useSelectedUnitStrategy(appState.battle, targetUnitId));
     },
     onBattleDefend: () => {
       if (!canUseManualBattleControls()) {
         return;
       }
 
-      const nextBattleState = resolveAfterPlayerAction(defendSelectedUnit(appState.battle));
-      appState = updateBattleState(appState, nextBattleState);
-      rerender();
+      finishPlayerFlow(defendSelectedUnit(appState.battle));
     },
     onBattleWait: () => {
       if (!canUseManualBattleControls()) {
         return;
       }
 
-      const nextBattleState = resolveAfterPlayerAction(waitSelectedUnit(appState.battle));
-      appState = updateBattleState(appState, nextBattleState);
-      rerender();
+      finishPlayerFlow(waitSelectedUnit(appState.battle));
     },
     onBattleEnterSkillMode: () => {
       if (!canUseManualBattleControls()) {
@@ -215,19 +366,7 @@ function rerender() {
         return;
       }
 
-      let nextBattleState = appState.battle;
-
-      if (
-        selectedSkill.effectType === "ally_attack_buff" ||
-        selectedSkill.effectType === "cannon_aoe" ||
-        selectedSkill.target === "enemy_all_in_range"
-      ) {
-        nextBattleState = resolveAfterPlayerAction(useSelectedUnitSkill(appState.battle));
-      } else {
-        nextBattleState = enterSkillMode(appState.battle);
-      }
-
-      appState = updateBattleState(appState, nextBattleState);
+      appState = updateBattleState(appState, enterSkillMode(appState.battle));
       rerender();
     },
     onBattleEndTurn: () => {
@@ -235,11 +374,10 @@ function rerender() {
         return;
       }
 
-      appState = updateBattleState(appState, runEnemyTurn(endPlayerTurn(appState.battle)));
-      rerender();
+      startEnemyTurnSequence(endPlayerTurn(appState.battle));
     },
     onBattleToggleAutoBattle: () => {
-      if (!appState.battle || appState.battle.status !== "active") {
+      if (!appState.battle || appState.battle.status !== "active" || battleTempoLocked) {
         return;
       }
 
@@ -250,18 +388,29 @@ function rerender() {
       rerender();
     },
     onBattleRetreat: () => {
+      if (battleTempoLocked && appState.battle?.status === "active") {
+        return;
+      }
+
       clearAutoBattleTimer();
+      clearBattleTempoTimers();
       appState = retreatFromBattle(appState);
       rerender();
     },
     onBattleReturnToWorld: () => {
       clearAutoBattleTimer();
+      clearBattleTempoTimers();
       appState = returnFromBattle(appState);
       rerender();
     },
   });
 
-  if (appState.battle?.autoBattleEnabled && appState.battle.status === "active" && appState.battle.turnOwner === "player") {
+  if (
+    appState.battle?.autoBattleEnabled
+    && appState.battle.status === "active"
+    && appState.battle.turnOwner === "player"
+    && !battleTempoLocked
+  ) {
     scheduleAutoBattleStep();
   }
 }

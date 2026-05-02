@@ -1,5 +1,5 @@
 import { getDirectionLabel } from "../core/battle_direction.js";
-import { getSkillById } from "../core/battle_skills.js";
+import { getEffectiveAttack, getEffectiveDefense, getSkillById } from "../core/battle_skills.js";
 import { hasStatus } from "../core/battle_strategy.js";
 
 function getEffectStyle(kind) {
@@ -49,6 +49,40 @@ function buildActionSignature(lastAction) {
     .join("|");
 
   return `${lastAction.type}:${lastAction.actorUnitId ?? "none"}:${targetIds}:${effectTexts}`;
+}
+
+function formatStatusList(unit) {
+  const statuses = [];
+
+  if (hasStatus(unit, "confusion")) {
+    statuses.push(`혼란 ${unit.statusEffects.confusion}`);
+  }
+
+  if (hasStatus(unit, "shake")) {
+    statuses.push(`동요 ${unit.statusEffects.shake}`);
+  }
+
+  if (unit?.isDefending) {
+    statuses.push("방어 태세");
+  }
+
+  return statuses.length > 0 ? statuses.join(" · ") : "상태 이상 없음";
+}
+
+function getSkillHelpCopy(skill) {
+  if (!skill) {
+    return "이동 · 공격 · 특기 · 책략 · 방어 · 대기";
+  }
+
+  if (skill.id === "hakikjin_barrage") {
+    return "사정거리 안의 모든 적을 포격합니다.";
+  }
+
+  if (skill.id === "reform_order") {
+    return "아군의 공격력을 2턴 동안 상승시킵니다.";
+  }
+
+  return skill.description;
 }
 
 export function createBattleSceneDefinition({ battleState, callbacks = {}, onSceneReady } = {}) {
@@ -130,6 +164,21 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         fontFamily: "Segoe UI, sans-serif",
         fontSize: "18px",
       });
+      this.input.mouse?.disableContextMenu();
+      this.input.on("pointerdown", (pointer) => {
+        if (pointer.button !== 2) {
+          return;
+        }
+
+        if (this.battleState.phase === "facing") {
+          this.callbacks.onCancelPendingMove?.();
+          return;
+        }
+
+        if (["attack", "skill", "strategy"].includes(this.battleState.phase)) {
+          this.callbacks.onCancelActionMode?.();
+        }
+      });
 
       const boardBackground = this.add.rectangle(
         this.board.x + this.board.width / 2,
@@ -157,6 +206,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.renderGrid();
       this.renderHighlights();
       this.renderUnits();
+      this.renderFacingHighlights();
       this.renderInstructionText();
       this.renderFloatingEffects();
     }
@@ -212,8 +262,20 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           this.cellWidth - 10,
           this.cellHeight - 10,
           0xff7b7b,
+          0.14,
+        ).setStrokeStyle(1.5, 0xff9f7b, 0.42);
+        this.dynamicLayer.add(rect);
+      });
+
+      (highlights.attackTargets ?? []).forEach((position) => {
+        const rect = this.add.rectangle(
+          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
+          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
+          this.cellWidth - 10,
+          this.cellHeight - 10,
+          0xff7b7b,
           0.22,
-        ).setStrokeStyle(2, 0xff7b7b, 0.8);
+        ).setStrokeStyle(2.5, 0xff7b7b, 0.88);
         this.dynamicLayer.add(rect);
       });
 
@@ -224,8 +286,20 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           this.cellWidth - 14,
           this.cellHeight - 14,
           0x8b5cf6,
+          0.16,
+        ).setStrokeStyle(1.5, 0xd8b4fe, 0.46);
+        this.dynamicLayer.add(rect);
+      });
+
+      (highlights.skillTargets ?? []).forEach((position) => {
+        const rect = this.add.rectangle(
+          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
+          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
+          this.cellWidth - 12,
+          this.cellHeight - 12,
+          0x8b5cf6,
           0.28,
-        ).setStrokeStyle(2, 0xd8b4fe, 0.86);
+        ).setStrokeStyle(2.5, 0xf8d798, 0.9);
         this.dynamicLayer.add(rect);
       });
 
@@ -236,10 +310,27 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           this.cellWidth - 12,
           this.cellHeight - 12,
           0x7dd3fc,
-          0.24,
-        ).setStrokeStyle(2, 0xa5f3fc, 0.86);
+          0.14,
+        ).setStrokeStyle(1.5, 0x6ee7b7, 0.44);
         this.dynamicLayer.add(rect);
       });
+
+      (highlights.strategyTargets ?? []).forEach((position) => {
+        const rect = this.add.rectangle(
+          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
+          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
+          this.cellWidth - 12,
+          this.cellHeight - 12,
+          0x7dd3fc,
+          0.24,
+        ).setStrokeStyle(2.5, 0xa5f3fc, 0.9);
+        this.dynamicLayer.add(rect);
+      });
+
+    }
+
+    renderFacingHighlights() {
+      const highlights = this.battleState.highlights ?? {};
 
       (highlights.facing ?? []).forEach((position) => {
         const rect = this.add.rectangle(
@@ -256,10 +347,26 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           fontSize: "24px",
           fontStyle: "bold",
         }).setOrigin(0.5, 0.5);
+        rect.setDepth(400);
+        label.setDepth(401);
         rect.setInteractive({ useHandCursor: true });
-        rect.on("pointerdown", () => this.callbacks.onSetFacing?.(position.direction));
+        rect.on("pointerdown", (pointer, _localX, _localY, event) => {
+          if (pointer.button !== 0) {
+            return;
+          }
+
+          event?.stopPropagation?.();
+          this.callbacks.onSetFacing?.(position.direction);
+        });
         label.setInteractive({ useHandCursor: true });
-        label.on("pointerdown", () => this.callbacks.onSetFacing?.(position.direction));
+        label.on("pointerdown", (pointer, _localX, _localY, event) => {
+          if (pointer.button !== 0) {
+            return;
+          }
+
+          event?.stopPropagation?.();
+          this.callbacks.onSetFacing?.(position.direction);
+        });
         this.dynamicLayer.add([rect, label]);
       });
     }
@@ -284,6 +391,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
     renderUnits() {
       const selectedUnitId = this.battleState.selectedUnitId;
+      const skillTargetLookup = new Set((this.battleState.highlights?.skillTargets ?? []).map((tile) => `${tile.x},${tile.y}`));
+      const strategyTargetLookup = new Set((this.battleState.highlights?.strategyTargets ?? []).map((tile) => `${tile.x},${tile.y}`));
 
       this.battleState.units.forEach((unit) => {
         if (!unit.isAlive) {
@@ -410,20 +519,52 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         }
 
         if (unit.side === "player") {
-          hitZone.setInteractive({ useHandCursor: this.battleState.turnOwner === "player" });
-          hitZone.on("pointerdown", () => this.callbacks.onSelectUnit?.(unit.id));
+          if (this.battleState.phase !== "facing") {
+            hitZone.setInteractive({ useHandCursor: this.battleState.turnOwner === "player" });
+          }
+
+          hitZone.on("pointerdown", () => {
+            if (this.battleState.phase === "facing") {
+              return;
+            }
+
+            if (this.battleState.phase === "move" && this.battleState.selectedUnitId === unit.id) {
+              this.callbacks.onMoveUnit?.({ x: unit.x, y: unit.y });
+              return;
+            }
+
+            if (this.battleState.phase === "skill") {
+              if (skillTargetLookup.has(`${unit.x},${unit.y}`)) {
+                this.callbacks.onUseSkill?.(unit.id);
+              }
+              return;
+            }
+
+            this.callbacks.onSelectUnit?.(unit.id);
+          });
         }
 
         if (unit.side === "enemy") {
-          hitZone.setInteractive({ useHandCursor: true });
+          if (this.battleState.phase !== "facing") {
+            hitZone.setInteractive({ useHandCursor: true });
+          }
+
           hitZone.on("pointerdown", () => {
+            if (this.battleState.phase === "facing") {
+              return;
+            }
+
             if (this.battleState.phase === "skill") {
-              this.callbacks.onUseSkill?.(unit.id);
+              if (skillTargetLookup.has(`${unit.x},${unit.y}`)) {
+                this.callbacks.onUseSkill?.(unit.id);
+              }
               return;
             }
 
             if (this.battleState.phase === "strategy") {
-              this.callbacks.onUseStrategy?.(unit.id);
+              if (strategyTargetLookup.has(`${unit.x},${unit.y}`)) {
+                this.callbacks.onUseStrategy?.(unit.id);
+              }
               return;
             }
 
@@ -453,26 +594,56 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
     }
 
     renderInstructionText() {
-      const instructionText = this.add.text(
-        this.scale.width - 96,
-        54,
-        this.battleState.phase === "facing"
+      const selectedUnit = this.battleState.units.find((unit) => unit.id === this.battleState.selectedUnitId) ?? null;
+      const selectedSkill = selectedUnit ? getSkillById(this.battleState.skills, selectedUnit.skillId) : null;
+      const summaryLine = selectedUnit
+        ? `${selectedUnit.name} | 병력 ${selectedUnit.troops}/${selectedUnit.maxTroops} | 공격 ${Math.round(getEffectiveAttack(selectedUnit))} | 방어 ${Math.round(getEffectiveDefense(selectedUnit))} | 지력 ${selectedUnit.intelligence} | 방향 ${getDirectionLabel(selectedUnit.facing)}`
+        : "유닛을 선택하세요";
+      const summaryHelp = !selectedUnit
+        ? "이동 · 공격 · 특기 · 책략 · 방어 · 대기"
+        : this.battleState.phase === "facing"
           ? "이동 후 방향 선택"
           : this.battleState.phase === "skill"
-            ? "특기 대상 적 유닛 선택"
+            ? `${selectedSkill?.name ?? "고유 특기"}: ${getSkillHelpCopy(selectedSkill)}`
             : this.battleState.phase === "strategy"
               ? "책략 대상 적 유닛 선택"
-              : this.battleState.turnOwner === "player"
-                ? "유닛 선택 · 이동 · 방향 · 공격 · 특기 · 책략 · 방어 · 대기"
-                : "적군 행동 중",
+              : selectedSkill && selectedUnit.currentSkillCooldown > 0
+                ? `${selectedSkill.name}: 재사용 대기 ${selectedUnit.currentSkillCooldown}턴`
+                : selectedSkill
+                  ? `${selectedSkill.name}: ${getSkillHelpCopy(selectedSkill)}`
+                  : formatStatusList(selectedUnit);
+      const panelWidth = 470;
+      const panelHeight = 60;
+      const panelX = this.scale.width - 96 - panelWidth / 2;
+      const panelY = 62;
+      const panel = this.add.rectangle(panelX, panelY, panelWidth, panelHeight, 0x0f1824, 0.92)
+        .setStrokeStyle(1.5, 0xd1b075, 0.34);
+      const summaryText = this.add.text(
+        this.scale.width - 112,
+        47,
+        summaryLine,
+        {
+          color: "#f3ead9",
+          fontFamily: "Georgia, serif",
+          fontSize: "15px",
+          fixedWidth: panelWidth - 24,
+          align: "right",
+        },
+      ).setOrigin(1, 0.5);
+      const helpText = this.add.text(
+        this.scale.width - 112,
+        76,
+        summaryHelp,
         {
           color: "#aeb7c3",
           fontFamily: "Segoe UI, sans-serif",
-          fontSize: "16px",
+          fontSize: "12px",
+          fixedWidth: panelWidth - 24,
+          align: "right",
         },
       ).setOrigin(1, 0.5);
 
-      this.dynamicLayer.add(instructionText);
+      this.dynamicLayer.add([panel, summaryText, helpText]);
     }
 
     renderFloatingEffects() {

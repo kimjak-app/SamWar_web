@@ -45,19 +45,56 @@ function buildClearedSelectionState(battleState) {
     highlights: {
       move: [],
       attack: [],
+      attackTargets: [],
       skill: [],
+      skillTargets: [],
       facing: [],
       strategy: [],
+      strategyTargets: [],
     },
   };
 }
 
-function getResolvedSkillRange(unit, skill) {
-  if (skill.rangeSource === "unit.skillRange") {
+export function getResolvedSkillRange(unit, skill) {
+  if (skill.rangeSource === "unit.skillRange" || skill.rangeSource === "skill.range") {
     return unit.skillRange;
   }
 
   return 0;
+}
+
+export function getSkillTargetSide(skill) {
+  return skill?.targetSide ?? "enemy";
+}
+
+export function isValidSkillTriggerTarget(casterUnit, targetUnit, skill) {
+  if (!casterUnit || !targetUnit || !skill || !targetUnit.isAlive) {
+    return false;
+  }
+
+  const targetSide = getSkillTargetSide(skill);
+
+  if (targetSide === "enemy") {
+    return casterUnit.side !== targetUnit.side;
+  }
+
+  if (targetSide === "ally") {
+    if (casterUnit.id === targetUnit.id) {
+      return skill.includeSelf !== false;
+    }
+
+    return casterUnit.side === targetUnit.side;
+  }
+
+  if (targetSide === "self") {
+    return casterUnit.id === targetUnit.id;
+  }
+
+  if (targetSide === "any") {
+    return true;
+  }
+
+  return false;
 }
 
 export function canUseSkill(unit, skill) {
@@ -78,29 +115,13 @@ export function getSkillTargets(battleState, unit, skill) {
     return [];
   }
 
-  if (skill.target === "ally_all") {
-    return battleState.units.filter((candidate) => candidate.isAlive && candidate.side === unit.side);
-  }
-
   const range = getResolvedSkillRange(unit, skill);
 
-  if (skill.target === "enemy_all_in_range") {
-    return battleState.units.filter((candidate) => (
-      candidate.isAlive
-      && candidate.side !== unit.side
-      && getDistance(unit, candidate) <= range
-    ));
-  }
-
-  if (skill.target === "enemy") {
-    return battleState.units.filter((candidate) => (
-      candidate.isAlive
-      && candidate.side !== unit.side
-      && getDistance(unit, candidate) <= range
-    ));
-  }
-
-  return [];
+  return battleState.units.filter((candidate) => (
+    candidate.isAlive
+    && getDistance(unit, candidate) <= range
+    && isValidSkillTriggerTarget(unit, candidate, skill)
+  ));
 }
 
 function buildSkillDamage(caster, target, skillBonus = 0) {
@@ -281,19 +302,19 @@ export function applySkill(battleState, casterUnitId, targetUnitId = null) {
     };
   }
 
+  const availableTargets = getSkillTargets(battleState, casterUnit, skill);
+  const targetUnit = availableTargets.find((unit) => unit.id === targetUnitId) ?? null;
+
+  if (!targetUnit) {
+    return battleState;
+  }
+
   if (skill.effectType === "cannon_aoe") {
     return applyHakikjinBarrage(battleState, casterUnit, skill);
   }
 
   if (skill.effectType === "ally_attack_buff") {
     return applyReformOrder(battleState, casterUnit, skill);
-  }
-
-  const availableTargets = getSkillTargets(battleState, casterUnit, skill);
-  const targetUnit = availableTargets.find((unit) => unit.id === targetUnitId) ?? null;
-
-  if (!targetUnit) {
-    return battleState;
   }
 
   return applySingleTargetSkill(battleState, casterUnit, skill, targetUnit);

@@ -40,7 +40,7 @@ export const heroes = [
     defense: 12,
     moveRange: 3,
     attackRange: 1,
-    skillRange: 0,
+    skillRange: 3,
     aiType: "support",
     attackEffectType: "normal",
     skillEffectType: "buff",

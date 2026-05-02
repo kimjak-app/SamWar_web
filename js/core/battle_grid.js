@@ -24,6 +24,33 @@ export function getUnitAt(units, position) {
   return units.find((unit) => unit.isAlive && isSamePosition(unit, position)) ?? null;
 }
 
+export function getRangePositions(unit, range, grid = { width: BATTLE_GRID_WIDTH, height: BATTLE_GRID_HEIGHT }, options = {}) {
+  if (!unit?.isAlive || range <= 0) {
+    return [];
+  }
+
+  const includeOrigin = options.includeOrigin ?? false;
+  const positions = [];
+
+  for (let x = 0; x < grid.width; x += 1) {
+    for (let y = 0; y < grid.height; y += 1) {
+      const candidate = { x, y };
+
+      if (!isInBounds(candidate) || getDistance(unit, candidate) > range) {
+        continue;
+      }
+
+      if (!includeOrigin && isSamePosition(candidate, unit)) {
+        continue;
+      }
+
+      positions.push(candidate);
+    }
+  }
+
+  return positions;
+}
+
 export function getWalkablePositions(unit, units, grid = { width: BATTLE_GRID_WIDTH, height: BATTLE_GRID_HEIGHT }) {
   if (!unit?.isAlive) {
     return [];
