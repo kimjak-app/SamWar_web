@@ -123,3 +123,6 @@
 - Updated `js/main.js` with a lightweight `onBattleEnterAttackMode` handler so the new `기본 공격` command bar button has a stable UI entry point without changing battle rules.
 - Replaced the old stacked battle HUD CSS in `css/main.css` with a viewport-safe grid layout, fixed internal scroll zones, and a persistent footer command bar tuned for 100% zoom playability.
 - Re-ran `node --check` on `js/ui/battle_ui.js` and `js/main.js` after the layout restructure.
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` for a documentation-only session close handoff after `v0.2-6b`.
+- Recorded the latest completed milestone, preserved design decisions, current battle/world-map state, known issues, and the proposed `v0.2-7` agenda for the next ChatGPT session.
+- Kept this task documentation-only and did not modify game code, CSS, assets, battle logic, or world map logic.
