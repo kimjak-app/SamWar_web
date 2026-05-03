@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.2-9 Sequential Unique Skill Cut-ins for All MVP Heroes`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.2-9c Unit Roster Selection + Skill Name Polish`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -33,6 +33,9 @@ Current recorded build state:
 - `v0.2-8c` Cut-in Background Slash Bounds Tuning
 - `v0.2-8d` Cut-in Slash Subtle Tuning
 - `v0.2-9` Sequential Unique Skill Cut-ins for All MVP Heroes
+- `v0.2-9a` 14x8 Battlefield Expansion
+- `v0.2-9b` Unit Token Tone-down Patch
+- `v0.2-9c` Unit Roster Selection + Skill Name Polish
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -65,7 +68,24 @@ Current recorded build state:
 - Battle uses:
   - `assets/units/unit_player_mvp.png`
   - `assets/units/unit_enemy_mvp.png`
-  - `assets/battle/battlefield_mvp.png`
+  - `assets/battle/battlefield_14x8_mvp.png`
+  - old rollback asset preserved: `assets/battle/battlefield_mvp.png`
+- Tactical battlefield is now `14x8`.
+- Heavy battlefield-wide background darkening was removed and reduced to a near-transparent readability pass.
+- Fixed MVP start positions were expanded for the larger board:
+  - `Yi Sun-sin` -> `{ x: 2, y: 5 }`
+  - `Jeong Do-jeon` -> `{ x: 2, y: 4 }`
+  - `Nobunaga` -> `{ x: 11, y: 3 }`
+  - `Kenshin` -> `{ x: 11, y: 4 }`
+- Existing battle rules, AI sequencing, cut-ins, BGM, and world-map flow were preserved.
+- No stat balance changes were made in `v0.2-9a`.
+- Unit token image sprites are now slightly toned down with a subtle alpha adjustment so they blend better with the softer `14x8` battlefield background.
+- HP bars, labels, highlights, cut-ins, battle rules, AI, and battlefield background rendering were preserved in `v0.2-9b`.
+- Friendly player units can now be selected from the right `UNIT / 부대 목록` roster panel during manual player control.
+- Enemy roster cards remain display-only for now.
+- Nobunaga's unique skill display name is now `삼단격`.
+- Kenshin's unique skill display name is now `차륜전`.
+- Skill effects, IDs, AI, cut-ins, board size, and battle rules were preserved in `v0.2-9c`.
 - Simple BGM system is integrated:
   - `assets/audio/world_map_bgm.mp3`
   - `assets/audio/battle_bgm.mp3`
@@ -171,17 +191,18 @@ Current recorded build state:
 11. UI/BGM are now in usable MVP state, but polish is still ongoing.
 
 ## Known Issues / Improvement Candidates
-1. Enemy cut-in timing may still need browser tuning after real playtest.
-2. Basic attack and some unique skill ranges may overlap or share similar values.
+1. Roster-card selection usability still needs browser validation after real playtest.
+2. Initial unit positions on the larger board may still need tuning after actual battle feel testing.
+3. Basic attack and some unique skill ranges may overlap or share similar values.
    - Revisit later during balance and hero-skill design.
-3. BGM can be replaced by overwriting the same filenames.
+4. BGM can be replaced by overwriting the same filenames.
    - Browser cache may require `Ctrl+F5`.
-4. Cut-in duration and animation may still need tuning after all hero cut-ins are browser-tested.
-5. SFX is not integrated yet.
+5. Cut-in duration and animation may still need tuning after all hero cut-ins are browser-tested.
+6. SFX is not integrated yet.
    - No SFX was added in `v0.2-8`.
-6. Troop-count visual degradation is still deferred.
-7. Future UNIT roster panel should support hero portraits.
-8. Future settings may include:
+7. Troop-count visual degradation is still deferred.
+8. Future UNIT roster panel should support hero portraits.
+9. Future settings may include:
    - battle speed
    - BGM volume
    - SFX volume
@@ -189,12 +210,12 @@ Current recorded build state:
    - animation skip
 
 ## Suggested Next Direction
-Suggested next task: browser-test and tune enemy cut-in timing if needed.
+Suggested next task: browser-test roster-card selection usability.
 
 Main candidates:
 
-1. Browser-test and tune enemy cut-in timing if needed
-2. SFX / battle sound effects
-3. Tune cut-in duration / animation after all hero cut-ins are tested
-4. `14x8` battlefield size test
-5. BGM fade / volume / mute options
+1. Browser-test roster-card selection usability
+2. Tune battle difficulty / balance after `14x8` testing
+3. SFX / battle sound effects
+4. Terrain effects / movement cost prototype
+5. Optional enemy info selection UX

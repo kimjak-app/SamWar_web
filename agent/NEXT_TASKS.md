@@ -1,25 +1,24 @@
 # Next Tasks
 
 ## Primary Next Session Target
-Browser-test and tune enemy cut-in timing if needed.
+Browser-test roster-card selection usability.
 
 ## Priority Order
-1. Browser-test and tune enemy cut-in timing if needed
-   - Validate sequential enemy skill flow with Nobunaga and Kenshin in real battle turns.
-   - Confirm enemy skill cut-ins always resolve before the stored skill effect.
-2. SFX / battle sound effects
-   - Keep as a follow-up candidate after the first cut-in visual pass.
+1. Browser-test roster-card selection usability
+   - Confirm friendly roster cards select player units correctly during manual player control.
+   - Confirm enemy roster cards remain display-only.
+   - Confirm roster-card selection is blocked during enemy turn, cut-in/tempo lock, and auto battle.
+2. Tune battle difficulty / balance after `14x8` testing
+   - Reassess pacing only after the larger board is playtested.
+   - Avoid premature stat changes before map-size validation.
+3. SFX / battle sound effects
+   - Keep as a follow-up candidate after the `14x8` visual/gameplay pass.
    - Start small and avoid bundling too many systems at once.
-3. Tune cut-in duration / animation after all hero cut-ins are tested
-   - Validate the full multi-hero presentation after browser checks.
-   - Keep the approved image size and subtle slash treatment unless a real issue appears.
-4. `14x8` battlefield size test
-   - Current `10x6` board still feels compact.
-   - Test larger battlefield size without jumping too far at once.
-   - Preserve battle tempo and AI readability.
-5. BGM fade/volume/mute options
-   - Good follow-up after simple BGM integration.
-   - No settings UI was added yet.
+4. Terrain effects / movement cost prototype
+   - Consider only after the larger open battlefield baseline is understood.
+   - Keep it separate from the first `14x8` validation pass.
+5. Optional enemy info selection UX
+   - If needed later, consider non-command enemy roster inspection behavior separate from command selection.
 
 ## Constraints To Preserve
 - Direct Codex Paste Mode remains the working method.

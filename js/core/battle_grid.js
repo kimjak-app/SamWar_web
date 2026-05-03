@@ -1,5 +1,5 @@
-export const BATTLE_GRID_WIDTH = 10;
-export const BATTLE_GRID_HEIGHT = 6;
+export const BATTLE_GRID_WIDTH = 14;
+export const BATTLE_GRID_HEIGHT = 8;
 
 export function isSamePosition(a, b) {
   return a?.x === b?.x && a?.y === b?.y;

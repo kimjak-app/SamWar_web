@@ -78,7 +78,7 @@ function renderBattleLog(logEntries) {
     .join("");
 }
 
-function renderUnitCard(unit, sideLabel, isSelected = false) {
+function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = false } = {}) {
   const statusParts = [];
 
   if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
@@ -95,8 +95,12 @@ function renderUnitCard(unit, sideLabel, isSelected = false) {
     statusParts.push("상태 이상 없음");
   }
 
+  const selectionAttributes = selectable
+    ? ` data-battle-roster-unit-id="${unit.id}" role="button" tabindex="0" aria-label="${unit.name} 선택"`
+    : "";
+
   return `
-    <div class="battle-unit-card battle-unit-card-${unit.side} ${isSelected ? "is-selected" : ""}">
+    <div class="battle-unit-card battle-unit-card-${unit.side} ${isSelected ? "is-selected" : ""}"${selectionAttributes}>
       <div class="battle-unit-side-row">
         <span class="battle-unit-side">${sideLabel}</span>
         ${isSelected ? '<span class="battle-unit-selected-chip">선택 중</span>' : ""}
@@ -192,14 +196,21 @@ function renderBattleLeftPanel(battleState) {
   `;
 }
 
-function renderBattleRightPanel(battleState, playerUnits, enemyUnits) {
+function renderBattleRightPanel(battleState, playerUnits, enemyUnits, options = {}) {
+  const { selectablePlayerRoster = false } = options;
+
   return `
     <section class="battle-panel battle-unit-info-panel">
       <p class="eyebrow">Unit</p>
       <h2 class="detail-heading">부대 목록</h2>
       <div class="battle-unit-stats">
-        ${playerUnits.map((unit) => renderUnitCard(unit, "아군", unit.id === battleState.selectedUnitId)).join("")}
-        ${enemyUnits.map((unit) => renderUnitCard(unit, "적군", unit.id === battleState.selectedUnitId)).join("")}
+        ${playerUnits.map((unit) => renderUnitCard(unit, "아군", {
+          isSelected: unit.id === battleState.selectedUnitId,
+          selectable: selectablePlayerRoster,
+        })).join("")}
+        ${enemyUnits.map((unit) => renderUnitCard(unit, "적군", {
+          isSelected: unit.id === battleState.selectedUnitId,
+        })).join("")}
       </div>
     </section>
   `;
@@ -307,6 +318,11 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
     && !isFacingPhase
     && battleState.phase !== "skill"
   );
+  const selectablePlayerRoster = Boolean(
+    isActive
+    && battleState.turnOwner === "player"
+    && !manualControlsLocked
+  );
   const skillButtonLabel = selectedSkill?.name ?? "고유 특기";
   const existingScreen = rootElement.querySelector(".battle-screen");
   const currentBattleId = existingScreen?.getAttribute("data-battle-id");
@@ -336,7 +352,9 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
   }
 
   if (rightPanelElement) {
-    rightPanelElement.innerHTML = renderBattleRightPanel(battleState, playerUnits, enemyUnits);
+    rightPanelElement.innerHTML = renderBattleRightPanel(battleState, playerUnits, enemyUnits, {
+      selectablePlayerRoster,
+    });
   }
 
   if (commandBarElement) {
@@ -416,6 +434,22 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
   rootElement.querySelectorAll("[data-battle-facing]").forEach((button) => {
     button.addEventListener("click", () => {
       handlers.onBattleSetFacing?.(button.getAttribute("data-battle-facing"));
+    });
+  });
+
+  rootElement.querySelectorAll("[data-battle-roster-unit-id]").forEach((card) => {
+    const selectRosterUnit = () => {
+      handlers.onBattleSelectUnit?.(card.getAttribute("data-battle-roster-unit-id"));
+    };
+
+    card.addEventListener("click", selectRosterUnit);
+    card.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      selectRosterUnit();
     });
   });
 }

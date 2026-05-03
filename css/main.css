@@ -633,6 +633,16 @@ button {
   border-color: rgba(91, 184, 255, 0.3);
 }
 
+.battle-unit-card-player[data-battle-roster-unit-id] {
+  cursor: pointer;
+}
+
+.battle-unit-card-player[data-battle-roster-unit-id]:hover,
+.battle-unit-card-player[data-battle-roster-unit-id]:focus-visible {
+  border-color: rgba(248, 215, 152, 0.65);
+  outline: none;
+}
+
 .battle-unit-card-enemy {
   border-color: rgba(255, 123, 123, 0.26);
 }

@@ -262,3 +262,40 @@
   - `node --check js/core/battle_ai.js`
   - `node --check js/core/battle_rules.js`
 - Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9` complete.
+- Completed `v0.2-9a` 14x8 Battlefield Expansion.
+- Expanded the centralized tactical grid from `10x6` to `14x8` in `js/core/battle_grid.js`.
+- Updated fixed MVP spawn positions in `data/battle_rosters.js`:
+  - Yi Sun-sin -> `{ x: 2, y: 5 }`
+  - Jeong Do-jeon -> `{ x: 2, y: 4 }`
+  - Nobunaga -> `{ x: 11, y: 3 }`
+  - Kenshin -> `{ x: 11, y: 4 }`
+- Updated `js/phaser/battle_scene.js` to load `assets/battle/battlefield_14x8_mvp.png` as the primary battlefield background.
+- Preserved rollback/failure behavior by also loading the old `assets/battle/battlefield_mvp.png` as a fallback texture path.
+- Removed the old heavy battlefield dimming pass and reduced the readability overlay to a near-transparent alpha so the new background stays visible.
+- Preserved existing battle rules, skill logic, cut-ins, AI sequencing, BGM, SFX state, persistent Phaser mount behavior, and world-map flow.
+- No stat balance changes were made in this patch.
+- Ran syntax checks:
+  - `node --check js/core/battle_state.js`
+  - `node --check js/phaser/battle_scene.js`
+  - `node --check js/core/battle_grid.js`
+  - `node --check data/battle_rosters.js`
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9a` complete.
+- Completed `v0.2-9b` Unit Token Tone-down Patch.
+- Updated only `js/phaser/battle_scene.js` token image rendering to apply a subtle `0.92` alpha to unit token sprites.
+- Kept the scope limited to the rendered unit token image sprite so HP bars, labels, highlights, cut-ins, battle rules, AI, and battlefield background remained unchanged.
+- The goal of the patch was to make unit sprites feel less bright and less sticker-like against the softer `14x8` battlefield art.
+- Ran syntax checks:
+  - `node --check js/phaser/battle_scene.js`
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9b` complete.
+- Completed `v0.2-9c` Unit Roster Selection + Skill Name Polish.
+- Updated `js/ui/battle_ui.js` so friendly player unit cards in the right `UNIT / 부대 목록` panel can now select units through the existing `onBattleSelectUnit` path during manual player control only.
+- Kept enemy roster cards display-only for now and preserved the existing main-controller manual-control gating for enemy turn, tempo lock, cut-in, and auto-battle states.
+- Added minimal clickable hover/cursor polish for selectable player roster cards in `css/main.css`.
+- Updated `data/skills.js` display text only:
+  - Nobunaga unique skill name -> `삼단격`
+  - Kenshin unique skill name -> `차륜전`
+- Preserved skill IDs, effects, cooldowns, cut-ins, AI logic, board size, and battle rules.
+- Ran syntax checks:
+  - `node --check js/ui/battle_ui.js`
+  - `node --check data/skills.js`
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9c` complete.

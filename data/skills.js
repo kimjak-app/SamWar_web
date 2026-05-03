@@ -36,7 +36,7 @@ export const skills = [
   },
   {
     id: "matchlock_volley",
-    name: "화승총 사격",
+    name: "삼단격",
     ownerHeroId: "nobunaga",
     isUnique: true,
     effectType: "gun_single",
@@ -49,11 +49,11 @@ export const skills = [
     cutinDurationMs: 1400,
     cutinStyle: "diagonalBrush",
     bonusDamage: 10,
-    description: "노부나가 고유특기. 사정거리 안의 적 하나에게 강한 사격 피해를 줍니다.",
+    description: "노부나가 고유특기. 삼단으로 이어지는 화승총 사격으로 사정거리 안의 적 하나에게 강한 피해를 줍니다.",
   },
   {
     id: "cavalry_charge",
-    name: "돌격",
+    name: "차륜전",
     ownerHeroId: "kenshin",
     isUnique: true,
     effectType: "charge_single",
@@ -66,6 +66,6 @@ export const skills = [
     cutinDurationMs: 1400,
     cutinStyle: "diagonalBrush",
     bonusDamage: 18,
-    description: "겐신 고유특기. 근접한 적에게 강한 돌격 피해를 줍니다.",
+    description: "겐신 고유특기. 차륜처럼 몰아치는 기동전으로 근접한 적에게 강한 돌격 피해를 줍니다.",
   },
 ];

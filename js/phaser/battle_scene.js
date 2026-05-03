@@ -88,7 +88,8 @@ function getSkillHelpCopy(skill) {
 export function createBattleSceneDefinition({ battleState, callbacks = {}, onSceneReady } = {}) {
   const PhaserLib = window.Phaser;
   const sceneKey = `samwar-battle-${battleState.id}`;
-  const BATTLEFIELD_KEY = "battlefield-mvp";
+  const BATTLEFIELD_KEY = "battlefield-14x8-mvp";
+  const BATTLEFIELD_FALLBACK_KEY = "battlefield-mvp";
   const PLAYER_TOKEN_KEY = "unit-player-mvp";
   const ENEMY_TOKEN_KEY = "unit-enemy-mvp";
 
@@ -117,7 +118,11 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
     preload() {
       if (!this.textures.exists(BATTLEFIELD_KEY)) {
-        this.load.image(BATTLEFIELD_KEY, "assets/battle/battlefield_mvp.png");
+        this.load.image(BATTLEFIELD_KEY, "assets/battle/battlefield_14x8_mvp.png");
+      }
+
+      if (!this.textures.exists(BATTLEFIELD_FALLBACK_KEY)) {
+        this.load.image(BATTLEFIELD_FALLBACK_KEY, "assets/battle/battlefield_mvp.png");
       }
 
       if (!this.textures.exists(PLAYER_TOKEN_KEY)) {
@@ -220,7 +225,17 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         ).setOrigin(0.5, 0.5);
         battlefieldImage.displayWidth = this.board.width;
         battlefieldImage.displayHeight = this.board.height;
-        battlefieldImage.setAlpha(0.78);
+        battlefieldImage.setAlpha(0.96);
+        this.dynamicLayer.add(battlefieldImage);
+      } else if (this.textures.exists(BATTLEFIELD_FALLBACK_KEY)) {
+        const battlefieldImage = this.add.image(
+          this.board.x + this.board.width / 2,
+          this.board.y + this.board.height / 2,
+          BATTLEFIELD_FALLBACK_KEY,
+        ).setOrigin(0.5, 0.5);
+        battlefieldImage.displayWidth = this.board.width;
+        battlefieldImage.displayHeight = this.board.height;
+        battlefieldImage.setAlpha(0.96);
         this.dynamicLayer.add(battlefieldImage);
       } else if (!this.missingBackgroundWarningShown) {
         this.missingBackgroundWarningShown = true;
@@ -233,7 +248,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         this.board.width,
         this.board.height,
         0x081018,
-        0.3,
+        0.06,
       );
       this.dynamicLayer.add(readabilityOverlay);
     }
@@ -582,6 +597,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           .setOrigin(0.5, 0.85);
         sprite.displayWidth = 96;
         sprite.scaleY = sprite.scaleX;
+        sprite.setAlpha(0.92);
         return sprite;
       }
 
