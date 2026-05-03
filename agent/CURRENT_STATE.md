@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web documentation is updated for clean new-chat handoff after the `v0.2-7 UI/UX Polish + Simple BGM Integration` milestone.
+SamWar_web is updated through `v0.2-7o Battle Tempo Slowdown for Cut-in Prep`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -26,6 +26,7 @@ Current recorded build state:
 - `v0.2-6a` Battle Background Visual Patch
 - `v0.2-6b` Battle Command Bar + Side Info Layout Patch
 - `v0.2-7` Battle UI/UX Polish + Simple BGM Integration
+- `v0.2-7o` Battle Tempo Slowdown for Cut-in Prep
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -66,6 +67,12 @@ Current recorded build state:
   - battle BGM during battle
   - first-user-interaction autoplay unlock handling
   - only one BGM track plays at a time
+- Battle tempo is now slightly slower:
+  - longer counterattack delay
+  - clearer pause before enemy turn actions begin
+  - more spacing between enemy actions
+  - slower but still functional auto-battle pacing
+- This slowdown is intended to prepare timing space for the upcoming unique-skill cut-in overlay system.
 - Persistent Phaser mount is preserved:
   - same `battle.id` reuses the same Phaser canvas
   - auto battle no longer flickers
@@ -127,8 +134,8 @@ Current recorded build state:
 11. UI/BGM are now in usable MVP state, but polish is still ongoing.
 
 ## Known Issues / Improvement Candidates
-1. Battle tempo may still be slightly fast.
-   - Tune later after BGM/SFX/effects work.
+1. Unique-skill cut-in overlay system is still not implemented.
+   - The battle tempo was slowed first to create visual breathing room for it.
 2. Basic attack and some unique skill ranges may overlap or share similar values.
    - Revisit later during balance and hero-skill design.
 3. BGM can be replaced by overwriting the same filenames.
@@ -136,6 +143,7 @@ Current recorded build state:
 4. Battlefield size test is still pending.
    - Candidate: `14x8`
 5. SFX is not integrated yet.
+   - Keep it as a follow-up candidate after the cut-in system.
 6. Troop-count visual degradation is still deferred.
 7. Future UNIT roster panel should support hero portraits.
 8. Future settings may include:
@@ -146,12 +154,12 @@ Current recorded build state:
    - animation skip
 
 ## Suggested Next Direction
-Suggested next task: review `v0.2-7` final state and choose one focused next step.
+Suggested next task: implement the unique-skill cut-in overlay system as the next focused battle presentation upgrade.
 
 Main candidates:
 
-1. SFX / battle sound effects
-2. `14x8` battlefield size test
-3. Battle impact/effects polish
-4. BGM fade/volume/mute options
-5. Hero portrait-ready UNIT roster card structure
+1. Unique-skill cut-in overlay system
+2. First implementation for Yi Sun-sin's `학익진 포격` cut-in
+3. SFX / battle sound effects
+4. `14x8` battlefield size test
+5. BGM fade / volume / mute options

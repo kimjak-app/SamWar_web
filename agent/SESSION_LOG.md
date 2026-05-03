@@ -169,3 +169,22 @@
 - Ensured only one BGM track plays at a time and mode switching does not overlap or recreate tracks.
 - Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` for the `v0.2-7` session-close handoff.
 - Kept this final task documentation-only and did not modify game code, CSS, assets, audio files, battle logic, or world map logic.
+
+## 2026-05-03
+
+- Completed `v0.2-7o` Battle Tempo Slowdown for Cut-in Prep.
+- Updated only the `BATTLE_TEMPO` values in `js/main.js`.
+- Increased:
+  - `counterDelayMs` from `800` to `1100`
+  - `enemyActionLeadMs` from `750` to `1000`
+  - `enemyActionDelayMs` from `900` to `1250`
+  - `autoBattleDelayMs` from `800` to `1050`
+- Preserved battle rules, AI logic, Phaser rendering, battle UI layout, BGM logic, and SFX logic.
+- Kept the slowdown scoped as timing prep for the future unique-skill cut-in overlay system.
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-7o` complete.
+- Reordered next task priorities to:
+  1. unique-skill cut-in overlay system
+  2. first implementation for Yi Sun-sin's `학익진 포격` cut-in
+  3. SFX / battle sound effects
+  4. `14x8` battlefield size test
+  5. BGM fade / volume / mute options

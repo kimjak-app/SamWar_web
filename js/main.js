@@ -50,10 +50,10 @@ let battleTempoLocked = false;
 const battleTempoTimerIds = new Set();
 
 const BATTLE_TEMPO = {
-  counterDelayMs: 800,
-  enemyActionLeadMs: 750,
-  enemyActionDelayMs: 900,
-  autoBattleDelayMs: 800,
+  counterDelayMs: 1100,
+  enemyActionLeadMs: 1000,
+  enemyActionDelayMs: 1250,
+  autoBattleDelayMs: 1050,
 };
 
 initializeBgmManager();

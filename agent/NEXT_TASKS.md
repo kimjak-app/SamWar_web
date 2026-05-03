@@ -1,25 +1,26 @@
 # Next Tasks
 
 ## Primary Next Session Target
-Review `v0.2-7` final state and choose one focused next step.
+Implement the unique-skill cut-in overlay system as the next focused battle presentation step.
 
 ## Priority Order
-1. SFX / battle sound effects
-   - Highest-value next sensory layer after simple BGM.
-   - Keep scope small at first.
-   - Avoid bundling too many new systems at once.
-2. `14x8` battlefield size test
+1. Unique-skill cut-in overlay system
+   - Main next priority after `v0.2-7o`.
+   - Use the slower battle tempo as timing foundation for dramatic presentation.
+   - Keep the first pass focused on overlay flow rather than broad battle-rule changes.
+2. First implementation for Yi Sun-sin's `학익진 포격` cut-in
+   - Establish the first real diagonal brush-style cut-in path on one signature skill.
+   - Use it to validate timing, layering, and return-to-battle flow.
+3. SFX / battle sound effects
+   - Keep as a follow-up candidate after the cut-in system.
+   - Start small and avoid bundling too many systems at once.
+4. `14x8` battlefield size test
    - Current `10x6` board still feels compact.
    - Test larger battlefield size without jumping too far at once.
    - Preserve battle tempo and AI readability.
-3. Battle impact/effects polish
-   - Improve combat readability and feel after tempo/BGM baseline.
-   - Keep this separate from major rules changes.
-4. BGM fade/volume/mute options
+5. BGM fade/volume/mute options
    - Good follow-up after simple BGM integration.
    - No settings UI was added yet.
-5. Hero portrait-ready UNIT roster card structure
-   - Prepare the right roster panel for future portrait support.
 
 ## Constraints To Preserve
 - Direct Codex Paste Mode remains the working method.
