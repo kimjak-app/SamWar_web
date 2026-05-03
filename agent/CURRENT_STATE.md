@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.2-8 Unique Skill Cut-in Overlay System`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.2-8d Cut-in Slash Subtle Tuning`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -28,6 +28,10 @@ Current recorded build state:
 - `v0.2-7` Battle UI/UX Polish + Simple BGM Integration
 - `v0.2-7o` Battle Tempo Slowdown for Cut-in Prep
 - `v0.2-8` Unique Skill Cut-in Overlay System
+- `v0.2-8a` Cut-in Bounds Fix
+- `v0.2-8b` Yi Sun-sin Cut-in Size Tuning
+- `v0.2-8c` Cut-in Background Slash Bounds Tuning
+- `v0.2-8d` Cut-in Slash Subtle Tuning
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -80,6 +84,25 @@ Current recorded build state:
   - battle controls lock while the cut-in is visible
   - the cut-in appears before the actual skill effect resolves
   - first implementation is Yi Sun-sin's `학익진 포격`
+- The unique-skill cut-in overlay is now bounded inside the central battlefield board area.
+  - it no longer covers the left panel, right panel, bottom command bar, or full browser viewport
+  - it remains image-only and data-driven
+  - Yi Sun-sin's `학익진 포격` still resolves before skill damage
+- Yi Sun-sin's cut-in image size is now reduced relative to the battlefield board.
+  - it feels less like a full-board poster and more like a dramatic battlefield insert
+  - more battlefield context remains visible behind the image
+  - the cut-in remains bounded inside the central battlefield board
+  - the cut-in remains image-only
+- The decorative diagonal background slash effect is now reduced and constrained.
+  - Yi Sun-sin's approved cut-in image size is preserved
+  - the slash effect stays within the central battlefield board area
+  - the slash remains a secondary supporting effect behind the image
+  - the cut-in remains image-only
+- The decorative diagonal background slash effect is now smaller and subtler.
+  - Yi Sun-sin's approved cut-in image size is preserved
+  - the slash remains bounded inside the central battlefield board
+  - the slash no longer visually dominates the cut-in image
+  - the cut-in remains image-only
 - Persistent Phaser mount is preserved:
   - same `battle.id` reuses the same Phaser canvas
   - auto battle no longer flickers
@@ -141,12 +164,12 @@ Current recorded build state:
 11. UI/BGM are now in usable MVP state, but polish is still ongoing.
 
 ## Known Issues / Improvement Candidates
-1. Yi Sun-sin cut-in timing, size, and animation may need visual tuning after browser playtest.
+1. Additional hero cut-in images are not integrated yet for Jeong Do-jeon, Nobunaga, and Kenshin.
 2. Basic attack and some unique skill ranges may overlap or share similar values.
    - Revisit later during balance and hero-skill design.
 3. BGM can be replaced by overwriting the same filenames.
    - Browser cache may require `Ctrl+F5`.
-4. Additional cut-in images are not integrated yet for the other heroes.
+4. Yi Sun-sin cut-in duration and animation may still need visual tuning after multi-hero browser playtest.
 5. SFX is not integrated yet.
    - No SFX was added in `v0.2-8`.
 6. Troop-count visual degradation is still deferred.
@@ -159,12 +182,12 @@ Current recorded build state:
    - animation skip
 
 ## Suggested Next Direction
-Suggested next task: visually tune Yi Sun-sin's first cut-in pass after browser verification.
+Suggested next task: add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin.
 
 Main candidates:
 
-1. Tune Yi Sun-sin cut-in timing / size / animation after visual test
-2. Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin
-3. SFX / battle sound effects
+1. Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin
+2. SFX / battle sound effects
+3. Tune cut-in duration / animation after multi-hero cut-in test
 4. `14x8` battlefield size test
 5. BGM fade / volume / mute options

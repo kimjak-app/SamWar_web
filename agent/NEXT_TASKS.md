@@ -1,18 +1,18 @@
 # Next Tasks
 
 ## Primary Next Session Target
-Tune Yi Sun-sin's first cut-in pass after a browser visual test.
+Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin.
 
 ## Priority Order
-1. Tune Yi Sun-sin cut-in timing / size / animation after visual test
-   - Validate the first `v0.2-8` pass in real browser flow.
-   - Adjust duration, image scale, and entry motion only as needed.
-2. Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin
+1. Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin
    - Reuse the metadata-driven cut-in path from `data/skills.js`.
    - Keep the presentation layer generic and avoid hero-hardcoded branching.
-3. SFX / battle sound effects
+2. SFX / battle sound effects
    - Keep as a follow-up candidate after the first cut-in visual pass.
    - Start small and avoid bundling too many systems at once.
+3. Tune cut-in duration / animation after multi-hero cut-in test
+   - Validate the full multi-hero presentation after more cut-in assets are integrated.
+   - Keep Yi Sun-sin's approved image size and subtle slash treatment unless a real issue appears.
 4. `14x8` battlefield size test
    - Current `10x6` board still feels compact.
    - Test larger battlefield size without jumping too far at once.

@@ -205,3 +205,42 @@
 - Updated `js/ui/battle_ui.js` and `css/main.css` to render a text-free diagonal brush-style overlay without using Phaser for the effect.
 - No SFX was added in this milestone.
 - Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8` complete.
+- Completed `v0.2-8a` Cut-in Bounds Fix.
+- Moved the cut-in overlay mount from the full battle screen scope into the central battlefield board container in `js/ui/battle_ui.js`.
+- Added a bounded board wrapper in `css/main.css` so the cut-in overlay now uses board-local absolute positioning with hidden overflow.
+- Changed cut-in image sizing from viewport-driven scaling to board-relative sizing so the image stays inside the central battlefield area.
+- Preserved the text-free, metadata-driven cut-in flow and kept skill resolution after the cut-in ends.
+- No battle rules, AI, Phaser rendering, BGM, or SFX logic were changed.
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8a` complete.
+- Completed `v0.2-8b` Yi Sun-sin Cut-in Size Tuning.
+- Updated only the `.skill-cutin-image` rule in `css/main.css` to reduce the cut-in image footprint inside the battlefield board.
+- Replaced oversized near-full-board image sizing with board-relative percentage sizing:
+  - `width: 52%`
+  - `max-width: 52%`
+  - `max-height: 58%`
+- Increased the cut-in image drop shadow slightly to preserve visual punch after the size reduction.
+- Yi Sun-sin's cut-in now feels less like a full-board poster and more like a battlefield insert while remaining clearly visible.
+- The cut-in remains bounded inside the central battlefield board and remains image-only.
+- No battle rules, AI, Phaser rendering, BGM, or SFX logic were changed.
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8b` complete.
+- Completed `v0.2-8c` Cut-in Background Slash Bounds Tuning.
+- Updated only the `.skill-cutin-overlay::before` and `.skill-cutin-overlay::after` rules in `css/main.css`.
+- Reduced the decorative diagonal background slash effect and constrained it with board-relative percentage sizing and positions.
+- Preserved Yi Sun-sin's approved `v0.2-8b` cut-in image size without changing the `.skill-cutin-image` sizing values.
+- The slash effect now stays within the central battlefield board area and acts as a supporting impact effect behind the image.
+- The cut-in remains image-only.
+- No battle rules, AI, Phaser rendering, BGM, or SFX logic were changed.
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8c` complete.
+- Completed `v0.2-8d` Cut-in Slash Subtle Tuning.
+- Updated only the `.skill-cutin-overlay::before` and `.skill-cutin-overlay::after` rules in `css/main.css`.
+- Made the decorative diagonal slash effect smaller and subtler by reducing:
+  - width
+  - height
+  - gradient intensity
+  - overall opacity
+- Adjusted the slash positions slightly inward so the effect remains a restrained supporting layer behind the cut-in image.
+- Preserved Yi Sun-sin's approved cut-in image size without changing the `.skill-cutin-image` sizing values.
+- The slash effect remains bounded inside the central battlefield board.
+- The cut-in remains image-only.
+- No battle rules, AI, Phaser rendering, BGM, or SFX logic were changed.
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8d` complete.

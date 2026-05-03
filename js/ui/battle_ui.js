@@ -119,14 +119,16 @@ function renderBattleShell(battleState) {
         <section class="battle-center-panel">
           <div class="battle-stage-panel battle-panel">
             <div class="battle-phaser-shell">
-              <div class="battle-phaser-host" data-battle-mount></div>
+              <div class="battle-phaser-host-wrap">
+                <div class="battle-phaser-host" data-battle-mount></div>
+                <div class="battle-board-overlay-layer" data-battle-overlay-layer></div>
+              </div>
             </div>
           </div>
         </section>
         <aside class="battle-right-panel" data-battle-right-panel></aside>
       </section>
       <footer class="battle-command-bar battle-panel" data-battle-command-bar></footer>
-      <div class="battle-overlay-layer" data-battle-overlay-layer></div>
     </main>
   `;
 }
