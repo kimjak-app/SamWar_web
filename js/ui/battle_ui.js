@@ -126,7 +126,20 @@ function renderBattleShell(battleState) {
         <aside class="battle-right-panel" data-battle-right-panel></aside>
       </section>
       <footer class="battle-command-bar battle-panel" data-battle-command-bar></footer>
+      <div class="battle-overlay-layer" data-battle-overlay-layer></div>
     </main>
+  `;
+}
+
+function renderSkillCutinOverlay(activeSkillCutin) {
+  if (!activeSkillCutin) {
+    return "";
+  }
+
+  return `
+    <div class="skill-cutin-overlay skill-cutin-overlay--${activeSkillCutin.style}" aria-hidden="true">
+      <img class="skill-cutin-image" src="${activeSkillCutin.image}" alt="" />
+    </div>
   `;
 }
 
@@ -305,6 +318,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
   const leftPanelElement = rootElement.querySelector("[data-battle-left-panel]");
   const rightPanelElement = rootElement.querySelector("[data-battle-right-panel]");
   const commandBarElement = rootElement.querySelector("[data-battle-command-bar]");
+  const overlayLayerElement = rootElement.querySelector("[data-battle-overlay-layer]");
   const mountElement = rootElement.querySelector("[data-battle-mount]");
 
   if (battleScreen) {
@@ -337,6 +351,10 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
         skillButtonLabel,
       },
     );
+  }
+
+  if (overlayLayerElement) {
+    overlayLayerElement.innerHTML = renderSkillCutinOverlay(battleState.activeSkillCutin);
   }
 
   if (mountElement) {

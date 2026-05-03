@@ -10,6 +10,9 @@ export const skills = [
     target: "enemy_all_in_range",
     rangeSource: "unit.skillRange",
     cooldown: 3,
+    cutinImage: "assets/skill_cutins/yi_sunsin_hakikjin.png",
+    cutinDurationMs: 1400,
+    cutinStyle: "diagonalBrush",
     description: "이순신 고유특기. 사정거리 안의 모든 적에게 포격 피해를 줍니다.",
   },
   {

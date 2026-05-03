@@ -188,3 +188,20 @@
   3. SFX / battle sound effects
   4. `14x8` battlefield size test
   5. BGM fade / volume / mute options
+- Completed `v0.2-8` Unique Skill Cut-in Overlay System.
+- Added cut-in metadata only to Yi Sun-sin's `학익진 포격` in `data/skills.js`:
+  - `cutinImage`
+  - `cutinDurationMs`
+  - `cutinStyle`
+- Added a controller-level active cut-in flow in `js/main.js`.
+- Skill cut-in flow is now:
+  - target click
+  - control lock
+  - image-only cut-in overlay
+  - cut-in delay
+  - actual skill resolution
+  - normal battle continuation
+- Preserved battle rules in `js/core` and kept the cut-in system metadata-driven rather than hero-hardcoded.
+- Updated `js/ui/battle_ui.js` and `css/main.css` to render a text-free diagonal brush-style overlay without using Phaser for the effect.
+- No SFX was added in this milestone.
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8` complete.

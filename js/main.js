@@ -36,6 +36,7 @@ import {
   playBattleBgm,
   playWorldMapBgm,
 } from "./audio/bgm_manager.js";
+import { getSkillById } from "./core/battle_skills.js";
 import { renderLayout } from "./ui/layout_ui.js";
 
 const appRoot = document.querySelector("#app");
@@ -47,6 +48,7 @@ if (!appRoot) {
 let appState = createInitialAppState();
 let autoBattleTimerId = null;
 let battleTempoLocked = false;
+let activeSkillCutin = null;
 const battleTempoTimerIds = new Set();
 
 const BATTLE_TEMPO = {
@@ -80,6 +82,7 @@ function clearBattleTempoTimers({ unlock = true } = {}) {
   }
 
   battleTempoTimerIds.clear();
+  activeSkillCutin = null;
 
   if (unlock) {
     battleTempoLocked = false;
@@ -111,8 +114,19 @@ function getRenderableAppState() {
     battle: {
       ...appState.battle,
       tempoLockActive: battleTempoLocked,
+      activeSkillCutin,
     },
   };
+}
+
+function getSelectedBattleSkill(battleState) {
+  const selectedUnit = battleState?.units.find((unit) => unit.id === battleState.selectedUnitId) ?? null;
+
+  if (!selectedUnit) {
+    return null;
+  }
+
+  return getSkillById(battleState.skills, selectedUnit.skillId);
 }
 
 function applyBattleState(nextBattleState) {
@@ -135,8 +149,82 @@ function finishPlayerFlow(nextBattleState) {
 }
 
 function finalizeBattleTempo(nextBattleState) {
+  activeSkillCutin = null;
   battleTempoLocked = false;
   finishPlayerFlow(nextBattleState);
+}
+
+function resolveActiveSkillCutin(cutinState) {
+  if (!cutinState) {
+    battleTempoLocked = false;
+    rerender();
+    return;
+  }
+
+  activeSkillCutin = null;
+
+  if (!appState.battle || appState.battle.id !== cutinState.battleId) {
+    battleTempoLocked = false;
+    rerender();
+    return;
+  }
+
+  const battleState = appState.battle;
+  const casterUnit = battleState.units.find((unit) => unit.id === cutinState.casterUnitId) ?? null;
+  const selectedSkill = getSelectedBattleSkill(battleState);
+  const targetUnit = cutinState.targetUnitId
+    ? battleState.units.find((unit) => unit.id === cutinState.targetUnitId) ?? null
+    : null;
+
+  if (
+    !casterUnit
+    || !casterUnit.isAlive
+    || battleState.selectedUnitId !== cutinState.casterUnitId
+    || !selectedSkill
+    || selectedSkill.id !== cutinState.skillId
+    || (cutinState.targetUnitId && (!targetUnit || !targetUnit.isAlive))
+  ) {
+    battleTempoLocked = false;
+    rerender();
+    return;
+  }
+
+  finalizeBattleTempo(useSelectedUnitSkill(battleState, cutinState.targetUnitId));
+}
+
+function startSkillCutinSequence(targetUnitId) {
+  if (!appState.battle || !appState.battle.selectedUnitId) {
+    return;
+  }
+
+  const selectedUnit = appState.battle.units.find((unit) => unit.id === appState.battle.selectedUnitId) ?? null;
+  const selectedSkill = getSelectedBattleSkill(appState.battle);
+
+  if (!selectedUnit || !selectedSkill?.cutinImage) {
+    finishPlayerFlow(useSelectedUnitSkill(appState.battle, targetUnitId));
+    return;
+  }
+
+  clearAutoBattleTimer();
+  clearBattleTempoTimers({ unlock: false });
+  battleTempoLocked = true;
+  activeSkillCutin = {
+    battleId: appState.battle.id,
+    casterUnitId: selectedUnit.id,
+    targetUnitId,
+    skillId: selectedSkill.id,
+    image: selectedSkill.cutinImage,
+    durationMs: selectedSkill.cutinDurationMs ?? 1400,
+    style: selectedSkill.cutinStyle ?? "default",
+  };
+  const scheduledCutinState = activeSkillCutin;
+  rerender();
+
+  scheduleBattleTempoTimer(
+    () => resolveActiveSkillCutin(scheduledCutinState),
+    scheduledCutinState.durationMs,
+    scheduledCutinState.battleId,
+  );
 }
 
 function resolveDelayedCounterattack(attackerUnitId, defenderUnitId, battleId) {
@@ -335,6 +423,13 @@ function rerender() {
     },
     onBattleUseSkill: (targetUnitId) => {
       if (!canUseManualBattleControls() || !appState.battle.selectedUnitId) {
+        return;
+      }
+
+      const selectedSkill = getSelectedBattleSkill(appState.battle);
+
+      if (selectedSkill?.cutinImage) {
+        startSkillCutinSequence(targetUnitId);
         return;
       }
 

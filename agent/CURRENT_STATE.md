@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.2-7o Battle Tempo Slowdown for Cut-in Prep`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.2-8 Unique Skill Cut-in Overlay System`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -27,6 +27,7 @@ Current recorded build state:
 - `v0.2-6b` Battle Command Bar + Side Info Layout Patch
 - `v0.2-7` Battle UI/UX Polish + Simple BGM Integration
 - `v0.2-7o` Battle Tempo Slowdown for Cut-in Prep
+- `v0.2-8` Unique Skill Cut-in Overlay System
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -73,6 +74,12 @@ Current recorded build state:
   - more spacing between enemy actions
   - slower but still functional auto-battle pacing
 - This slowdown is intended to prepare timing space for the upcoming unique-skill cut-in overlay system.
+- A text-free unique-skill cut-in overlay system is now added at the controller/UI layer.
+  - metadata-driven through `data/skills.js`
+  - image-only overlay with no text
+  - battle controls lock while the cut-in is visible
+  - the cut-in appears before the actual skill effect resolves
+  - first implementation is Yi Sun-sin's `학익진 포격`
 - Persistent Phaser mount is preserved:
   - same `battle.id` reuses the same Phaser canvas
   - auto battle no longer flickers
@@ -134,16 +141,14 @@ Current recorded build state:
 11. UI/BGM are now in usable MVP state, but polish is still ongoing.
 
 ## Known Issues / Improvement Candidates
-1. Unique-skill cut-in overlay system is still not implemented.
-   - The battle tempo was slowed first to create visual breathing room for it.
+1. Yi Sun-sin cut-in timing, size, and animation may need visual tuning after browser playtest.
 2. Basic attack and some unique skill ranges may overlap or share similar values.
    - Revisit later during balance and hero-skill design.
 3. BGM can be replaced by overwriting the same filenames.
    - Browser cache may require `Ctrl+F5`.
-4. Battlefield size test is still pending.
-   - Candidate: `14x8`
+4. Additional cut-in images are not integrated yet for the other heroes.
 5. SFX is not integrated yet.
-   - Keep it as a follow-up candidate after the cut-in system.
+   - No SFX was added in `v0.2-8`.
 6. Troop-count visual degradation is still deferred.
 7. Future UNIT roster panel should support hero portraits.
 8. Future settings may include:
@@ -154,12 +159,12 @@ Current recorded build state:
    - animation skip
 
 ## Suggested Next Direction
-Suggested next task: implement the unique-skill cut-in overlay system as the next focused battle presentation upgrade.
+Suggested next task: visually tune Yi Sun-sin's first cut-in pass after browser verification.
 
 Main candidates:
 
-1. Unique-skill cut-in overlay system
-2. First implementation for Yi Sun-sin's `학익진 포격` cut-in
+1. Tune Yi Sun-sin cut-in timing / size / animation after visual test
+2. Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin
 3. SFX / battle sound effects
 4. `14x8` battlefield size test
 5. BGM fade / volume / mute options
