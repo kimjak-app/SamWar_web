@@ -999,6 +999,89 @@ function applyAiAction(battleState, unitId) {
   return applyAiWait(battleState, actingUnit.id, action.facingDirection);
 }
 
+export function planNextEnemyAction(battleState) {
+  if (battleState.status !== "active" || battleState.turnOwner !== "enemy") {
+    return null;
+  }
+
+  const actingEnemy = battleState.units.find((unit) => unit.side === "enemy" && unit.isAlive && !unit.hasActed) ?? null;
+
+  if (!actingEnemy) {
+    return null;
+  }
+
+  const playerUnits = getPlayerUnits(battleState);
+
+  if (playerUnits.length === 0) {
+    return null;
+  }
+
+  const action = getAiTurnAction(battleState, actingEnemy);
+
+  if (!action) {
+    return {
+      type: "wait",
+      actorUnitId: actingEnemy.id,
+      targetUnitId: null,
+      movePosition: null,
+      facingDirection: actingEnemy.facing,
+    };
+  }
+
+  return {
+    ...action,
+    actorUnitId: action.actorUnitId ?? actingEnemy.id,
+  };
+}
+
+export function executePlannedEnemyAction(battleState, plannedAction) {
+  if (
+    battleState.status !== "active"
+    || battleState.turnOwner !== "enemy"
+    || !plannedAction?.actorUnitId
+  ) {
+    return battleState;
+  }
+
+  const actingUnit = getUnitById(battleState, plannedAction.actorUnitId);
+
+  if (!actingUnit || !actingUnit.isAlive || actingUnit.hasActed) {
+    return battleState;
+  }
+
+  if (plannedAction.type === "skill") {
+    let nextState = applySkill(battleState, actingUnit.id, plannedAction.targetUnitId ?? null);
+
+    if (plannedAction.facingDirection) {
+      nextState = updateUnit(nextState, actingUnit.id, (unit) => ({
+        ...unit,
+        facing: plannedAction.facingDirection,
+      }));
+    }
+
+    return setOutcomeStatus(nextState);
+  }
+
+  if (plannedAction.type === "strategy" && plannedAction.targetUnitId) {
+    return setOutcomeStatus(applyStrategy(battleState, actingUnit.id, plannedAction.targetUnitId));
+  }
+
+  if (plannedAction.type === "attack" && plannedAction.targetUnitId) {
+    return applyResolvedBasicAttack(battleState, actingUnit.id, plannedAction.targetUnitId);
+  }
+
+  if (plannedAction.type === "move" && plannedAction.movePosition) {
+    return applyAiMove(
+      battleState,
+      actingUnit.id,
+      plannedAction.movePosition,
+      plannedAction.facingDirection,
+    );
+  }
+
+  return applyAiWait(battleState, actingUnit.id, plannedAction.facingDirection);
+}
+
 export function endPlayerTurn(battleState) {
   if (battleState.status !== "active") {
     return battleState;
@@ -1028,23 +1111,13 @@ export function hasPendingEnemyActions(battleState) {
 }
 
 export function runNextEnemyAction(battleState) {
-  if (battleState.status !== "active" || battleState.turnOwner !== "enemy") {
-    return battleState;
-  }
+  const plannedAction = planNextEnemyAction(battleState);
 
-  const actingEnemy = battleState.units.find((unit) => unit.side === "enemy" && unit.isAlive && !unit.hasActed) ?? null;
-
-  if (!actingEnemy) {
-    return battleState;
-  }
-
-  const playerUnits = getPlayerUnits(battleState);
-
-  if (playerUnits.length === 0) {
+  if (!plannedAction) {
     return setOutcomeStatus(battleState);
   }
 
-  return applyAiAction(battleState, actingEnemy.id);
+  return executePlannedEnemyAction(battleState, plannedAction);
 }
 
 export function finishEnemyTurn(battleState) {

@@ -190,6 +190,8 @@ function buildSkillAction(battleState, unit) {
 
     return {
       type: "skill",
+      actorUnitId: unit.id,
+      skillId: skill.id,
       targetUnitId: null,
       movePosition: null,
       facingDirection: unit.facing,
@@ -199,6 +201,8 @@ function buildSkillAction(battleState, unit) {
   if (skill.effectType === "cannon_aoe") {
     return {
       type: "skill",
+      actorUnitId: unit.id,
+      skillId: skill.id,
       targetUnitId: null,
       movePosition: null,
       facingDirection: getDirectionFromPositions(unit, skillTargets[0]) ?? unit.facing,
@@ -213,6 +217,8 @@ function buildSkillAction(battleState, unit) {
 
   return {
     type: "skill",
+    actorUnitId: unit.id,
+    skillId: skill.id,
     targetUnitId: target.id,
     movePosition: null,
     facingDirection: getDirectionFromPositions(unit, target) ?? unit.facing,
@@ -229,6 +235,7 @@ function buildAttackAction(battleState, unit) {
 
   return {
     type: "attack",
+    actorUnitId: unit.id,
     targetUnitId: target.id,
     movePosition: null,
     facingDirection: getDirectionFromPositions(unit, target) ?? unit.facing,
@@ -249,6 +256,7 @@ function buildStrategyAction(battleState, unit) {
 
   return {
     type: "strategy",
+    actorUnitId: unit.id,
     targetUnitId: target.id,
     movePosition: null,
     facingDirection: getDirectionFromPositions(unit, target) ?? unit.facing,
@@ -259,6 +267,7 @@ export function getAiTurnAction(battleState, unit) {
   if (!unit || !unit.isAlive || unit.hasActed) {
     return {
       type: "wait",
+      actorUnitId: unit?.id ?? null,
       targetUnitId: null,
       movePosition: null,
       facingDirection: unit?.facing ?? null,
@@ -288,9 +297,20 @@ export function getAiTurnAction(battleState, unit) {
   if (!bestTarget) {
     return {
       type: "wait",
+      actorUnitId: unit.id,
       targetUnitId: null,
       movePosition: null,
       facingDirection: unit.facing,
+    };
+  }
+
+  if (unit.hasMoved) {
+    return {
+      type: "wait",
+      actorUnitId: unit.id,
+      targetUnitId: null,
+      movePosition: null,
+      facingDirection: getDirectionFromPositions(unit, bestTarget) ?? unit.facing,
     };
   }
 
@@ -299,6 +319,7 @@ export function getAiTurnAction(battleState, unit) {
   if (bestMove) {
     return {
       type: "move",
+      actorUnitId: unit.id,
       targetUnitId: null,
       movePosition: bestMove,
       facingDirection: getDirectionFromPositions(bestMove, bestTarget) ?? unit.facing,
@@ -307,6 +328,7 @@ export function getAiTurnAction(battleState, unit) {
 
   return {
     type: "wait",
+    actorUnitId: unit.id,
     targetUnitId: null,
     movePosition: null,
     facingDirection: getDirectionFromPositions(unit, bestTarget) ?? unit.facing,

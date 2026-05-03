@@ -1,18 +1,18 @@
 # Next Tasks
 
 ## Primary Next Session Target
-Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin.
+Browser-test and tune enemy cut-in timing if needed.
 
 ## Priority Order
-1. Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin
-   - Reuse the metadata-driven cut-in path from `data/skills.js`.
-   - Keep the presentation layer generic and avoid hero-hardcoded branching.
+1. Browser-test and tune enemy cut-in timing if needed
+   - Validate sequential enemy skill flow with Nobunaga and Kenshin in real battle turns.
+   - Confirm enemy skill cut-ins always resolve before the stored skill effect.
 2. SFX / battle sound effects
    - Keep as a follow-up candidate after the first cut-in visual pass.
    - Start small and avoid bundling too many systems at once.
-3. Tune cut-in duration / animation after multi-hero cut-in test
-   - Validate the full multi-hero presentation after more cut-in assets are integrated.
-   - Keep Yi Sun-sin's approved image size and subtle slash treatment unless a real issue appears.
+3. Tune cut-in duration / animation after all hero cut-ins are tested
+   - Validate the full multi-hero presentation after browser checks.
+   - Keep the approved image size and subtle slash treatment unless a real issue appears.
 4. `14x8` battlefield size test
    - Current `10x6` board still feels compact.
    - Test larger battlefield size without jumping too far at once.

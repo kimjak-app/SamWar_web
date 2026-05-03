@@ -1,17 +1,20 @@
 # Handoff to ChatCoach
 
 ## Completed Task
-`v0.2-8d Cut-in Slash Subtle Tuning` was completed.
+`v0.2-9 Sequential Unique Skill Cut-ins for All MVP Heroes` was completed.
 
 ## Changed Files
-- `css/main.css`
+- `data/skills.js`
+- `js/main.js`
+- `js/core/battle_ai.js`
+- `js/core/battle_rules.js`
 - `agent/CURRENT_STATE.md`
 - `agent/SESSION_LOG.md`
 - `agent/HANDOFF_TO_CHATCOACH.md`
 - `agent/NEXT_TASKS.md`
 
 ## Current State
-- Current recorded milestone is `v0.2-8d Cut-in Slash Subtle Tuning complete`.
+- Current recorded milestone is `v0.2-9 Sequential Unique Skill Cut-ins for All MVP Heroes complete`.
 - World map remains fullscreen with 4 MVP cities: `낙양`, `평양`, `한성`, `교토`.
 - World map attack loop works: select enemy city -> enter battle -> win or retreat -> return to world map -> victory occupies city.
 - Battle remains Phaser-rendered while core rules stay in `js/core`.
@@ -72,6 +75,12 @@
   - the slash remains bounded inside the central battlefield board
   - the slash no longer visually dominates the cut-in image
   - the cut-in remains image-only
+- All four MVP unique skills now have cut-in metadata.
+  - Jeong Do-jeon's player-side `개혁령` cut-in now works through the existing player cut-in flow
+  - Nobunaga and Kenshin now show unique-skill cut-ins during enemy AI actions
+  - enemy skill cut-ins pause the enemy sequence before the skill effect resolves
+  - enemy actions remain sequential: cut-in -> skill effect -> next enemy action
+  - cut-ins remain image-only and data-driven
 - Simple BGM is integrated:
   - `assets/audio/world_map_bgm.mp3`
   - `assets/audio/battle_bgm.mp3`
@@ -85,15 +94,18 @@
 - No SFX was added yet.
 
 ## Verification Result
-- No JS syntax check was required because only CSS and agent docs changed.
-- Existing cut-in timing flow was preserved while only the decorative slash pseudo-elements were made smaller and subtler.
-- Yi Sun-sin's approved `v0.2-8b` cut-in image size was preserved.
-- Agent docs were updated to reflect the latest `v0.2-8d` state and next priorities.
+- `node --check data/skills.js` passed.
+- `node --check js/main.js` passed.
+- `node --check js/core/battle_ai.js` passed.
+- `node --check js/core/battle_rules.js` passed.
+- Existing Yi Sun-sin player cut-in flow was preserved and Jeong Do-jeon now uses the same metadata-driven cut-in path.
+- Enemy skill actions now pause for the cut-in before resolving the stored skill action.
+- Agent docs were updated to reflect the latest `v0.2-9` state and next priorities.
 - This handoff file includes the next chat start prompt.
 
 ## Known Issues
-- Additional cut-in images are not added yet for Jeong Do-jeon, Nobunaga, and Kenshin.
-- Yi Sun-sin cut-in duration and animation may still need visual tuning after multi-hero browser verification.
+- Enemy cut-in timing may still need browser tuning after real playtest.
+- Cut-in duration and animation may still need tuning after all hero cut-ins are browser-tested.
 - Basic attack and some unique skill ranges may overlap or use similar values; revisit later during balance and hero-skill design.
 - BGM can be replaced by overwriting the same filenames, but browser cache may require `Ctrl+F5`.
 - `14x8` battlefield size test is still pending.
@@ -110,11 +122,14 @@
 - Confirm hero, skill, roster, and strategy content remain data-driven.
 - Confirm unique skills remain owner-locked and click-to-trigger.
 - Confirm `학익진 포격` now shows an image-only cut-in before damage resolves.
+- Confirm `개혁령` now also shows an image-only cut-in before the ally buff resolves.
 - Confirm the cut-in is confined to the central battlefield board area only.
 - Confirm Yi Sun-sin's cut-in image now appears significantly smaller than before.
 - Confirm Yi Sun-sin's cut-in image size remains unchanged from the approved `v0.2-8b` result.
 - Confirm the decorative diagonal slash effect is smaller and subtler than before.
 - Confirm the slash effect remains inside the battlefield board and no longer visually dominates the cut-in.
+- Confirm Nobunaga and Kenshin enemy skill cut-ins appear before their skill effects resolve.
+- Confirm enemy actions remain sequential and do not re-roll a different AI action after a cut-in.
 - Confirm the left panel, right panel, and command bar are not covered.
 - Confirm the battlefield remains partially visible behind the cut-in.
 - Confirm the cut-in contains no text and locks controls while visible.
@@ -122,13 +137,13 @@
 - Confirm the next task should stay focused and avoid adding too many systems at once.
 
 ## Suggested Next Task
-Suggested next task: add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin.
+Suggested next task: browser-test and tune enemy cut-in timing if needed.
 
 Main candidates:
 
-1. Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin
+1. Browser-test and tune enemy cut-in timing if needed
 2. SFX / battle sound effects
-3. Tune cut-in duration / animation after multi-hero cut-in test
+3. Tune cut-in duration / animation after all hero cut-ins are tested
 4. `14x8` battlefield size test
 5. BGM fade / volume / mute options
 
@@ -139,7 +154,7 @@ GitHub 저장소는 kimjak-app/SamWar_web이고, 공통 룰은 kimjak-app/_rules
 프로젝트 상태는 agent/CURRENT_STATE.md, agent/SESSION_LOG.md, agent/HANDOFF_TO_CHATCOACH.md, agent/NEXT_TASKS.md 기준으로 이어가자.
 
 현재 상태:
-- v0.2-8d Cut-in Slash Subtle Tuning까지 완료.
+- v0.2-9 Sequential Unique Skill Cut-ins for All MVP Heroes까지 완료.
 - 월드맵 4도시 MVP 작동.
 - 월드맵 → 전투 → 승리/후퇴 → 월드맵 복귀 루프 작동.
 - 전투 엔진은 Phaser + JS core rules 구조.
@@ -150,6 +165,7 @@ GitHub 저장소는 kimjak-app/SamWar_web이고, 공통 룰은 kimjak-app/_rules
 - 이순신 컷인 이미지는 이전보다 더 작아져 전장 삽입 연출에 가깝게 조정됨.
 - 장식용 대각선 배경 슬래시 효과도 더 작아지고 전장 보드 안에 머물도록 조정됨.
 - 장식용 슬래시 효과는 추가로 더 작고 더 은은하게 조정되어 컷인 이미지를 덜 압도하게 됨.
+- 네 명의 MVP 영웅 모두 고유 특기 컷인 메타데이터를 가지며, 적 AI 특기 컷인도 순차적으로 `컷인 -> 스킬 효과 -> 다음 행동` 흐름으로 동작하도록 확장됨.
 - 컷인 중에는 전투 조작이 잠기고, SFX는 아직 추가되지 않음.
 - Direct Codex Paste Mode로 작업 중이고 CODEX_INBOX.md는 메인 작업 소스로 쓰지 않음.
 

@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.2-8d Cut-in Slash Subtle Tuning`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.2-9 Sequential Unique Skill Cut-ins for All MVP Heroes`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -32,6 +32,7 @@ Current recorded build state:
 - `v0.2-8b` Yi Sun-sin Cut-in Size Tuning
 - `v0.2-8c` Cut-in Background Slash Bounds Tuning
 - `v0.2-8d` Cut-in Slash Subtle Tuning
+- `v0.2-9` Sequential Unique Skill Cut-ins for All MVP Heroes
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -103,6 +104,12 @@ Current recorded build state:
   - the slash remains bounded inside the central battlefield board
   - the slash no longer visually dominates the cut-in image
   - the cut-in remains image-only
+- All four MVP unique skills now have cut-in metadata.
+  - Yi Sun-sin and Jeong Do-jeon use the existing player-side cut-in flow
+  - Nobunaga and Kenshin now show cut-ins during enemy AI skill actions
+  - enemy skill cut-ins pause the enemy sequence before the skill effect resolves
+  - enemy actions remain sequential: cut-in -> skill effect -> next enemy action
+  - cut-ins remain image-only and data-driven
 - Persistent Phaser mount is preserved:
   - same `battle.id` reuses the same Phaser canvas
   - auto battle no longer flickers
@@ -164,12 +171,12 @@ Current recorded build state:
 11. UI/BGM are now in usable MVP state, but polish is still ongoing.
 
 ## Known Issues / Improvement Candidates
-1. Additional hero cut-in images are not integrated yet for Jeong Do-jeon, Nobunaga, and Kenshin.
+1. Enemy cut-in timing may still need browser tuning after real playtest.
 2. Basic attack and some unique skill ranges may overlap or share similar values.
    - Revisit later during balance and hero-skill design.
 3. BGM can be replaced by overwriting the same filenames.
    - Browser cache may require `Ctrl+F5`.
-4. Yi Sun-sin cut-in duration and animation may still need visual tuning after multi-hero browser playtest.
+4. Cut-in duration and animation may still need tuning after all hero cut-ins are browser-tested.
 5. SFX is not integrated yet.
    - No SFX was added in `v0.2-8`.
 6. Troop-count visual degradation is still deferred.
@@ -182,12 +189,12 @@ Current recorded build state:
    - animation skip
 
 ## Suggested Next Direction
-Suggested next task: add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin.
+Suggested next task: browser-test and tune enemy cut-in timing if needed.
 
 Main candidates:
 
-1. Add cut-in images for Jeong Do-jeon, Nobunaga, and Kenshin
+1. Browser-test and tune enemy cut-in timing if needed
 2. SFX / battle sound effects
-3. Tune cut-in duration / animation after multi-hero cut-in test
+3. Tune cut-in duration / animation after all hero cut-ins are tested
 4. `14x8` battlefield size test
 5. BGM fade / volume / mute options

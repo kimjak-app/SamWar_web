@@ -244,3 +244,21 @@
 - The cut-in remains image-only.
 - No battle rules, AI, Phaser rendering, BGM, or SFX logic were changed.
 - Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8d` complete.
+- Completed `v0.2-9` Sequential Unique Skill Cut-ins for All MVP Heroes.
+- Added cut-in metadata in `data/skills.js` for:
+  - Jeong Do-jeon / `개혁령`
+  - Nobunaga / `화승총 사격`
+  - Kenshin / `돌격`
+- Preserved Yi Sun-sin's approved cut-in image size and slash tuning.
+- Split enemy AI turn handling into planned-action and execute-action phases so cut-ins can pause the exact stored enemy skill action before resolution.
+- Updated `js/main.js` so enemy skill actions with cut-in metadata now show the cut-in first, then resolve the skill effect, then continue the enemy sequence.
+- Preserved the existing player-side cut-in flow and extended it to Jeong Do-jeon's `개혁령` through metadata only.
+- Enemy actions now remain sequential during skill cut-ins: cut-in -> skill effect -> next enemy action.
+- No SFX was added yet.
+- No battle damage, AI scoring, movement, facing, strategy, Phaser rendering, or BGM logic was intentionally changed.
+- Ran syntax checks:
+  - `node --check data/skills.js`
+  - `node --check js/main.js`
+  - `node --check js/core/battle_ai.js`
+  - `node --check js/core/battle_rules.js`
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9` complete.

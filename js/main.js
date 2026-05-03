@@ -12,13 +12,14 @@ import {
   cancelBattleActionMode,
   cancelPendingMove,
   defendSelectedUnit,
+  executePlannedEnemyAction,
   finishEnemyTurn,
   enterAttackMode,
   endPlayerTurn,
   hasPendingEnemyActions,
+  planNextEnemyAction,
   performAutoBattleStep,
   resolvePendingCounter,
-  runNextEnemyAction,
   enterSkillMode,
   enterStrategyMode,
   moveSelectedUnit,
@@ -154,6 +155,28 @@ function finalizeBattleTempo(nextBattleState) {
   finishPlayerFlow(nextBattleState);
 }
 
+function continueEnemyTurnSequence(nextBattleState, battleId) {
+  applyBattleState(nextBattleState);
+
+  if (nextBattleState.status !== "active") {
+    battleTempoLocked = false;
+    rerender();
+    return;
+  }
+
+  if (!hasPendingEnemyActions(nextBattleState)) {
+    battleTempoLocked = false;
+    applyBattleState(finishEnemyTurn(nextBattleState));
+    return;
+  }
+
+  scheduleBattleTempoTimer(
+    () => stepEnemyTurnSequence(battleId),
+    BATTLE_TEMPO.enemyActionDelayMs,
+    battleId,
+  );
+}
+
 function resolveActiveSkillCutin(cutinState) {
   if (!cutinState) {
     battleTempoLocked = false;
@@ -170,6 +193,13 @@ function resolveActiveSkillCutin(cutinState) {
   }
 
   const battleState = appState.battle;
+
+  if (cutinState.source === "enemy") {
+    const nextBattleState = executePlannedEnemyAction(battleState, cutinState.plannedAction);
+    continueEnemyTurnSequence(nextBattleState, cutinState.battleId);
+    return;
+  }
+
   const casterUnit = battleState.units.find((unit) => unit.id === cutinState.casterUnitId) ?? null;
   const selectedSkill = getSelectedBattleSkill(battleState);
   const targetUnit = cutinState.targetUnitId
@@ -227,6 +257,37 @@ function startSkillCutinSequence(targetUnitId) {
   );
 }
 
+function startEnemySkillCutinSequence(plannedAction, selectedSkill) {
+  if (!appState.battle || !plannedAction?.actorUnitId || !selectedSkill?.cutinImage) {
+    return false;
+  }
+
+  clearAutoBattleTimer();
+  clearBattleTempoTimers({ unlock: false });
+  battleTempoLocked = true;
+  activeSkillCutin = {
+    source: "enemy",
+    battleId: appState.battle.id,
+    casterUnitId: plannedAction.actorUnitId,
+    targetUnitId: plannedAction.targetUnitId ?? null,
+    skillId: plannedAction.skillId,
+    plannedAction,
+    image: selectedSkill.cutinImage,
+    durationMs: selectedSkill.cutinDurationMs ?? 1400,
+    style: selectedSkill.cutinStyle ?? "default",
+  };
+  const scheduledCutinState = activeSkillCutin;
+  rerender();
+
+  scheduleBattleTempoTimer(
+    () => resolveActiveSkillCutin(scheduledCutinState),
+    scheduledCutinState.durationMs,
+    scheduledCutinState.battleId,
+  );
+
+  return true;
+}
+
 function resolveDelayedCounterattack(attackerUnitId, defenderUnitId, battleId) {
   scheduleBattleTempoTimer(() => {
     const resolvedBattleState = resolvePendingCounter(appState.battle, attackerUnitId, defenderUnitId);
@@ -241,26 +302,24 @@ function stepEnemyTurnSequence(battleId) {
     return;
   }
 
-  const nextBattleState = runNextEnemyAction(appState.battle);
-  applyBattleState(nextBattleState);
+  const plannedAction = planNextEnemyAction(appState.battle);
 
-  if (nextBattleState.status !== "active") {
+  if (!plannedAction) {
     battleTempoLocked = false;
-    rerender();
+    applyBattleState(finishEnemyTurn(appState.battle));
     return;
   }
 
-  if (!hasPendingEnemyActions(nextBattleState)) {
-    battleTempoLocked = false;
-    applyBattleState(finishEnemyTurn(nextBattleState));
-    return;
+  if (plannedAction.type === "skill" && plannedAction.skillId) {
+    const selectedSkill = getSkillById(appState.battle.skills, plannedAction.skillId);
+
+    if (selectedSkill?.cutinImage && startEnemySkillCutinSequence(plannedAction, selectedSkill)) {
+      return;
+    }
   }
 
-  scheduleBattleTempoTimer(
-    () => stepEnemyTurnSequence(battleId),
-    BATTLE_TEMPO.enemyActionDelayMs,
-    battleId,
-  );
+  const nextBattleState = executePlannedEnemyAction(appState.battle, plannedAction);
+  continueEnemyTurnSequence(nextBattleState, battleId);
 }
 
 function startEnemyTurnSequence(enemyTurnState) {
