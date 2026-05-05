@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.3-2b Safe Battlefield Asset Source Switch`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.3-2c Battlefield Hero Portrait HQ Asset Activation`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -50,6 +50,7 @@ Current recorded build state:
 - `v0.3-2a` Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch
 - `v0.3-2b` Safe Battlefield HUD Micro Tuning
 - `v0.3-2b` Safe Battlefield Asset Source Switch
+- `v0.3-2c` Battlefield Hero Portrait HQ Asset Activation
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -139,7 +140,12 @@ Current recorded build state:
 - Battlefield troop text is now simplified from `병력 110 / 110` to `110 / 110` with the facing arrow shown inline, and HP bars are thinner and placed closer to the unit sprite.
 - Portrait badges are now 32px with a thin dark/black border, while skill cooldown/status icon redesign remains deferred and battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved in `v0.3-2`.
 - `battlefieldPortraitImage` is still copied into battle units so separate battlefield-specific portrait assets remain available for later use.
-- `v0.3-2b` Safe Battlefield Asset Source Switch now keeps battlefield portrait badge rendering on the existing higher-quality `portraitImage` source instead of the lower-quality `battlefieldPortraitImage` source.
+- `v0.3-2c` Battlefield Hero Portrait HQ Asset Activation now re-enables the dedicated battlefield portrait source for battlefield badges:
+  - high-quality Lanczos-processed 128px battlefield portrait assets are activated for battlefield badges
+  - `getBattlefieldPortraitPath()` now uses `battlefieldPortraitImage` first and `portraitImage` as fallback
+  - existing 256px battlefield unit token sources from `v0.3-2b` are preserved
+  - Phaser rendering, filter, scale, and HUD settings were intentionally not touched
+  - battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved
 - Battlefield portrait frame intensity was first reduced in `v0.3-2a`.
 - `v0.3-2b` safely tightens the compact battlefield HUD from that restored stable baseline:
   - portrait border is reduced again to an almost invisible dark outline
@@ -277,14 +283,13 @@ Current recorded build state:
    - animation skip
 
 ## Suggested Next Direction
-Suggested next task: `Browser-test new 256 battlefield unit token quality`.
+Suggested next task: `Browser-test HQ battlefield hero portrait clarity`.
 
 Main candidates:
 
-1. Browser-test new 256 battlefield unit token quality
+1. Browser-test HQ battlefield hero portrait clarity
 2. Tune battlefield portrait/arrow/HP offsets if needed
-3. Create higher-quality battlefield portrait assets later if desired
-4. Add status effect icons
-5. Add hero portraits to world-map city / garrison UI
-6. Defense battle UX polish
-7. SFX / battle sound effects
+3. Add status effect icons
+4. Add hero portraits to world-map city / garrison UI
+5. Defense battle UX polish
+6. SFX / battle sound effects

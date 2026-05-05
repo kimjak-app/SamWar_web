@@ -2,6 +2,19 @@
 
 ## 2026-05-05
 
+- Completed `v0.3-2c Battlefield Hero Portrait HQ Asset Activation`.
+- Updated `js/phaser/battle_scene.js` so battlefield hero badges now use `unit.battlefieldPortraitImage` first and `unit.portraitImage` as fallback again.
+- Confirmed all four MVP heroes in `data/heroes.js` already had the correct `battlefieldPortraitImage` paths:
+  - `assets/portraits_battlefield/yi_sunsin_battlefield.png`
+  - `assets/portraits_battlefield/jeong_dojeon_battlefield.png`
+  - `assets/portraits_battlefield/nobunaga_battlefield.png`
+  - `assets/portraits_battlefield/kenshin_battlefield.png`
+- Activated the newly replaced high-quality Lanczos-processed 128px battlefield portrait assets for battlefield badge rendering without changing badge size, border, position, or HUD offsets.
+- Preserved the existing 256px battlefield unit token sources from `v0.3-2b`.
+- Intentionally did not touch Phaser rendering filters, `pixelArt`, `NEAREST`, texture filtering, scale logic, or HUD layout.
+- Preserved battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic.
+- Ran `node --check js/phaser/battle_scene.js`.
+- Ran `node --check data/heroes.js`.
 - Completed `v0.3-2b Safe Battlefield Asset Source Switch`.
 - Updated only `js/phaser/battle_scene.js` for source switching:
   - battlefield unit sprites now use dedicated 256x256 battlefield token assets from `assets/unit_tokens_battlefield/`

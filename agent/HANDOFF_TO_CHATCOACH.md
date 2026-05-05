@@ -1,7 +1,7 @@
 # Handoff to ChatCoach
 
 ## Completed Task
-`v0.3-2b Safe Battlefield Asset Source Switch` was completed.
+`v0.3-2c Battlefield Hero Portrait HQ Asset Activation` was completed.
 
 ## Changed Files
 - `js/phaser/battle_scene.js`
@@ -11,7 +11,7 @@
 - `agent/NEXT_TASKS.md`
 
 ## Current State
-- Current recorded milestone is `v0.3-2b Safe Battlefield Asset Source Switch complete`.
+- Current recorded milestone is `v0.3-2c Battlefield Hero Portrait HQ Asset Activation complete`.
 - World map remains fullscreen with 4 MVP cities: `낙양`, `평양`, `한성`, `교토`.
 - World map attack loop still uses the pre-battle choice flow:
   - select enemy city
@@ -37,8 +37,10 @@
   - `assets/unit_tokens_battlefield/unit_red_battlefield.png`
 - Old unit assets in `assets/units/` were intentionally kept and not deleted.
 - Battlefield units now also show compact 32px hero portrait badges near the unit sprite.
-- Battlefield portrait badges now use the existing higher-quality `portraitImage` source for stability and quality.
-- Low-quality `battlefieldPortraitImage` assets remain preserved in data but are not used for battlefield badge rendering in this patch.
+- Battlefield portrait badges now use the dedicated battlefield portrait source again:
+  - `battlefieldPortraitImage` is preferred
+  - `portraitImage` remains the fallback
+  - the newly replaced high-quality Lanczos-processed 128px battlefield portrait assets are now active for battlefield badges
 - Battlefield unit name labels are now removed from the Phaser battlefield.
 - Battlefield troop text remains simplified to `current / max`.
 - Battlefield portrait badge border is now reduced further to an almost invisible dark outline.
@@ -46,6 +48,7 @@
 - Battlefield HP bar and troop number are now moved closer to the unit sprite for a tighter compact layout.
 - Battlefield cooldown text is hidden for now, and status icon redesign remains intentionally deferred.
 - Phaser rendering filters, `pixelArt`, `NEAREST`, texture filtering, and global sharpness settings were intentionally not touched in this patch.
+- Phaser scale logic, badge display sizing, and HUD offsets were also intentionally not touched in this patch.
 - Click/hit-zone behavior remains intact.
 - Enemy invasion candidates are based on connected enemy-owned and player-owned cities only.
 - Invasion choice reuses the existing manual/auto battle choice structure:
@@ -61,12 +64,13 @@
 
 ## Verification Result
 - `node --check js/phaser/battle_scene.js` passed.
-- Agent docs were updated to reflect the latest `v0.3-2b` state and next priorities.
+- `node --check data/heroes.js` passed.
+- Agent docs were updated to reflect the latest `v0.3-2c` state and next priorities.
 
 ## Known Issues
 - Browser verification for battlefield portrait readability and spacing is still pending.
 - Browser verification for the new 256 battlefield unit token quality is still pending.
-- Browser verification that battlefield badges are now using the 512px `portraitImage` source is still pending.
+- Browser verification that battlefield badges are now using the HQ `battlefieldPortraitImage` source is still pending.
 - Browser verification for the safer portrait-border softness and tighter arrow / HP / troop placement is still pending.
 - Browser verification for hero portrait readability and spacing is still pending.
 - Browser verification for the new world turn + enemy invasion loop is still pending.
@@ -89,7 +93,8 @@
 - Confirm blue/player battlefield units use `unit_blue_battlefield.png`.
 - Confirm red/enemy battlefield units use `unit_red_battlefield.png`.
 - Confirm old unit assets remain untouched in `assets/units/`.
-- Confirm battlefield portrait badges use the existing 512px `portraitImage` source rather than the low-quality battlefield portrait source.
+- Confirm battlefield portrait badges use `battlefieldPortraitImage` first and `portraitImage` only as fallback.
+- Confirm the HQ battlefield portrait assets look sharper/cleaner than the temporary `portraitImage` fallback state.
 - Confirm the battlefield portrait frame feels almost absent and no yellow/gold frame remains.
 - Confirm the facing arrow above the unit now sits closer without overlapping the portrait badge or unit sprite.
 - Confirm the HP bar plus troop number sit closer to the unit and still feel readable without overlap.
@@ -114,17 +119,16 @@
 - Confirm no stat rebalance, cut-in timing change, or world-turn/invasion system was bundled into this patch.
 
 ## Suggested Next Task
-Suggested next task: `Browser-test new 256 battlefield unit token quality`.
+Suggested next task: `Browser-test HQ battlefield hero portrait clarity`.
 
 Main candidates:
 
-1. Browser-test new 256 battlefield unit token quality
+1. Browser-test HQ battlefield hero portrait clarity
 2. Tune battlefield portrait/arrow/HP offsets if needed
-3. Create higher-quality battlefield portrait assets later if desired
-4. Add status effect icons
-5. Add hero portraits to world-map city / garrison UI
-6. Defense battle UX polish
-7. SFX / battle sound effects
+3. Add status effect icons
+4. Add hero portraits to world-map city / garrison UI
+5. Defense battle UX polish
+6. SFX / battle sound effects
 
 ## New Chat Start Prompt
 채코치, SamWar_web 다음 세션 시작.
@@ -133,11 +137,12 @@ GitHub 저장소는 kimjak-app/SamWar_web이고, 공통 룰은 kimjak-app/_rules
 프로젝트 상태는 agent/CURRENT_STATE.md, agent/SESSION_LOG.md, agent/HANDOFF_TO_CHATCOACH.md, agent/NEXT_TASKS.md 기준으로 이어가자.
 
 현재 상태:
-- v0.3-2b Safe Battlefield Asset Source Switch까지 완료.
+- v0.3-2c Battlefield Hero Portrait HQ Asset Activation까지 완료.
 - 전장 유닛 스프라이트는 이제 dedicated 256x256 battlefield token asset을 사용한다.
 - 기존 `assets/units/` 구 유닛 에셋은 백업/롤백용으로 유지되고 삭제하지 않았다.
 - `battlefieldPortraitImage`가 hero data와 battle unit 양쪽에 추가됐다.
-- 하지만 이번 패치에서는 저화질 128px battlefield portrait 대신 기존 512px `portraitImage`를 전장 badge source로 사용한다.
+- 새로 교체된 HQ Lanczos 128px battlefield portrait asset을 전장 badge source로 다시 활성화했다.
+- 전장 badge portrait 선택은 이제 `battlefieldPortraitImage` 우선, `portraitImage` fallback이다.
 - portrait frame은 거의 안 보이지 않을 정도의 dark outline로 더 줄였다.
 - facing arrow는 유닛 위를 유지하면서 더 가까이 붙였고 HP bar와 troop number도 sprite 쪽으로 더 당겼다.
 - Phaser rendering filter / pixelArt / NEAREST / global sharpness 설정은 이번 패치에서 의도적으로 건드리지 않았다.

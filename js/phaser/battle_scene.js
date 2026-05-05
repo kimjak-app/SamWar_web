@@ -122,7 +122,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
     }
 
     getBattlefieldPortraitPath(unit) {
-      return unit.portraitImage ?? null;
+      return unit.battlefieldPortraitImage ?? unit.portraitImage ?? null;
     }
 
     preload() {
