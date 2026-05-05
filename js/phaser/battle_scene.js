@@ -92,6 +92,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
   const BATTLEFIELD_FALLBACK_KEY = "battlefield-mvp";
   const PLAYER_TOKEN_KEY = "unit-player-mvp";
   const ENEMY_TOKEN_KEY = "unit-enemy-mvp";
+  const PORTRAIT_TEXTURE_PREFIX = "battle-portrait";
 
   return class BattleScene extends PhaserLib.Scene {
     constructor() {
@@ -116,6 +117,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       };
     }
 
+    getPortraitTextureKey(unit) {
+      return `${PORTRAIT_TEXTURE_PREFIX}-${unit.heroId ?? unit.id}`;
+    }
+
     preload() {
       if (!this.textures.exists(BATTLEFIELD_KEY)) {
         this.load.image(BATTLEFIELD_KEY, "assets/battle/battlefield_14x8_mvp.png");
@@ -132,6 +137,18 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       if (!this.textures.exists(ENEMY_TOKEN_KEY)) {
         this.load.image(ENEMY_TOKEN_KEY, "assets/units/unit_enemy_mvp.png");
       }
+
+      this.battleState.units.forEach((unit) => {
+        if (!unit.portraitImage) {
+          return;
+        }
+
+        const portraitTextureKey = this.getPortraitTextureKey(unit);
+
+        if (!this.textures.exists(portraitTextureKey)) {
+          this.load.image(portraitTextureKey, unit.portraitImage);
+        }
+      });
     }
 
     syncBattleState(nextBattleState, nextCallbacks = {}) {
@@ -458,9 +475,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         );
         const tokenKey = unit.side === "player" ? PLAYER_TOKEN_KEY : ENEMY_TOKEN_KEY;
         const tokenSprite = this.createUnitTokenSprite(unit, tokenKey, fillColor);
+        const portraitBadge = this.createUnitPortraitBadge(unit);
         const hitZone = this.add.zone(0, 8, 90, 110).setOrigin(0.5, 0.5);
 
-        unitGroup.add([selectionRing, tokenSprite, hpBarTrack, hpBarFill, facingText, label, hpText, cooldownText, hitZone]);
+        unitGroup.add([selectionRing, tokenSprite, portraitBadge, hpBarTrack, hpBarFill, facingText, label, hpText, cooldownText, hitZone]);
 
         if (unit.isDefending) {
           unitGroup.add(this.add.text(0, -60, "방어", {
@@ -607,6 +625,32 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       }
 
       return this.add.circle(0, 10, 26, fillColor, 0.96).setStrokeStyle(4, 0xf3ead9, 0.92);
+    }
+
+    createUnitPortraitBadge(unit) {
+      const badge = this.add.container(-28, -18);
+      const badgeFrame = this.add.rectangle(0, 0, 32, 32, 0x0d1622, 0.94)
+        .setStrokeStyle(2, 0xf8d798, 0.72);
+      badge.add(badgeFrame);
+
+      const portraitTextureKey = this.getPortraitTextureKey(unit);
+
+      if (unit.portraitImage && this.textures.exists(portraitTextureKey)) {
+        const portraitImage = this.add.image(0, 0, portraitTextureKey)
+          .setDisplaySize(28, 28);
+        badge.add(portraitImage);
+      } else {
+        const fallbackText = this.add.text(0, 0, "?", {
+          color: "#f8d798",
+          fontFamily: "Georgia, serif",
+          fontSize: "20px",
+          fontStyle: "bold",
+          align: "center",
+        }).setOrigin(0.5, 0.5);
+        badge.add(fallbackText);
+      }
+
+      return badge;
     }
 
     renderInstructionText() {

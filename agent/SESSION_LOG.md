@@ -2,6 +2,11 @@
 
 ## 2026-05-05
 
+- Updated `js/phaser/battle_scene.js` so battle scenes now preload hero portrait textures from existing `unit.portraitImage` data when available.
+- Added a small 28px battlefield portrait badge to each rendered unit, positioned near the upper-left of the unit sprite with a simple gold-framed backing.
+- Added safe battlefield portrait fallback rendering so missing portrait textures do not break unit rendering or battlefield interaction.
+- Intentionally deferred status icons and broader unit HUD cleanup while preserving battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic in `v0.3-1 Battlefield Unit Portrait Badge`.
+- Ran `node --check js/phaser/battle_scene.js`.
 - Added `portraitImage` fields for all four MVP heroes in `data/heroes.js` using the existing portrait PNG assets already present in the repository.
 - Extended `js/core/battle_state.js` so battle units now carry portrait image paths copied from hero data.
 - Updated `js/ui/battle_ui.js` so right-side roster cards show portrait thumbnails for both player and enemy units, and the selected-unit summary now shows the selected hero portrait.

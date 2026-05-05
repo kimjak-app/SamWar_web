@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.3.0 Hero Portrait UI`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.3-1 Battlefield Unit Portrait Badge`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -45,6 +45,7 @@ Current recorded build state:
 - `v0.2-9d-hotfix7` Auto Battle hasActed Fallback Root Fix
 - `v0.2-10` World Turn + Enemy Invasion MVP
 - `v0.3.0` Hero Portrait UI
+- `v0.3-1` Battlefield Unit Portrait Badge
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -126,6 +127,9 @@ Current recorded build state:
 - Hero portrait assets are now connected directly to hero data and copied into battle units for UI rendering.
 - Right `UNIT / 부대 목록` roster cards now show hero portraits for both player and enemy units.
 - Selected-unit summary now shows the selected hero portrait with safe missing-portrait fallback behavior, while battle rules, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved in `v0.3.0`.
+- Small 28px hero portrait badges are now rendered directly on battlefield units using existing `unit.portraitImage` data from `v0.3.0`.
+- Battlefield badges are placed near the unit sprite without replacing the existing HP bar, name label, cooldown text, or click handling.
+- Status icons and broader unit HUD cleanup were intentionally deferred, while battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved in `v0.3-1`.
 - Simple BGM system is integrated:
   - `assets/audio/world_map_bgm.mp3`
   - `assets/audio/battle_bgm.mp3`

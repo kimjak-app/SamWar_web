@@ -1,20 +1,17 @@
 # Handoff to ChatCoach
 
 ## Completed Task
-`v0.3.0 Hero Portrait UI` was completed.
+`v0.3-1 Battlefield Unit Portrait Badge` was completed.
 
 ## Changed Files
-- `data/heroes.js`
-- `js/core/battle_state.js`
-- `js/ui/battle_ui.js`
-- `css/main.css`
+- `js/phaser/battle_scene.js`
 - `agent/CURRENT_STATE.md`
 - `agent/SESSION_LOG.md`
 - `agent/HANDOFF_TO_CHATCOACH.md`
 - `agent/NEXT_TASKS.md`
 
 ## Current State
-- Current recorded milestone is `v0.3.0 Hero Portrait UI complete`.
+- Current recorded milestone is `v0.3-1 Battlefield Unit Portrait Badge complete`.
 - World map remains fullscreen with 4 MVP cities: `낙양`, `평양`, `한성`, `교토`.
 - World map attack loop still uses the pre-battle choice flow:
   - select enemy city
@@ -35,6 +32,10 @@
 - Right `UNIT / 부대 목록` roster cards now show hero portraits for both player and enemy units.
 - Selected-unit summary now shows the selected hero portrait.
 - Missing portrait data now falls back safely without breaking the battle UI.
+- Battlefield units now also show small 28px hero portrait badges near the unit sprite.
+- Battlefield portrait badges reuse the same `unit.portraitImage` data from `v0.3.0`.
+- Existing HP bar, unit labels, cooldown text, and click/hit-zone behavior remain intact for now.
+- Status icons and broader battlefield unit HUD cleanup were intentionally deferred.
 - Enemy invasion candidates are based on connected enemy-owned and player-owned cities only.
 - Invasion choice reuses the existing manual/auto battle choice structure:
   - `직접 방어` starts defense battle with `autoBattleEnabled: false`
@@ -48,12 +49,11 @@
 - No SFX work was added.
 
 ## Verification Result
-- `node --check data/heroes.js` passed.
-- `node --check js/core/battle_state.js` passed.
-- `node --check js/ui/battle_ui.js` passed.
-- Agent docs were updated to reflect the latest `v0.3.0` state and next priorities.
+- `node --check js/phaser/battle_scene.js` passed.
+- Agent docs were updated to reflect the latest `v0.3-1` state and next priorities.
 
 ## Known Issues
+- Browser verification for battlefield portrait badge size and placement is still pending.
 - Browser verification for hero portrait readability and spacing is still pending.
 - Browser verification for the new world turn + enemy invasion loop is still pending.
 - Browser verification for continued multi-turn auto-battle progression is still pending.
@@ -72,6 +72,8 @@
 - Confirm battle rules remain separated from Phaser rendering.
 - Confirm hero, skill, roster, and strategy content remain data-driven.
 - Confirm auto battle can run for multiple full turns without freezing after wait, move, strategy success/failure, skill, or status skip.
+- Confirm all four MVP battlefield units show portrait badges without covering HP bars or breaking selection/move/attack/skill interactions.
+- Confirm battlefield portrait badges are not too large and remain readable on the `14x8` board.
 - Confirm all four MVP portraits render correctly in the right roster and selected-unit summary without clipping or making text unreadable.
 - Confirm player roster cards remain clickable and selected-card highlighting still works with portrait thumbnails.
 - Confirm player auto battle no longer depends on object-reference change and instead advances only after the acting unit actually consumes its action.
@@ -91,15 +93,15 @@
 - Confirm no stat rebalance, cut-in timing change, or world-turn/invasion system was bundled into this patch.
 
 ## Suggested Next Task
-Suggested next task: `Browser-test hero portrait UI readability`.
+Suggested next task: `Browser-test battlefield portrait badge size and placement`.
 
 Main candidates:
 
-1. Browser-test hero portrait UI readability
-2. Tune portrait sizes / card spacing if needed
-3. Add hero portraits to world-map city / garrison UI
-4. Defense battle UX polish
-5. SFX / battle sound effects
+1. Browser-test battlefield portrait badge size and placement
+2. Tune badge size / position if needed
+3. Compact battlefield unit HUD text
+4. Add status effect icons
+5. Add hero portraits to world-map city / garrison UI
 
 ## New Chat Start Prompt
 채코치, SamWar_web 다음 세션 시작.
@@ -108,11 +110,11 @@ GitHub 저장소는 kimjak-app/SamWar_web이고, 공통 룰은 kimjak-app/_rules
 프로젝트 상태는 agent/CURRENT_STATE.md, agent/SESSION_LOG.md, agent/HANDOFF_TO_CHATCOACH.md, agent/NEXT_TASKS.md 기준으로 이어가자.
 
 현재 상태:
-- v0.3.0 Hero Portrait UI까지 완료.
-- 영웅 데이터에 portrait asset path가 연결됐고 전투 유닛에도 portraitImage가 복사된다.
-- 우측 `UNIT / 부대 목록` 카드에 아군/적군 초상화 썸네일이 표시된다.
-- 선택 유닛 요약 영역에도 현재 선택한 영웅 초상화가 표시된다.
-- portrait가 없더라도 fallback이 안전하게 렌더되도록 처리했다.
+- v0.3-1 Battlefield Unit Portrait Badge까지 완료.
+- 기존 `unit.portraitImage` 데이터를 이용해 전장 유닛 스프라이트 근처에 28px 초상화 badge가 추가됐다.
+- 우측 roster portrait와 selected summary portrait는 그대로 유지된다.
+- HP bar, unit label, cooldown text, selection hit-zone은 그대로 두고 portrait badge만 추가했다.
+- status icon과 battlefield HUD 정리는 의도적으로 다음 작업으로 미뤘다.
 - 전투 규칙, 자동전투, 컷인, 월드 턴, 침공, 도시 점유 흐름은 유지된다.
 - Direct Codex Paste Mode로 작업 중이고 CODEX_INBOX.md는 메인 작업 소스로 쓰지 않음.
 
