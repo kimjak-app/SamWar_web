@@ -40,6 +40,7 @@ import {
   initializeBgmManager,
   playBattleBgm,
   playWorldMapBgm,
+  stopBgm,
 } from "./audio/bgm_manager.js";
 import { getSkillById } from "./core/battle_skills.js";
 import { renderLayout } from "./ui/layout_ui.js";
@@ -55,6 +56,8 @@ let autoBattleTimerId = null;
 let battleTempoLocked = false;
 let activeSkillCutin = null;
 let activeBattleResultCutin = null;
+let activeBattleResultAudio = null;
+let battleResultSequenceId = 0;
 const battleTempoTimerIds = new Set();
 
 const BATTLE_TEMPO = {
@@ -63,13 +66,21 @@ const BATTLE_TEMPO = {
   enemyActionDelayMs: 1250,
   autoBattleDelayMs: 1050,
 };
-const BATTLE_RESULT_CUTIN_MS = 2000;
+const BATTLE_RESULT_FALLBACK_MS = 2000;
 const BATTLE_RESULT_VICTORY_IMAGE = "./assets/skill_cutins/battle_result_victory.png";
 const BATTLE_RESULT_DEFEAT_IMAGE = "./assets/skill_cutins/battle_result_defeat.png";
+const BATTLE_RESULT_AUDIO = {
+  won: "./assets/audio/result/battle_victory.mp3",
+  lost: "./assets/audio/result/battle_defeat.mp3",
+};
 
 initializeBgmManager();
 
 function syncBgmWithMode() {
+  if (activeBattleResultCutin) {
+    return;
+  }
+
   if (appState.mode === "battle" && appState.battle) {
     playBattleBgm();
     return;
@@ -93,10 +104,21 @@ function clearBattleTempoTimers({ unlock = true } = {}) {
   battleTempoTimerIds.clear();
   activeSkillCutin = null;
   activeBattleResultCutin = null;
+  stopActiveBattleResultAudio();
 
   if (unlock) {
     battleTempoLocked = false;
   }
+}
+
+function stopActiveBattleResultAudio() {
+  if (!activeBattleResultAudio) {
+    return;
+  }
+
+  activeBattleResultAudio.pause();
+  activeBattleResultAudio.currentTime = 0;
+  activeBattleResultAudio = null;
 }
 
 function isResolvedBattleStatus(status) {
@@ -105,6 +127,42 @@ function isResolvedBattleStatus(status) {
 
 function isBattleResultCutinActive() {
   return Boolean(activeBattleResultCutin);
+}
+
+function getAudioDurationMs(src) {
+  return new Promise((resolve) => {
+    const audio = new Audio(src);
+
+    audio.addEventListener("loadedmetadata", () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        resolve(Math.ceil(audio.duration * 1000));
+        return;
+      }
+
+      resolve(BATTLE_RESULT_FALLBACK_MS);
+    }, { once: true });
+
+    audio.addEventListener("error", () => {
+      resolve(BATTLE_RESULT_FALLBACK_MS);
+    }, { once: true });
+
+    audio.load();
+  });
+}
+
+function playResultAudio(src) {
+  const audio = new Audio(src);
+  audio.volume = 0.9;
+
+  const playPromise = audio.play();
+
+  if (playPromise?.catch) {
+    playPromise.catch(() => {
+      // Ignore autoplay/playback errors and keep the result flow moving.
+    });
+  }
+
+  return { audio, playPromise };
 }
 
 function scheduleBattleTempoTimer(callback, delayMs, battleId = appState.battle?.id ?? null) {
@@ -166,19 +224,21 @@ function finishBattleAfterResultCutin(battleId) {
   if (!appState.battle || appState.battle.id !== battleId || !isResolvedBattleStatus(appState.battle.status)) {
     activeBattleResultCutin = null;
     battleTempoLocked = false;
+    stopActiveBattleResultAudio();
     rerender();
     return;
   }
 
   activeBattleResultCutin = null;
   battleTempoLocked = false;
+  stopActiveBattleResultAudio();
   clearAutoBattleTimer();
   clearBattleTempoTimers();
   appState = returnFromBattle(appState);
   rerender();
 }
 
-function startBattleResultCutinSequence(nextBattleState) {
+async function startBattleResultCutinSequence(nextBattleState) {
   if (!nextBattleState || nextBattleState.status === "active") {
     appState = updateBattleState(appState, nextBattleState);
     rerender();
@@ -188,33 +248,61 @@ function startBattleResultCutinSequence(nextBattleState) {
   clearAutoBattleTimer();
   clearBattleTempoTimers({ unlock: false });
   battleTempoLocked = true;
+  const isVictory = nextBattleState.status === "won";
+  const resultAudioSrc = BATTLE_RESULT_AUDIO[nextBattleState.status] ?? null;
+  const sequenceId = ++battleResultSequenceId;
+
   activeBattleResultCutin = {
     battleId: nextBattleState.id,
     result: nextBattleState.status,
-    image: nextBattleState.status === "won" ? BATTLE_RESULT_VICTORY_IMAGE : BATTLE_RESULT_DEFEAT_IMAGE,
-    durationMs: BATTLE_RESULT_CUTIN_MS,
+    image: isVictory ? BATTLE_RESULT_VICTORY_IMAGE : BATTLE_RESULT_DEFEAT_IMAGE,
+    audio: resultAudioSrc,
   };
   appState = updateBattleState(appState, nextBattleState);
   rerender();
   const scheduledResultCutin = activeBattleResultCutin;
+  let durationMs = BATTLE_RESULT_FALLBACK_MS;
 
-  scheduleBattleTempoTimer(
-    () => {
-      if (!appState.battle || appState.battle.id !== scheduledResultCutin.battleId) {
-        activeBattleResultCutin = null;
-        battleTempoLocked = false;
-        rerender();
-        return;
+  if (resultAudioSrc) {
+    stopBgm();
+    durationMs = await getAudioDurationMs(resultAudioSrc);
+
+    if (
+      battleResultSequenceId !== sequenceId
+      || !activeBattleResultCutin
+      || activeBattleResultCutin.battleId !== scheduledResultCutin.battleId
+      || !appState.battle
+      || appState.battle.id !== scheduledResultCutin.battleId
+    ) {
+      return;
+    }
+
+    const { audio, playPromise } = playResultAudio(resultAudioSrc);
+    activeBattleResultAudio = audio;
+
+    if (playPromise) {
+      try {
+        await playPromise;
+      } catch {
+        durationMs = BATTLE_RESULT_FALLBACK_MS;
       }
 
-      activeBattleResultCutin = null;
-      battleTempoLocked = false;
-      clearAutoBattleTimer();
-      clearBattleTempoTimers();
-      appState = returnFromBattle(appState);
-      rerender();
-    },
-    scheduledResultCutin.durationMs,
+      if (
+        battleResultSequenceId !== sequenceId
+        || !activeBattleResultCutin
+        || activeBattleResultCutin.battleId !== scheduledResultCutin.battleId
+        || !appState.battle
+        || appState.battle.id !== scheduledResultCutin.battleId
+      ) {
+        stopActiveBattleResultAudio();
+        return;
+      }
+    }
+  }
+
+  scheduleBattleTempoTimer(
+    () => finishBattleAfterResultCutin(scheduledResultCutin.battleId),
+    durationMs,
     scheduledResultCutin.battleId,
   );
 }
