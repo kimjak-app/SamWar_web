@@ -1,5 +1,7 @@
 import {
+  cancelBattleChoice,
   createInitialAppState,
+  openBattleChoice,
   retreatFromBattle,
   returnFromBattle,
   selectCity,
@@ -135,6 +137,55 @@ function applyBattleState(nextBattleState) {
   rerender();
 }
 
+function scheduleNextEnemyActionTimer(battleId = appState.battle?.id ?? null, delayMs = BATTLE_TEMPO.enemyActionDelayMs) {
+  if (!appState.battle || !battleId || battleTempoTimerIds.size > 0) {
+    return false;
+  }
+
+  scheduleBattleTempoTimer(
+    () => stepEnemyTurnSequence(battleId),
+    delayMs,
+    battleId,
+  );
+  return true;
+}
+
+function ensureBattleProgress() {
+  if (!appState.battle || appState.battle.status !== "active" || activeSkillCutin) {
+    return false;
+  }
+
+  if (battleTempoLocked && battleTempoTimerIds.size === 0 && !autoBattleTimerId) {
+    battleTempoLocked = false;
+  }
+
+  if (appState.battle.turnOwner === "enemy") {
+    if (hasPendingEnemyActions(appState.battle)) {
+      battleTempoLocked = true;
+      return scheduleNextEnemyActionTimer(appState.battle.id);
+    }
+
+    applyBattleState(finishEnemyTurn(appState.battle));
+    return true;
+  }
+
+  if (!appState.battle.autoBattleEnabled) {
+    return false;
+  }
+
+  if (shouldAutoAdvanceTurn(appState.battle)) {
+    startEnemyTurnSequence(endPlayerTurn(appState.battle));
+    return true;
+  }
+
+  if (!battleTempoLocked && !autoBattleTimerId && battleTempoTimerIds.size === 0) {
+    scheduleAutoBattleStep();
+    return true;
+  }
+
+  return false;
+}
+
 function finishPlayerFlow(nextBattleState) {
   if (!nextBattleState || nextBattleState.status !== "active") {
     applyBattleState(nextBattleState);
@@ -147,6 +198,7 @@ function finishPlayerFlow(nextBattleState) {
   }
 
   applyBattleState(nextBattleState);
+  ensureBattleProgress();
 }
 
 function finalizeBattleTempo(nextBattleState) {
@@ -167,14 +219,14 @@ function continueEnemyTurnSequence(nextBattleState, battleId) {
   if (!hasPendingEnemyActions(nextBattleState)) {
     battleTempoLocked = false;
     applyBattleState(finishEnemyTurn(nextBattleState));
+    ensureBattleProgress();
     return;
   }
 
-  scheduleBattleTempoTimer(
-    () => stepEnemyTurnSequence(battleId),
-    BATTLE_TEMPO.enemyActionDelayMs,
-    battleId,
-  );
+  battleTempoLocked = true;
+  if (!scheduleNextEnemyActionTimer(battleId)) {
+    ensureBattleProgress();
+  }
 }
 
 function resolveActiveSkillCutin(cutinState) {
@@ -307,6 +359,7 @@ function stepEnemyTurnSequence(battleId) {
   if (!plannedAction) {
     battleTempoLocked = false;
     applyBattleState(finishEnemyTurn(appState.battle));
+    ensureBattleProgress();
     return;
   }
 
@@ -339,14 +392,13 @@ function startEnemyTurnSequence(enemyTurnState) {
   if (!hasPendingEnemyActions(startedEnemyTurnState)) {
     battleTempoLocked = false;
     applyBattleState(finishEnemyTurn(startedEnemyTurnState));
+    ensureBattleProgress();
     return;
   }
 
-  scheduleBattleTempoTimer(
-    () => stepEnemyTurnSequence(startedEnemyTurnState.id),
-    BATTLE_TEMPO.enemyActionLeadMs,
-    startedEnemyTurnState.id,
-  );
+  if (!scheduleNextEnemyActionTimer(startedEnemyTurnState.id, BATTLE_TEMPO.enemyActionLeadMs)) {
+    ensureBattleProgress();
+  }
 }
 
 function canUseManualBattleControls() {
@@ -402,7 +454,22 @@ function rerender() {
     onAttackCity: (cityId) => {
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = startBattle(appState, cityId);
+      appState = openBattleChoice(appState, cityId);
+      rerender();
+    },
+    onBattleChoiceConfirm: ({ cityId, autoBattleEnabled }) => {
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
+      appState = startBattle(appState, cityId, { autoBattleEnabled });
+      rerender();
+      if (autoBattleEnabled) {
+        ensureBattleProgress();
+      }
+    },
+    onBattleChoiceCancel: () => {
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
+      appState = cancelBattleChoice(appState);
       rerender();
     },
     onBattleSelectUnit: (unitId) => {
@@ -557,6 +624,7 @@ function rerender() {
         setAutoBattleEnabled(appState.battle, !appState.battle.autoBattleEnabled),
       );
       rerender();
+      ensureBattleProgress();
     },
     onBattleRetreat: () => {
       if (battleTempoLocked && appState.battle?.status === "active") {

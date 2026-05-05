@@ -104,6 +104,21 @@ function shouldUseSupportSkill(unit, allies) {
   return unit.aiType === "support" && allies.some((ally) => ally.buffTurns <= 0 || ally.buffAttackBonus <= 0);
 }
 
+function pickBestSupportSkillTarget(allies) {
+  return allies
+    .slice()
+    .sort((leftAlly, rightAlly) => {
+      const leftNeedsBuff = leftAlly.buffTurns <= 0 || leftAlly.buffAttackBonus <= 0;
+      const rightNeedsBuff = rightAlly.buffTurns <= 0 || rightAlly.buffAttackBonus <= 0;
+
+      if (leftNeedsBuff !== rightNeedsBuff) {
+        return rightNeedsBuff ? 1 : -1;
+      }
+
+      return leftAlly.hp - rightAlly.hp;
+    })[0] ?? null;
+}
+
 function scoreMovePosition(unit, position, target, battleState, skill = null) {
   const preferredRange = getPreferredRange(unit, skill);
   const distance = getDistance(position, target);
@@ -188,13 +203,19 @@ function buildSkillAction(battleState, unit) {
       return null;
     }
 
+    const target = pickBestSupportSkillTarget(skillTargets);
+
+    if (!target) {
+      return null;
+    }
+
     return {
       type: "skill",
       actorUnitId: unit.id,
       skillId: skill.id,
-      targetUnitId: null,
+      targetUnitId: target.id,
       movePosition: null,
-      facingDirection: unit.facing,
+      facingDirection: getDirectionFromPositions(unit, target) ?? unit.facing,
     };
   }
 

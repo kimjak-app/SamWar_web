@@ -42,11 +42,11 @@ function getStatusText(cities, selectedCity) {
   }
 
   if (canAttackCity(cities, selectedCity)) {
-    return "공격을 시작하면 Phaser 전투 화면으로 진입합니다.";
+    return "공격을 누르면 전투 방식 선택 후 Phaser 전투 화면으로 진입합니다.";
   }
 
   if (isPlayerCity(selectedCity)) {
-    return "아군 거점입니다. 인접한 적 도시가 있으면 즉시 전투를 시작할 수 있습니다.";
+    return "아군 거점입니다. 인접한 적 도시가 있으면 전투 방식 선택 뒤 공격을 시작할 수 있습니다.";
   }
 
   if (isEnemyCity(selectedCity)) {
@@ -71,15 +71,45 @@ function getCityLabelClass(cityId) {
   }
 }
 
+function renderBattleChoicePanel(pendingBattleChoice) {
+  if (!pendingBattleChoice) {
+    return "";
+  }
+
+  return `
+    <section class="detail-card hud-panel battle-choice-card" aria-live="polite">
+      <p class="eyebrow">Battle Mode</p>
+      <h3 class="detail-heading">전투 방식을 선택하세요</h3>
+      <div class="battle-choice-summary">
+        <p class="battle-choice-line">출발 도시: ${pendingBattleChoice.originCityName}</p>
+        <p class="battle-choice-line">목표 도시: ${pendingBattleChoice.targetCityName}</p>
+        ${pendingBattleChoice.isRemoteBattle ? '<p class="battle-choice-note">원격 침공</p>' : ""}
+      </div>
+      <div class="battle-choice-actions">
+        <button class="attack-button battle-choice-button" type="button" data-battle-choice="manual" data-battle-choice-city-id="${pendingBattleChoice.targetCityId}">
+          직접 지휘
+        </button>
+        <button class="attack-button battle-choice-button battle-choice-button-auto" type="button" data-battle-choice="auto" data-battle-choice-city-id="${pendingBattleChoice.targetCityId}">
+          자동 위임
+        </button>
+        <button class="battle-choice-cancel" type="button" data-battle-choice="cancel">
+          취소
+        </button>
+      </div>
+    </section>
+  `;
+}
+
 export function renderWorldMap(rootElement, appState, handlers = {}) {
   const { meta, world } = appState;
-  const { onCitySelect, onAttackCity } = handlers;
+  const { onCitySelect, onAttackCity, onBattleChoiceConfirm, onBattleChoiceCancel } = handlers;
   const selectedCity = getSelectedCity(appState);
   const linkedCities = getLinkedCities(world.cities, selectedCity);
   const cityEdges = getCityEdges(world.cities);
   const selectedFaction = getFactionById(world.factions, selectedCity.ownerFactionId);
   const attackable = canAttackCity(world.cities, selectedCity);
   const unified = isWorldUnified(world.cities);
+  const { pendingBattleChoice } = appState;
 
   rootElement.innerHTML = `
     <main class="map-screen">
@@ -163,13 +193,15 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
                   <button class="attack-button" type="button" data-attack-city-id="${selectedCity.id}">
                     공격
                   </button>
-                  <p class="attack-note">공격을 시작하면 전투 화면으로 진입합니다.</p>
+                  <p class="attack-note">공격을 누르면 전투 방식 선택 후 전투 화면으로 진입합니다.</p>
                 `
                 : `
                   <p class="attack-note">전투 화면은 공격 가능한 적 도시를 선택했을 때만 진입합니다.</p>
                 `
             }
           </section>
+
+          ${renderBattleChoicePanel(pendingBattleChoice)}
 
           <section class="detail-card hud-panel">
             <h3 class="detail-heading">연결 도시</h3>
@@ -195,7 +227,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
             <ul class="goal-list">
               <li>배경 맵의 성곽 랜드마크에 4개 도시 앵커를 맞춰 전선을 검증합니다.</li>
               <li>도시 선택과 공격 진입, 점령, 통일 메시지까지 현재 월드맵 루프를 확인합니다.</li>
-              <li>전투는 Phaser 기반 1차 MVP이며 이동과 스킬은 아직 구현하지 않았습니다.</li>
+              <li>전투는 Phaser 기반 MVP이며 수동 지휘와 자동 위임 흐름을 함께 검증합니다.</li>
             </ul>
           </section>
         </aside>
@@ -224,6 +256,31 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
           onAttackCity(cityId);
         }
       });
+    });
+  }
+
+  if (onBattleChoiceConfirm) {
+    rootElement.querySelectorAll("[data-battle-choice]").forEach((element) => {
+      element.addEventListener("click", () => {
+        const choice = element.getAttribute("data-battle-choice");
+
+        if (choice === "manual" || choice === "auto") {
+          const cityId = element.getAttribute("data-battle-choice-city-id");
+
+          if (cityId) {
+            onBattleChoiceConfirm({
+              cityId,
+              autoBattleEnabled: choice === "auto",
+            });
+          }
+        }
+      });
+    });
+  }
+
+  if (onBattleChoiceCancel) {
+    rootElement.querySelector('[data-battle-choice="cancel"]')?.addEventListener("click", () => {
+      onBattleChoiceCancel();
     });
   }
 }

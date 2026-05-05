@@ -34,6 +34,10 @@ function appendLog(battleState, message) {
   };
 }
 
+function isUnitActionBlocked(unit) {
+  return Boolean(unit?.isAlive && unit.actionBlockReason);
+}
+
 function updateUnit(battleState, unitId, updater) {
   return {
     ...battleState,
@@ -158,6 +162,7 @@ function applyTurnStartEffects(battleState, side) {
           currentSkillCooldown: unit.currentSkillCooldown > 0 ? unit.currentSkillCooldown - 1 : 0,
           buffTurns: nextBuffTurns,
           buffAttackBonus: nextBuffTurns > 0 ? unit.buffAttackBonus : 0,
+          actionBlockReason: null,
           hasMoved: false,
           hasActed: false,
           isDefending: false,
@@ -906,6 +911,39 @@ function applyAiWait(battleState, unitId, facingDirection = null) {
   return appendLog(nextState, `${actingUnit.name}이 대기했습니다.`);
 }
 
+function applyStatusBlockedAction(battleState, unitId) {
+  const actingUnit = getUnitById(battleState, unitId);
+
+  if (!actingUnit || !actingUnit.isAlive) {
+    return battleState;
+  }
+
+  let nextState = updateUnit(battleState, unitId, (unit) => ({
+    ...unit,
+    hasActed: true,
+    actionBlockReason: null,
+  }));
+  nextState = {
+    ...clearBattleSelection(nextState),
+    lastAction: {
+      type: "status_skip",
+      skillId: null,
+      actorUnitId: unitId,
+      targetUnitIds: [unitId],
+      effects: [
+        { unitId, kind: "status", text: "행동 불가" },
+        { unitId, kind: "status", text: actingUnit.actionBlockReason === "confusion" ? "혼란" : "상태 이상" },
+      ],
+    },
+  };
+
+  if (actingUnit.actionBlockReason === "confusion") {
+    return appendLog(nextState, `${actingUnit.name}은 혼란 상태로 행동할 수 없습니다.`);
+  }
+
+  return appendLog(nextState, `${actingUnit.name}은 상태 이상으로 행동할 수 없습니다.`);
+}
+
 function applyAiMove(battleState, unitId, movePosition, facingDirection = null) {
   const actingUnit = getUnitById(battleState, unitId);
 
@@ -946,6 +984,10 @@ function applyAiAction(battleState, unitId) {
 
   if (!actingUnit || !actingUnit.isAlive || actingUnit.hasActed) {
     return battleState;
+  }
+
+  if (isUnitActionBlocked(actingUnit)) {
+    return applyStatusBlockedAction(battleState, actingUnit.id);
   }
 
   const action = getAiTurnAction(battleState, actingUnit);
@@ -1016,6 +1058,17 @@ export function planNextEnemyAction(battleState) {
     return null;
   }
 
+  if (isUnitActionBlocked(actingEnemy)) {
+    return {
+      type: "status_skip",
+      actorUnitId: actingEnemy.id,
+      targetUnitId: actingEnemy.id,
+      reason: actingEnemy.actionBlockReason,
+      movePosition: null,
+      facingDirection: actingEnemy.facing,
+    };
+  }
+
   const action = getAiTurnAction(battleState, actingEnemy);
 
   if (!action) {
@@ -1047,6 +1100,10 @@ export function executePlannedEnemyAction(battleState, plannedAction) {
 
   if (!actingUnit || !actingUnit.isAlive || actingUnit.hasActed) {
     return battleState;
+  }
+
+  if (plannedAction.type === "status_skip") {
+    return applyStatusBlockedAction(battleState, actingUnit.id);
   }
 
   if (plannedAction.type === "skill") {
@@ -1114,7 +1171,17 @@ export function runNextEnemyAction(battleState) {
   const plannedAction = planNextEnemyAction(battleState);
 
   if (!plannedAction) {
-    return setOutcomeStatus(battleState);
+    const fallbackEnemy = battleState.units.find((unit) => unit.side === "enemy" && unit.isAlive && !unit.hasActed) ?? null;
+
+    if (!fallbackEnemy) {
+      return setOutcomeStatus(battleState);
+    }
+
+    if (isUnitActionBlocked(fallbackEnemy)) {
+      return applyStatusBlockedAction(battleState, fallbackEnemy.id);
+    }
+
+    return applyAiWait(battleState, fallbackEnemy.id, fallbackEnemy.facing);
   }
 
   return executePlannedEnemyAction(battleState, plannedAction);
@@ -1172,5 +1239,15 @@ export function performAutoBattleStep(battleState) {
     return battleState;
   }
 
-  return applyAiAction(battleState, actingPlayer.id);
+  if (isUnitActionBlocked(actingPlayer)) {
+    return applyStatusBlockedAction(battleState, actingPlayer.id);
+  }
+
+  const nextState = applyAiAction(battleState, actingPlayer.id);
+
+  if (nextState !== battleState) {
+    return nextState;
+  }
+
+  return applyAiWait(battleState, actingPlayer.id, actingPlayer.facing);
 }

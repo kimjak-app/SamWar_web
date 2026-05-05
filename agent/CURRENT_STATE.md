@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.2-9c Unit Roster Selection + Skill Name Polish`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.2-9d-hotfix5 Auto Battle Sequencer Deadlock Guard`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -36,6 +36,11 @@ Current recorded build state:
 - `v0.2-9a` 14x8 Battlefield Expansion
 - `v0.2-9b` Unit Token Tone-down Patch
 - `v0.2-9c` Unit Roster Selection + Skill Name Polish
+- `v0.2-9d` Battle Mode Choice: Manual vs Auto
+- `v0.2-9d-hotfix2` Auto Battle Continuation Fix
+- `v0.2-9d-hotfix3` Auto Battle Status Skip Continuation Fix
+- `v0.2-9d-hotfix4` Confusion Skip Deadlock Fix
+- `v0.2-9d-hotfix5` Auto Battle Sequencer Deadlock Guard
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -45,7 +50,8 @@ Current recorded build state:
   - `교토`
 - World map attack flow works:
   - select enemy city
-  - enter battle
+  - open battle mode choice
+  - manual battle or auto battle
   - win/retreat
   - return to world map
   - victory occupies city
@@ -86,6 +92,24 @@ Current recorded build state:
 - Nobunaga's unique skill display name is now `삼단격`.
 - Kenshin's unique skill display name is now `차륜전`.
 - Skill effects, IDs, AI, cut-ins, board size, and battle rules were preserved in `v0.2-9c`.
+- Player-initiated attacks now open a world-map battle mode choice UI before battle starts.
+  - `직접 지휘` starts the existing battle flow with `autoBattleEnabled: false`
+  - `자동 위임` starts the existing battle flow with `autoBattleEnabled: true`
+  - `취소` closes the choice UI and stays on the world map
+- The new pending battle-choice structure is intended to be reused later for defense battles and enemy invasion flow.
+- No battle rules, AI logic, cut-ins, board size, stats, SFX, or portraits were changed in `v0.2-9d`.
+- Auto battle now continues beyond the first player unit instead of stalling after Yi Sun-sin's first action.
+- Auto battle processes all available player units sequentially and then auto-advances to the enemy turn.
+- Manual battle behavior remains unchanged, and existing cut-ins plus enemy sequential cut-in flow remain intact in `v0.2-9d-hotfix2`.
+- Auto battle no longer stops when a unit cannot act due to confusion or status-blocked turns.
+- Status-blocked units now consume their action properly, and enemy turn sequencing continues after skipped units.
+- Player auto battle also continues through status-blocked units while preserving manual battle behavior, battle rules, cut-ins, board size, and world flow in `v0.2-9d-hotfix3`.
+- Confused/status-blocked units now create a real queued skip action during enemy turns and player auto turns instead of silently leaving a pending deadlock state.
+- Status skip consumes that unit's action exactly once and clears the pending block so Kenshin or another confused unit no longer freezes the sequence.
+- Manual battle, cut-ins, battle rules, board size, and world flow remain preserved in `v0.2-9d-hotfix4`.
+- Auto battle now has a stronger controller-level progression guard after automatic actions.
+- Enemy skill cut-in resolution now always continues to the next enemy action or enemy turn end, and normal wait/move/strategy actions are also guarded against dead-end states.
+- The guard applies to both world-map Auto Battle and in-battle Auto Battle while preserving status-skip handling, manual battle, cut-ins, battle rules, board size, and world flow in `v0.2-9d-hotfix5`.
 - Simple BGM system is integrated:
   - `assets/audio/world_map_bgm.mp3`
   - `assets/audio/battle_bgm.mp3`
@@ -210,12 +234,12 @@ Current recorded build state:
    - animation skip
 
 ## Suggested Next Direction
-Suggested next task: browser-test roster-card selection usability.
+Suggested next task: `v0.2-10 World Turn + Enemy Invasion MVP`.
 
 Main candidates:
 
-1. Browser-test roster-card selection usability
-2. Tune battle difficulty / balance after `14x8` testing
-3. SFX / battle sound effects
-4. Terrain effects / movement cost prototype
-5. Optional enemy info selection UX
+1. `v0.2-10 World Turn + Enemy Invasion MVP`
+2. Defense battle manual/auto choice using the new battle mode choice structure
+3. Tune battle difficulty / balance after `14x8` testing
+4. Hero portrait UI
+5. SFX / battle sound effects

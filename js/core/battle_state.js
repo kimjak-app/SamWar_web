@@ -49,6 +49,7 @@ function buildBattleUnit(heroId) {
       confusion: 0,
       shake: 0,
     },
+    actionBlockReason: null,
     x: spawnPosition.x,
     y: spawnPosition.y,
     facing: hero.side === "player" ? "right" : "left",
@@ -59,7 +60,7 @@ function buildBattleUnit(heroId) {
   };
 }
 
-export function createInitialBattleState({ attackerCity, defenderCity }) {
+export function createInitialBattleState({ attackerCity, defenderCity, autoBattleEnabled = false }) {
   battleSequence += 1;
 
   const rosterUnitIds = [
@@ -79,7 +80,7 @@ export function createInitialBattleState({ attackerCity, defenderCity }) {
     selectedUnitId: null,
     selectedStrategyId: null,
     pendingMove: null,
-    autoBattleEnabled: false,
+    autoBattleEnabled,
     phase: "select",
     log: [`${attackerCity.name}에서 ${defenderCity.name} 공격을 개시했습니다.`],
     lastAction: null,

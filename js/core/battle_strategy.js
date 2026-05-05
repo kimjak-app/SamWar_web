@@ -148,8 +148,9 @@ export function decrementStatusEffectsForSide(battleState, side) {
     const nextConfusion = Math.max(0, currentConfusion - 1);
     const nextShake = Math.max(0, currentShake - 1);
     const isConfusedThisTurn = currentConfusion > 0;
+    const shouldQueueStatusSkip = isConfusedThisTurn && (side === "enemy" || battleState.autoBattleEnabled);
 
-    if (isConfusedThisTurn) {
+    if (isConfusedThisTurn && !shouldQueueStatusSkip) {
       logs.push(`${unit.name}은 혼란 상태로 행동할 수 없습니다.`);
       effects.push({ unitId: unit.id, kind: "status", text: "행동 불가" });
       effects.push({ unitId: unit.id, kind: "status", text: "혼란" });
@@ -157,7 +158,8 @@ export function decrementStatusEffectsForSide(battleState, side) {
 
     return {
       ...unit,
-      hasActed: isConfusedThisTurn ? true : unit.hasActed,
+      hasActed: isConfusedThisTurn && !shouldQueueStatusSkip ? true : unit.hasActed,
+      actionBlockReason: shouldQueueStatusSkip ? "confusion" : null,
       statusEffects: {
         confusion: nextConfusion,
         shake: nextShake,

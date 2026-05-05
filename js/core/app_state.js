@@ -21,6 +21,7 @@ export function createInitialAppState() {
       cityId: DEFAULT_SELECTED_CITY_ID,
     },
     battle: null,
+    pendingBattleChoice: null,
     world: {
       cities,
       factions,
@@ -37,10 +38,53 @@ export function selectCity(appState, cityId) {
       ...appState.selection,
       cityId,
     },
+    pendingBattleChoice: null,
   };
 }
 
-export function startBattle(appState, cityId) {
+function buildPendingBattleChoice(appState, cityId) {
+  const defenderCity = appState.world.cities.find((city) => city.id === cityId);
+  const attackerCity = getAttackSourceCity(appState.world.cities, cityId);
+
+  if (!defenderCity || !attackerCity || !canAttackCity(appState.world.cities, defenderCity)) {
+    return null;
+  }
+
+  return {
+    type: "attack",
+    originCityId: attackerCity.id,
+    originCityName: attackerCity.name,
+    targetCityId: defenderCity.id,
+    targetCityName: defenderCity.name,
+    isRemoteBattle: attackerCity.id !== DEFAULT_SELECTED_CITY_ID,
+  };
+}
+
+export function openBattleChoice(appState, cityId) {
+  const pendingBattleChoice = buildPendingBattleChoice(appState, cityId);
+
+  if (!pendingBattleChoice) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingBattleChoice,
+  };
+}
+
+export function cancelBattleChoice(appState) {
+  if (!appState.pendingBattleChoice) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingBattleChoice: null,
+  };
+}
+
+export function startBattle(appState, cityId, options = {}) {
   const defenderCity = appState.world.cities.find((city) => city.id === cityId);
   const attackerCity = getAttackSourceCity(appState.world.cities, cityId);
 
@@ -51,11 +95,16 @@ export function startBattle(appState, cityId) {
   return {
     ...appState,
     mode: "battle",
+    pendingBattleChoice: null,
     selection: {
       ...appState.selection,
       cityId: defenderCity.id,
     },
-    battle: createInitialBattleState({ attackerCity, defenderCity }),
+    battle: createInitialBattleState({
+      attackerCity,
+      defenderCity,
+      autoBattleEnabled: options.autoBattleEnabled === true,
+    }),
   };
 }
 
@@ -71,6 +120,7 @@ export function retreatFromBattle(appState) {
     ...appState,
     mode: "world",
     battle: null,
+    pendingBattleChoice: null,
   };
 }
 
@@ -92,6 +142,7 @@ export function returnFromBattle(appState) {
       ...appState,
       mode: "world",
       battle: null,
+      pendingBattleChoice: null,
       selection: {
         ...appState.selection,
         cityId: battle.defenderCityId,
@@ -107,5 +158,6 @@ export function returnFromBattle(appState) {
     ...appState,
     mode: "world",
     battle: null,
+    pendingBattleChoice: null,
   };
 }

@@ -299,3 +299,75 @@
   - `node --check js/ui/battle_ui.js`
   - `node --check data/skills.js`
 - Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9c` complete.
+- Completed `v0.2-9d` Battle Mode Choice: Manual vs Auto.
+- Updated `js/core/app_state.js` to add a lightweight `pendingBattleChoice` world-state flow and safe open/cancel/start helpers for player-initiated attacks.
+- Extended `js/core/battle_state.js` and `js/main.js` so battle creation can start with `autoBattleEnabled: true` from the initial battle state instead of toggling after entry.
+- Updated `js/ui/world_map_ui.js` and `css/main.css` to render a simple world-map battle-choice panel with `직접 지휘`, `자동 위임`, and `취소`.
+- Manual battle now preserves the previous normal attack flow while auto battle enters the same battle screen with the existing auto-battle system already enabled.
+- Cancel now closes the choice UI without starting battle and keeps the world map usable.
+- Preserved battle rules, AI logic, cut-ins, battlefield size, stats, SFX state, portrait state, and the existing in-battle auto-battle button.
+- Ran syntax checks:
+  - `node --check js/core/app_state.js`
+  - `node --check js/core/battle_state.js`
+  - `node --check js/ui/world_map_ui.js`
+  - `node --check js/main.js`
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d` complete.
+- Completed `v0.2-9d-hotfix2` Auto Battle Continuation Fix.
+- Updated `js/core/battle_ai.js` so support-skill auto actions now pass a valid allied target instead of returning a no-op state.
+- Updated `js/core/battle_rules.js` so automatic player actions fall back to a safe wait action if an AI-selected action fails to change battle state.
+- Auto battle now continues across all available player units and then properly reaches player-turn auto-advance into the enemy turn.
+- Manual battle behavior, cut-ins, enemy sequential cut-in flow, board size, and stats were preserved.
+- Ran syntax checks:
+  - `node --check js/main.js`
+  - `node --check js/core/battle_rules.js`
+  - `node --check js/core/battle_ai.js`
+- Ran a module-level runtime sanity check confirming:
+  - Yi Sun-sin acts first
+  - Jeong Do-jeon acts second
+  - player-turn auto-advance becomes true after both player units act
+  - enemy turn can begin normally after auto-battle player actions
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d-hotfix2` complete.
+- Completed `v0.2-9d-hotfix3` Auto Battle Status Skip Continuation Fix.
+- Updated `js/core/battle_rules.js` so confusion-blocked units can resolve as an explicit `status_skip` action that consumes the unit's turn.
+- Added safe fallback handling so enemy sequencing and player auto battle do not deadlock when a pending unit has no executable normal action.
+- Auto battle and enemy turn sequencing now continue properly after status-blocked units instead of freezing later in the battle loop.
+- Manual battle behavior, battle rules, cut-ins, board size, stats, and world-map flow were preserved.
+- Ran syntax checks:
+  - `node --check js/core/battle_rules.js`
+  - `node --check js/core/battle_ai.js`
+  - `node --check js/main.js`
+- Ran a module-level runtime sanity check confirming:
+  - confused auto-battle player units consume their action and the next player unit still acts
+  - confused enemy units consume their action through `status_skip`
+  - enemy turn can finish and return to the player turn normally after a skipped/status-blocked enemy unit
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d-hotfix3` complete.
+- Completed `v0.2-9d-hotfix4` Confusion Skip Deadlock Fix.
+- Updated `js/core/battle_state.js` to track a per-unit pending action-block reason for queued skip handling.
+- Updated `js/core/battle_strategy.js` so confusion at turn start can queue a real skip action for enemy turns and player auto turns instead of always consuming the turn immediately.
+- Updated `js/core/battle_rules.js` so queued blocked units resolve through a real `status_skip` action that consumes the unit's action and clears the pending block.
+- Auto battle no longer freezes when Kenshin or another unit is confused, and enemy sequencing continues after the status skip resolves.
+- Manual battle behavior, cut-ins, battle rules, board size, stats, and world-map flow were preserved.
+- Ran syntax checks:
+  - `node --check js/core/battle_rules.js`
+  - `node --check js/core/battle_ai.js`
+  - `node --check js/main.js`
+  - `node --check js/core/battle_strategy.js`
+  - `node --check js/core/battle_state.js`
+- Ran module-level runtime sanity checks confirming:
+  - player auto turn queues and resolves a confused unit as a real skip action
+  - enemy turn queues and resolves Kenshin confusion as `status_skip`
+  - both sides can finish their turn normally after the skip action
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d-hotfix4` complete.
+- Completed `v0.2-9d-hotfix5` Auto Battle Sequencer Deadlock Guard.
+- Updated `js/main.js` with a stronger auto-battle/enemy-sequence progression guard so automatic actions always lead to the next scheduled step, enemy turn end, player auto continuation, or battle outcome.
+- Added guarded scheduling helpers for enemy sequence timers and post-action progression recovery so the controller can recover from stale locked/no-timer states.
+- Enemy skill cut-in resolution now reliably continues into the next enemy action or enemy turn finish, and normal wait/move/strategy actions are also covered by the same progression guard.
+- Status-skip handling from `v0.2-9d-hotfix4` was preserved.
+- Manual battle behavior, cut-ins, battle rules, board size, stats, and world-map flow were preserved.
+- Ran syntax checks:
+  - `node --check js/main.js`
+  - `node --check js/core/battle_rules.js`
+  - `node --check js/core/battle_ai.js`
+  - `node --check js/core/battle_strategy.js`
+  - `node --check js/core/battle_state.js`
+- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d-hotfix5` complete.
