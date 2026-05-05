@@ -43,6 +43,7 @@ function buildBattleUnit(heroId) {
     skillId: hero.skillId,
     skillCooldown: hero.skillCooldown,
     portraitImage: hero.portraitImage ?? null,
+    battlefieldPortraitImage: hero.battlefieldPortraitImage ?? null,
     currentSkillCooldown: 0,
     buffAttackBonus: 0,
     buffTurns: 0,

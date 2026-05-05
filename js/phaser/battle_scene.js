@@ -121,6 +121,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       return `${PORTRAIT_TEXTURE_PREFIX}-${unit.heroId ?? unit.id}`;
     }
 
+    getBattlefieldPortraitPath(unit) {
+      return unit.battlefieldPortraitImage ?? unit.portraitImage ?? null;
+    }
+
     preload() {
       if (!this.textures.exists(BATTLEFIELD_KEY)) {
         this.load.image(BATTLEFIELD_KEY, "assets/battle/battlefield_14x8_mvp.png");
@@ -139,14 +143,16 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       }
 
       this.battleState.units.forEach((unit) => {
-        if (!unit.portraitImage) {
+        const portraitPath = this.getBattlefieldPortraitPath(unit);
+
+        if (!portraitPath) {
           return;
         }
 
         const portraitTextureKey = this.getPortraitTextureKey(unit);
 
         if (!this.textures.exists(portraitTextureKey)) {
-          this.load.image(portraitTextureKey, unit.portraitImage);
+          this.load.image(portraitTextureKey, portraitPath);
         }
       });
     }
@@ -436,18 +442,26 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
         const selectionRing = this.add.ellipse(0, 26, 86, 26, 0xf8d798, unit.id === selectedUnitId ? 0.24 : 0)
           .setStrokeStyle(unit.id === selectedUnitId ? 3 : 2, 0xf8d798, unit.id === selectedUnitId ? 0.85 : 0.28);
-        const facingLabel = getDirectionLabel(unit.facing);
-        const hpText = this.add.text(0, 72, `${unit.troops} / ${unit.maxTroops}${facingLabel ? ` ${facingLabel}` : ""}`, {
+        const facingText = this.add.text(0, -84, getDirectionLabel(unit.facing), {
+          color: "#f3ead9",
+          fontFamily: "Segoe UI, sans-serif",
+          fontSize: "22px",
+          fontStyle: "bold",
+          align: "center",
+          stroke: "#081018",
+          strokeThickness: 3,
+        }).setOrigin(0.5, 0.5);
+        const hpText = this.add.text(0, 64, `${unit.troops} / ${unit.maxTroops}`, {
           color: "#dbe6f3",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "15px",
           align: "center",
         }).setOrigin(0.5, 0.5);
-        const hpBarTrack = this.add.rectangle(0, 56, 90, 5, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
+        const hpBarTrack = this.add.rectangle(0, 49, 90, 5, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
         const hpRatio = unit.maxTroops > 0 ? Math.max(0, unit.troops) / unit.maxTroops : 0;
         const hpBarFill = this.add.rectangle(
           -45 + (90 * hpRatio) / 2,
-          56,
+          49,
           90 * hpRatio,
           5,
           fillColor,
@@ -458,7 +472,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const portraitBadge = this.createUnitPortraitBadge(unit);
         const hitZone = this.add.zone(0, 8, 90, 110).setOrigin(0.5, 0.5);
 
-        unitGroup.add([selectionRing, tokenSprite, portraitBadge, hpBarTrack, hpBarFill, hpText, hitZone]);
+        unitGroup.add([selectionRing, tokenSprite, portraitBadge, facingText, hpBarTrack, hpBarFill, hpText, hitZone]);
 
         if (unit.isDefending) {
           unitGroup.add(this.add.text(0, -60, "방어", {
@@ -609,13 +623,13 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
     createUnitPortraitBadge(unit) {
       const badge = this.add.container(-28, -18);
-      const badgeFrame = this.add.rectangle(0, 0, 36, 36, 0x111111, 0.94)
-        .setStrokeStyle(1, 0x000000, 0.85);
+      const badgeFrame = this.add.rectangle(0, 0, 36, 36, 0x101010, 0.12)
+        .setStrokeStyle(1, 0x000000, 0.12);
       badge.add(badgeFrame);
 
       const portraitTextureKey = this.getPortraitTextureKey(unit);
 
-      if (unit.portraitImage && this.textures.exists(portraitTextureKey)) {
+      if (this.getBattlefieldPortraitPath(unit) && this.textures.exists(portraitTextureKey)) {
         const portraitImage = this.add.image(0, 0, portraitTextureKey)
           .setDisplaySize(32, 32);
         badge.add(portraitImage);

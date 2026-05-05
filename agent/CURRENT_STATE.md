@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.3-2 Battlefield Unit HUD Cleanup`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.3-2a Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -47,6 +47,7 @@ Current recorded build state:
 - `v0.3.0` Hero Portrait UI
 - `v0.3-1` Battlefield Unit Portrait Badge
 - `v0.3-2` Battlefield Unit HUD Cleanup
+- `v0.3-2a` Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -134,6 +135,9 @@ Current recorded build state:
 - Battlefield unit name labels are now removed so the Phaser battlefield stays visually cleaner while identity remains available through portraits and the right UNIT panel.
 - Battlefield troop text is now simplified from `병력 110 / 110` to `110 / 110` with the facing arrow shown inline, and HP bars are thinner and placed closer to the unit sprite.
 - Portrait badges are now 32px with a thin dark/black border, while skill cooldown/status icon redesign remains deferred and battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved in `v0.3-2`.
+- Battlefield portrait badges now use dedicated `battlefieldPortraitImage` assets first, with fallback to the existing general portrait only when needed.
+- `battlefieldPortraitImage` is now copied into battle units so roster/selected-summary portraits and battlefield portraits can use separate sources safely.
+- Battlefield portrait frame intensity is now reduced to a nearly invisible dark border, the facing arrow is moved above the unit for readability, and HP bar plus troop text sit closer to the sprite while battlefield names remain hidden and status/cooldown icon work stays deferred in `v0.3-2a`.
 - Simple BGM system is integrated:
   - `assets/audio/world_map_bgm.mp3`
   - `assets/audio/battle_bgm.mp3`

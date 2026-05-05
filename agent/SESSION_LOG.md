@@ -2,6 +2,14 @@
 
 ## 2026-05-05
 
+- Added `battlefieldPortraitImage` to all four MVP heroes in `data/heroes.js` while keeping the existing `portraitImage` field unchanged for roster and selected-summary UI.
+- Extended `js/core/battle_state.js` so battle units now copy `battlefieldPortraitImage` separately from the normal portrait source.
+- Updated `js/phaser/battle_scene.js` so battlefield portrait badges now prefer dedicated battlefield portrait assets and only fall back to `portraitImage` when needed.
+- Reduced the battlefield portrait frame to a near-invisible dark border, moved the facing arrow above the unit, and pulled the HP bar plus troop number closer to the sprite for a tighter HUD.
+- Kept battlefield names hidden and status/cooldown icon redesign deferred while preserving battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic in `v0.3-2a Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch`.
+- Ran `node --check data/heroes.js`.
+- Ran `node --check js/core/battle_state.js`.
+- Ran `node --check js/phaser/battle_scene.js`.
 - Cleaned up the battlefield unit HUD in `js/phaser/battle_scene.js` by removing battlefield unit name labels and hiding direct battlefield cooldown text.
 - Simplified battlefield troop text from `병력 current / max` to `current / max` and moved the facing arrow inline with that text.
 - Made battlefield HP bars thinner and positioned the HP bar plus troop text closer to the unit sprite for a more compact HUD.

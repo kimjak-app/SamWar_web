@@ -1,16 +1,16 @@
 # Next Tasks
 
-Current recorded build state before the next task: `v0.3-2 Battlefield Unit HUD Cleanup`.
+Current recorded build state before the next task: `v0.3-2a Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch`.
 
 ## Primary Next Session Target
-`Browser-test compact battlefield HUD readability`
+`Browser-test battlefield portrait readability and spacing`
 
 ## Priority Order
-1. Browser-test compact battlefield HUD readability
-   - Verify the cleaner HUD layout, thinner HP bar, and inline troop/facing text in the browser.
-   - Confirm battlefield interactions remain intact after the visual cleanup.
-2. Tune portrait badge size / position if needed
-   - Adjust Phaser-only placement after browser review.
+1. Browser-test battlefield portrait readability and spacing
+   - Verify dedicated battlefield portraits, the softer frame, and compact HP/troop placement in the browser.
+   - Confirm battlefield interactions remain intact after the micro tuning.
+2. Tune arrow size / position if needed
+   - Adjust Phaser-only facing-arrow placement after browser review.
    - Avoid touching battle logic or portrait assets.
 3. Add status effect icons
    - Add explicit battlefield status markers in a later focused pass.
@@ -32,3 +32,4 @@ Current recorded build state before the next task: `v0.3-2 Battlefield Unit HUD 
 - Preserve the v0.3.0 portrait-data linkage and safe fallback rendering behavior.
 - Preserve the v0.3-1 battlefield portrait badge rendering without changing core hit-zone behavior.
 - Preserve the v0.3-2 compact battlefield HUD layout and hidden battlefield cooldown text.
+- Preserve the v0.3-2a dedicated battlefield portrait source split and subtle-frame treatment.
