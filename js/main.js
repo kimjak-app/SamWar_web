@@ -54,6 +54,7 @@ let appState = createInitialAppState();
 let autoBattleTimerId = null;
 let battleTempoLocked = false;
 let activeSkillCutin = null;
+let activeBattleResultCutin = null;
 const battleTempoTimerIds = new Set();
 
 const BATTLE_TEMPO = {
@@ -62,6 +63,9 @@ const BATTLE_TEMPO = {
   enemyActionDelayMs: 1250,
   autoBattleDelayMs: 1050,
 };
+const BATTLE_RESULT_CUTIN_MS = 2000;
+const BATTLE_RESULT_VICTORY_IMAGE = "./assets/skill_cutins/battle_result_victory.png";
+const BATTLE_RESULT_DEFEAT_IMAGE = "./assets/skill_cutins/battle_result_defeat.png";
 
 initializeBgmManager();
 
@@ -88,10 +92,19 @@ function clearBattleTempoTimers({ unlock = true } = {}) {
 
   battleTempoTimerIds.clear();
   activeSkillCutin = null;
+  activeBattleResultCutin = null;
 
   if (unlock) {
     battleTempoLocked = false;
   }
+}
+
+function isResolvedBattleStatus(status) {
+  return status === "won" || status === "lost";
+}
+
+function isBattleResultCutinActive() {
+  return Boolean(activeBattleResultCutin);
 }
 
 function scheduleBattleTempoTimer(callback, delayMs, battleId = appState.battle?.id ?? null) {
@@ -120,6 +133,7 @@ function getRenderableAppState() {
       ...appState.battle,
       tempoLockActive: battleTempoLocked,
       activeSkillCutin,
+      activeBattleResultCutin,
     },
   };
 }
@@ -135,8 +149,74 @@ function getSelectedBattleSkill(battleState) {
 }
 
 function applyBattleState(nextBattleState) {
+  if (
+    nextBattleState
+    && isResolvedBattleStatus(nextBattleState.status)
+    && (!activeBattleResultCutin || activeBattleResultCutin.battleId !== nextBattleState.id)
+  ) {
+    startBattleResultCutinSequence(nextBattleState);
+    return;
+  }
+
   appState = updateBattleState(appState, nextBattleState);
   rerender();
+}
+
+function finishBattleAfterResultCutin(battleId) {
+  if (!appState.battle || appState.battle.id !== battleId || !isResolvedBattleStatus(appState.battle.status)) {
+    activeBattleResultCutin = null;
+    battleTempoLocked = false;
+    rerender();
+    return;
+  }
+
+  activeBattleResultCutin = null;
+  battleTempoLocked = false;
+  clearAutoBattleTimer();
+  clearBattleTempoTimers();
+  appState = returnFromBattle(appState);
+  rerender();
+}
+
+function startBattleResultCutinSequence(nextBattleState) {
+  if (!nextBattleState || nextBattleState.status === "active") {
+    appState = updateBattleState(appState, nextBattleState);
+    rerender();
+    return;
+  }
+
+  clearAutoBattleTimer();
+  clearBattleTempoTimers({ unlock: false });
+  battleTempoLocked = true;
+  activeBattleResultCutin = {
+    battleId: nextBattleState.id,
+    result: nextBattleState.status,
+    image: nextBattleState.status === "won" ? BATTLE_RESULT_VICTORY_IMAGE : BATTLE_RESULT_DEFEAT_IMAGE,
+    durationMs: BATTLE_RESULT_CUTIN_MS,
+  };
+  appState = updateBattleState(appState, nextBattleState);
+  rerender();
+  const scheduledResultCutin = activeBattleResultCutin;
+
+  scheduleBattleTempoTimer(
+    () => {
+      if (!appState.battle || appState.battle.id !== scheduledResultCutin.battleId) {
+        activeBattleResultCutin = null;
+        battleTempoLocked = false;
+        rerender();
+        return;
+      }
+
+      activeBattleResultCutin = null;
+      battleTempoLocked = false;
+      clearAutoBattleTimer();
+      clearBattleTempoTimers();
+      appState = returnFromBattle(appState);
+      rerender();
+    },
+    scheduledResultCutin.durationMs,
+    scheduledResultCutin.battleId,
+  );
 }
 
 function scheduleNextEnemyActionTimer(battleId = appState.battle?.id ?? null, delayMs = BATTLE_TEMPO.enemyActionDelayMs) {
@@ -160,6 +240,7 @@ function ensurePlayerAutoBattleProgress() {
     || !appState.battle.autoBattleEnabled
     || battleTempoLocked
     || activeSkillCutin
+    || activeBattleResultCutin
   ) {
     return false;
   }
@@ -178,7 +259,7 @@ function ensurePlayerAutoBattleProgress() {
 }
 
 function ensureBattleProgress() {
-  if (!appState.battle || appState.battle.status !== "active" || activeSkillCutin) {
+  if (!appState.battle || appState.battle.status !== "active" || activeSkillCutin || activeBattleResultCutin) {
     return false;
   }
 
@@ -419,6 +500,7 @@ function canUseManualBattleControls() {
     appState.battle
     && appState.battle.status === "active"
     && !battleTempoLocked
+    && !activeBattleResultCutin
     && !appState.battle.autoBattleEnabled,
   );
 }
@@ -432,6 +514,7 @@ function scheduleAutoBattleStep() {
     || appState.battle.status !== "active"
     || appState.battle.turnOwner !== "player"
     || battleTempoLocked
+    || activeBattleResultCutin
   ) {
     return;
   }
@@ -445,6 +528,7 @@ function scheduleAutoBattleStep() {
       || appState.battle.status !== "active"
       || appState.battle.turnOwner !== "player"
       || battleTempoLocked
+      || activeBattleResultCutin
     ) {
       return;
     }
@@ -682,6 +766,10 @@ function rerender() {
       rerender();
     },
     onBattleReturnToWorld: () => {
+      if (isBattleResultCutinActive()) {
+        return;
+      }
+
       clearAutoBattleTimer();
       clearBattleTempoTimers();
       appState = returnFromBattle(appState);
@@ -694,6 +782,7 @@ function rerender() {
     && appState.battle.status === "active"
     && appState.battle.turnOwner === "player"
     && !battleTempoLocked
+    && !activeBattleResultCutin
   ) {
     ensurePlayerAutoBattleProgress();
   }

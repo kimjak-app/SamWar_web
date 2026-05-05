@@ -2,6 +2,17 @@
 
 ## 2026-05-05
 
+## v0.3-3a Battle Result Cutin
+- Reused the existing DOM-based battle board cutin overlay flow for terminal battle results.
+- Added a `2` second battle-end result cutin delay before the existing `returnFromBattle(...)` post-processing runs.
+- Victory result cutin path: `assets/skill_cutins/battle_result_victory.png`
+- Defeat result cutin path: `assets/skill_cutins/battle_result_defeat.png`
+- Battle result judgment logic was not changed.
+- Existing unique skill cutin image paths and flow were preserved.
+- Duplicate battle-end execution is now guarded by a dedicated active battle-result state.
+- Manual world-map return is suppressed while the battle result cutin is visible so the end flow cannot fire twice.
+- No SFX, BGM, Phaser render config, or asset files were changed.
+
 ## v0.3-2e Unit Sprite Facing Flip
 - Confirmed both blue and red battlefield unit-token assets face left by default.
 - Added `sprite.setFlipX(unit.facing === "right")` only to battlefield unit token sprites.

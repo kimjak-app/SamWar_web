@@ -167,6 +167,18 @@ function renderSkillCutinOverlay(activeSkillCutin) {
   `;
 }
 
+function renderBattleResultCutinOverlay(activeBattleResultCutin) {
+  if (!activeBattleResultCutin) {
+    return "";
+  }
+
+  return `
+    <div class="skill-cutin-overlay skill-cutin-overlay--result" aria-hidden="true">
+      <img class="skill-cutin-image" src="${activeBattleResultCutin.image}" alt="" />
+    </div>
+  `;
+}
+
 function renderBattleTopbar(battleState) {
   return `
     <div class="battle-topbar-copy">
@@ -272,6 +284,7 @@ function renderBattleRightPanel(battleState, playerUnits, enemyUnits, options = 
 function renderBattleCommandBar(battleState, selectedUnit, options) {
   const {
     isActive,
+    resultCutinActive,
     canUseSelectedSkill,
     canUsePostureCommand,
     manualControlsLocked,
@@ -316,7 +329,7 @@ function renderBattleCommandBar(battleState, selectedUnit, options) {
         후퇴
       </button>
       ${
-        !isActive
+        !isActive && !resultCutinActive
           ? `
             <button class="battle-action-button battle-action-button-return" type="button" data-battle-action="return">
               월드맵으로 복귀
@@ -349,6 +362,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
   const selectedUnit = getSelectedUnit(battleState);
   const selectedSkill = selectedUnit ? getSkillById(battleState.skills, selectedUnit.skillId) : null;
   const isActive = battleState.status === "active";
+  const resultCutinActive = Boolean(battleState.activeBattleResultCutin);
   const isFacingPhase = battleState.phase === "facing";
   const canUseSelectedSkill = Boolean(
     selectedUnit
@@ -416,6 +430,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
       selectedUnit,
       {
         isActive,
+        resultCutinActive,
         isFacingPhase,
         canUseSelectedSkill,
         canUsePostureCommand,
@@ -427,7 +442,10 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
   }
 
   if (overlayLayerElement) {
-    overlayLayerElement.innerHTML = renderSkillCutinOverlay(battleState.activeSkillCutin);
+    overlayLayerElement.innerHTML = (
+      renderSkillCutinOverlay(battleState.activeSkillCutin)
+      + renderBattleResultCutinOverlay(battleState.activeBattleResultCutin)
+    );
   }
 
   if (mountElement) {
