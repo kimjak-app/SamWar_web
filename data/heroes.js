@@ -25,6 +25,7 @@ export const heroes = [
     uniqueSkillId: "hakikjin_barrage",
     skillId: "hakikjin_barrage",
     skillCooldown: 3,
+    portraitImage: "assets/portraits/yi_sunsin_portrait.png",
   },
   {
     id: "jeong_do_jeon",
@@ -52,6 +53,7 @@ export const heroes = [
     uniqueSkillId: "reform_order",
     skillId: "reform_order",
     skillCooldown: 3,
+    portraitImage: "assets/portraits/jeong_dojeon_portrait.png",
   },
   {
     id: "nobunaga",
@@ -79,6 +81,7 @@ export const heroes = [
     uniqueSkillId: "matchlock_volley",
     skillId: "matchlock_volley",
     skillCooldown: 3,
+    portraitImage: "assets/portraits/nobunaga_portrait.png",
   },
   {
     id: "kenshin",
@@ -106,5 +109,6 @@ export const heroes = [
     uniqueSkillId: "cavalry_charge",
     skillId: "cavalry_charge",
     skillCooldown: 3,
+    portraitImage: "assets/portraits/kenshin_portrait.png",
   },
 ];

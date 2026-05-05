@@ -78,6 +78,19 @@ function renderBattleLog(logEntries) {
     .join("");
 }
 
+function renderUnitPortrait(unit, { large = false } = {}) {
+  const portraitClass = large ? "battle-selected-portrait" : "battle-unit-portrait";
+  const fallbackClass = large
+    ? "battle-unit-portrait-fallback battle-selected-portrait battle-selected-portrait-fallback"
+    : "battle-unit-portrait-fallback battle-unit-portrait";
+
+  if (unit?.portraitImage) {
+    return `<img class="${portraitClass}" src="${unit.portraitImage}" alt="${unit.name} 초상화" loading="lazy" />`;
+  }
+
+  return `<div class="${fallbackClass}" aria-hidden="true">?</div>`;
+}
+
 function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = false } = {}) {
   const statusParts = [];
 
@@ -101,15 +114,20 @@ function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = fals
 
   return `
     <div class="battle-unit-card battle-unit-card-${unit.side} ${isSelected ? "is-selected" : ""}"${selectionAttributes}>
-      <div class="battle-unit-side-row">
-        <span class="battle-unit-side">${sideLabel}</span>
-        ${isSelected ? '<span class="battle-unit-selected-chip">선택 중</span>' : ""}
+      <div class="battle-unit-card-layout">
+        ${renderUnitPortrait(unit)}
+        <div class="battle-unit-card-copy">
+          <div class="battle-unit-side-row">
+            <span class="battle-unit-side">${sideLabel}</span>
+            ${isSelected ? '<span class="battle-unit-selected-chip">선택 중</span>' : ""}
+          </div>
+          <strong class="battle-unit-name">${unit.name}</strong>
+          <span class="battle-unit-hp">병력 ${unit.troops} / ${unit.maxTroops} · 전열 ${unit.hp} / ${unit.maxHp}</span>
+          <span class="battle-unit-hp">공 ${Math.round(getEffectiveAttack(unit))} · 방 ${Math.round(getEffectiveDefense(unit))} · 지력 ${unit.intelligence}</span>
+          <span class="battle-unit-cooldown">방향 ${getDirectionLabel(unit.facing)}</span>
+          <span class="battle-unit-buff">${statusParts.join(" · ")}</span>
+        </div>
       </div>
-      <strong class="battle-unit-name">${unit.name}</strong>
-      <span class="battle-unit-hp">병력 ${unit.troops} / ${unit.maxTroops} · 전열 ${unit.hp} / ${unit.maxHp}</span>
-      <span class="battle-unit-hp">공 ${Math.round(getEffectiveAttack(unit))} · 방 ${Math.round(getEffectiveDefense(unit))} · 지력 ${unit.intelligence}</span>
-      <span class="battle-unit-cooldown">방향 ${getDirectionLabel(unit.facing)}</span>
-      <span class="battle-unit-buff">${statusParts.join(" · ")}</span>
     </div>
   `;
 }
@@ -170,7 +188,41 @@ function renderBattleTopbar(battleState) {
   `;
 }
 
-function renderBattleStatusPanel(battleState) {
+function renderSelectedUnitSummary(selectedUnit, selectedSkill) {
+  if (!selectedUnit) {
+    return `
+      <div class="battle-selected-card">
+        <span class="battle-unit-cooldown">현재 선택된 유닛이 없습니다.</span>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="battle-selected-card">
+      <div class="battle-selected-layout">
+        ${renderUnitPortrait(selectedUnit, { large: true })}
+        <div class="battle-selected-copy">
+          <strong class="battle-unit-name">${selectedUnit.name}</strong>
+          <span class="battle-unit-hp">병력 ${selectedUnit.troops} / ${selectedUnit.maxTroops} · 전열 ${selectedUnit.hp} / ${selectedUnit.maxHp}</span>
+          <span class="battle-unit-cooldown">방향 ${getDirectionLabel(selectedUnit.facing)} · 지력 ${selectedUnit.intelligence}</span>
+          <span class="battle-unit-buff">${formatStatusList(selectedUnit)}</span>
+        </div>
+      </div>
+    </div>
+    ${
+      selectedSkill
+        ? `
+          <div class="battle-skill-card">
+            <strong class="battle-unit-name">${selectedSkill.name}</strong>
+            <span class="battle-unit-cooldown">재사용 ${selectedUnit.currentSkillCooldown} / ${selectedUnit.skillCooldown}턴</span>
+          </div>
+        `
+        : ""
+    }
+  `;
+}
+
+function renderBattleStatusPanel(battleState, selectedUnit, selectedSkill) {
   return `
     <section class="battle-panel battle-status-panel">
       <p class="eyebrow">Status</p>
@@ -179,13 +231,14 @@ function renderBattleStatusPanel(battleState) {
       <div class="battle-status-note">
         ${battleState.turnOwner === "player" ? "유닛 선택 · 이동 · 방향 · 공격 · 특기 · 책략 · 방어 · 대기" : "적군 행동 중입니다."}
       </div>
+      ${renderSelectedUnitSummary(selectedUnit, selectedSkill)}
     </section>
   `;
 }
 
-function renderBattleLeftPanel(battleState) {
+function renderBattleLeftPanel(battleState, selectedUnit, selectedSkill) {
   return `
-    ${renderBattleStatusPanel(battleState)}
+    ${renderBattleStatusPanel(battleState, selectedUnit, selectedSkill)}
     <section class="battle-panel battle-log-panel">
       <p class="eyebrow">Battle Log</p>
       <h2 class="detail-heading">전투 기록</h2>
@@ -348,7 +401,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
   }
 
   if (leftPanelElement) {
-    leftPanelElement.innerHTML = renderBattleLeftPanel(battleState);
+    leftPanelElement.innerHTML = renderBattleLeftPanel(battleState, selectedUnit, selectedSkill);
   }
 
   if (rightPanelElement) {

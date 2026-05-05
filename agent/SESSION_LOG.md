@@ -2,6 +2,15 @@
 
 ## 2026-05-05
 
+- Added `portraitImage` fields for all four MVP heroes in `data/heroes.js` using the existing portrait PNG assets already present in the repository.
+- Extended `js/core/battle_state.js` so battle units now carry portrait image paths copied from hero data.
+- Updated `js/ui/battle_ui.js` so right-side roster cards show portrait thumbnails for both player and enemy units, and the selected-unit summary now shows the selected hero portrait.
+- Added safe portrait fallback rendering so missing portrait data does not break battle UI rendering.
+- Styled roster and selected-unit portraits in `css/main.css` with scaled CSS thumbnails rather than modifying the original image assets.
+- Preserved battle rules, AI, auto battle, cut-ins, world turn, invasion, and city ownership logic in `v0.3.0 Hero Portrait UI`.
+- Ran `node --check data/heroes.js`.
+- Ran `node --check js/ui/battle_ui.js`.
+- Ran `node --check js/core/battle_state.js`.
 - Added the first world-turn loop with `턴 종료`, `world.turnOwner`, and player/enemy world-turn presentation on the world map.
 - Added MVP enemy invasion rules in `js/core/world_rules.js` with connected-city candidate selection and one invasion attempt per enemy turn at `ENEMY_INVASION_CHANCE = 0.45`.
 - Extended `js/core/app_state.js` so enemy turns can either open a defense battle choice or show a no-invasion result panel, and the next player world turn increments after enemy resolution finishes.

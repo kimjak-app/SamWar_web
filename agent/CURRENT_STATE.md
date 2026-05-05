@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.2-10 World Turn + Enemy Invasion MVP`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.3.0 Hero Portrait UI`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -44,6 +44,7 @@ Current recorded build state:
 - `v0.2-9d-hotfix6` Resume Player Auto Battle After Enemy Turn
 - `v0.2-9d-hotfix7` Auto Battle hasActed Fallback Root Fix
 - `v0.2-10` World Turn + Enemy Invasion MVP
+- `v0.3.0` Hero Portrait UI
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -122,6 +123,9 @@ Current recorded build state:
 - World map now has a player-side `턴 종료` button and a lightweight world turn owner loop starting at `제 1턴 / 아군 턴`.
 - Enemy turn can attempt one probabilistic invasion per turn using connected enemy-city -> player-city candidates, and no-invasion turns show a confirmation result panel before advancing to the next player turn.
 - Enemy invasion now opens a defense battle choice UI with `직접 방어` and `자동 방어`, and defense battle results keep or transfer the defending city while existing player attack battle choice, battle rules, cut-ins, auto battle, board size, and BGM remain preserved in `v0.2-10`.
+- Hero portrait assets are now connected directly to hero data and copied into battle units for UI rendering.
+- Right `UNIT / 부대 목록` roster cards now show hero portraits for both player and enemy units.
+- Selected-unit summary now shows the selected hero portrait with safe missing-portrait fallback behavior, while battle rules, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved in `v0.3.0`.
 - Simple BGM system is integrated:
   - `assets/audio/world_map_bgm.mp3`
   - `assets/audio/battle_bgm.mp3`
