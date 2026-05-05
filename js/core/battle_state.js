@@ -60,7 +60,12 @@ function buildBattleUnit(heroId) {
   };
 }
 
-export function createInitialBattleState({ attackerCity, defenderCity, autoBattleEnabled = false }) {
+export function createInitialBattleState({
+  attackerCity,
+  defenderCity,
+  autoBattleEnabled = false,
+  battleContext = null,
+}) {
   battleSequence += 1;
 
   const rosterUnitIds = [
@@ -68,6 +73,15 @@ export function createInitialBattleState({ attackerCity, defenderCity, autoBattl
     ...battleRosters.defaultEnemyDefense,
   ];
   const units = rosterUnitIds.map(buildBattleUnit).filter(Boolean);
+  const resolvedBattleContext = battleContext ?? {
+    type: "attack",
+    controlMode: autoBattleEnabled ? "auto" : "manual",
+    attackerCityId: attackerCity.id,
+    defenderCityId: defenderCity.id,
+  };
+  const openingLog = resolvedBattleContext.type === "defense"
+    ? `${attackerCity.name}의 침공을 ${defenderCity.name}에서 맞아 방어전을 개시했습니다.`
+    : `${attackerCity.name}에서 ${defenderCity.name} 공격을 개시했습니다.`;
 
   return {
     id: `battle-${Date.now()}-${battleSequence}`,
@@ -75,6 +89,7 @@ export function createInitialBattleState({ attackerCity, defenderCity, autoBattl
     attackerCityName: attackerCity.name,
     defenderCityId: defenderCity.id,
     defenderCityName: defenderCity.name,
+    battleContext: resolvedBattleContext,
     status: "active",
     turnOwner: "player",
     selectedUnitId: null,
@@ -82,7 +97,7 @@ export function createInitialBattleState({ attackerCity, defenderCity, autoBattl
     pendingMove: null,
     autoBattleEnabled,
     phase: "select",
-    log: [`${attackerCity.name}에서 ${defenderCity.name} 공격을 개시했습니다.`],
+    log: [openingLog],
     lastAction: null,
     grid: {
       width: BATTLE_GRID_WIDTH,

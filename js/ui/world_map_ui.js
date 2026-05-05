@@ -56,6 +56,10 @@ function getStatusText(cities, selectedCity) {
   return "전투 시스템은 다음 버전에서 구현 예정입니다.";
 }
 
+function getWorldTurnOwnerLabel(turnOwner) {
+  return turnOwner === "enemy" ? "적군 턴" : "아군 턴";
+}
+
 function getCityLabelClass(cityId) {
   switch (cityId) {
     case "luoyang":
@@ -78,22 +82,46 @@ function renderBattleChoicePanel(pendingBattleChoice) {
 
   return `
     <section class="detail-card hud-panel battle-choice-card" aria-live="polite">
-      <p class="eyebrow">Battle Mode</p>
-      <h3 class="detail-heading">전투 방식을 선택하세요</h3>
+      <p class="eyebrow">${pendingBattleChoice.eyebrow ?? "Battle Mode"}</p>
+      <h3 class="detail-heading">${pendingBattleChoice.title ?? "전투 방식을 선택하세요"}</h3>
       <div class="battle-choice-summary">
-        <p class="battle-choice-line">출발 도시: ${pendingBattleChoice.originCityName}</p>
-        <p class="battle-choice-line">목표 도시: ${pendingBattleChoice.targetCityName}</p>
+        <p class="battle-choice-line">${pendingBattleChoice.type === "defense" ? "침공 도시" : "출발 도시"}: ${pendingBattleChoice.originCityName}</p>
+        <p class="battle-choice-line">${pendingBattleChoice.type === "defense" ? "방어 도시" : "목표 도시"}: ${pendingBattleChoice.targetCityName}</p>
+        ${pendingBattleChoice.description ? `<p class="battle-choice-line battle-choice-copy">${pendingBattleChoice.description}</p>` : ""}
         ${pendingBattleChoice.isRemoteBattle ? '<p class="battle-choice-note">원격 침공</p>' : ""}
       </div>
       <div class="battle-choice-actions">
         <button class="attack-button battle-choice-button" type="button" data-battle-choice="manual" data-battle-choice-city-id="${pendingBattleChoice.targetCityId}">
-          직접 지휘
+          ${pendingBattleChoice.confirmManualLabel ?? "직접 지휘"}
         </button>
         <button class="attack-button battle-choice-button battle-choice-button-auto" type="button" data-battle-choice="auto" data-battle-choice-city-id="${pendingBattleChoice.targetCityId}">
-          자동 위임
+          ${pendingBattleChoice.confirmAutoLabel ?? "자동 위임"}
         </button>
-        <button class="battle-choice-cancel" type="button" data-battle-choice="cancel">
-          취소
+        ${pendingBattleChoice.showCancel ? `
+          <button class="battle-choice-cancel" type="button" data-battle-choice="cancel">
+            취소
+          </button>
+        ` : ""}
+      </div>
+    </section>
+  `;
+}
+
+function renderEnemyTurnResultPanel(pendingEnemyTurnResult) {
+  if (!pendingEnemyTurnResult) {
+    return "";
+  }
+
+  return `
+    <section class="detail-card hud-panel battle-choice-card" aria-live="polite">
+      <p class="eyebrow">Enemy Turn</p>
+      <h3 class="detail-heading">적군 턴 결과</h3>
+      <div class="battle-choice-summary">
+        <p class="battle-choice-line battle-choice-copy">${pendingEnemyTurnResult.message}</p>
+      </div>
+      <div class="battle-choice-actions">
+        <button class="attack-button battle-choice-button battle-choice-button-auto" type="button" data-enemy-turn-result="confirm">
+          확인
         </button>
       </div>
     </section>
@@ -102,7 +130,14 @@ function renderBattleChoicePanel(pendingBattleChoice) {
 
 export function renderWorldMap(rootElement, appState, handlers = {}) {
   const { meta, world } = appState;
-  const { onCitySelect, onAttackCity, onBattleChoiceConfirm, onBattleChoiceCancel } = handlers;
+  const {
+    onCitySelect,
+    onAttackCity,
+    onBattleChoiceConfirm,
+    onBattleChoiceCancel,
+    onEndWorldTurn,
+    onConfirmEnemyTurnResult,
+  } = handlers;
   const selectedCity = getSelectedCity(appState);
   const linkedCities = getLinkedCities(world.cities, selectedCity);
   const cityEdges = getCityEdges(world.cities);
@@ -110,6 +145,8 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   const attackable = canAttackCity(world.cities, selectedCity);
   const unified = isWorldUnified(world.cities);
   const { pendingBattleChoice } = appState;
+  const canEndTurn = world.turnOwner === "player" && !pendingBattleChoice && !world.pendingEnemyTurnResult;
+  const canOpenAttackChoice = canEndTurn && attackable;
 
   rootElement.innerHTML = `
     <main class="map-screen">
@@ -175,9 +212,15 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
 
         <aside class="hud-stack" aria-label="Selected city details">
           <section class="turn-card hud-panel">
-            <span class="turn-label">Turn</span>
-            <strong class="turn-value">${meta.turn}</strong>
+            <span class="turn-label">World Turn</span>
+            <strong class="turn-value">제 ${meta.turn}턴</strong>
+            <strong class="turn-owner">${getWorldTurnOwnerLabel(world.turnOwner)}</strong>
             <span class="turn-copy">${unified ? "천하통일 달성" : meta.status}</span>
+            ${canEndTurn ? `
+              <button class="attack-button world-turn-button" type="button" data-end-world-turn="true">
+                턴 종료
+              </button>
+            ` : ""}
           </section>
 
           <section class="detail-card hud-panel">
@@ -188,7 +231,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
             </p>
             <p class="city-detail-copy">${getStatusText(world.cities, selectedCity)}</p>
             ${
-              attackable
+              canOpenAttackChoice
                 ? `
                   <button class="attack-button" type="button" data-attack-city-id="${selectedCity.id}">
                     공격
@@ -196,12 +239,17 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
                   <p class="attack-note">공격을 누르면 전투 방식 선택 후 전투 화면으로 진입합니다.</p>
                 `
                 : `
-                  <p class="attack-note">전투 화면은 공격 가능한 적 도시를 선택했을 때만 진입합니다.</p>
+                  <p class="attack-note">${
+                    world.turnOwner === "enemy"
+                      ? "적군 턴에는 턴 결과를 확인하거나 방어 방식을 선택해야 합니다."
+                      : "전투 화면은 공격 가능한 적 도시를 선택했을 때만 진입합니다."
+                  }</p>
                 `
             }
           </section>
 
           ${renderBattleChoicePanel(pendingBattleChoice)}
+          ${renderEnemyTurnResultPanel(world.pendingEnemyTurnResult)}
 
           <section class="detail-card hud-panel">
             <h3 class="detail-heading">연결 도시</h3>
@@ -281,6 +329,18 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   if (onBattleChoiceCancel) {
     rootElement.querySelector('[data-battle-choice="cancel"]')?.addEventListener("click", () => {
       onBattleChoiceCancel();
+    });
+  }
+
+  if (onEndWorldTurn) {
+    rootElement.querySelector("[data-end-world-turn='true']")?.addEventListener("click", () => {
+      onEndWorldTurn();
+    });
+  }
+
+  if (onConfirmEnemyTurnResult) {
+    rootElement.querySelector("[data-enemy-turn-result='confirm']")?.addEventListener("click", () => {
+      onConfirmEnemyTurnResult();
     });
   }
 }

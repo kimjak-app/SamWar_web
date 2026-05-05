@@ -126,6 +126,19 @@ button {
   line-height: 1.5;
 }
 
+.turn-owner {
+  color: var(--text-main);
+  font-family: var(--font-display);
+  font-size: 1.18rem;
+  line-height: 1.1;
+}
+
+.world-turn-button {
+  width: 100%;
+  margin-top: 10px;
+  background: linear-gradient(180deg, rgba(52, 72, 104, 0.96), rgba(22, 34, 53, 0.96));
+}
+
 .map-image,
 .map-overlay {
   position: absolute;
@@ -362,6 +375,10 @@ button {
   margin: 0;
   color: var(--text-main);
   line-height: 1.5;
+}
+
+.battle-choice-copy {
+  color: var(--text-muted);
 }
 
 .battle-choice-note {

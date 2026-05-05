@@ -1,6 +1,8 @@
 import {
   cancelBattleChoice,
+  confirmEnemyTurnResult,
   createInitialAppState,
+  endWorldTurn,
   openBattleChoice,
   retreatFromBattle,
   returnFromBattle,
@@ -150,6 +152,31 @@ function scheduleNextEnemyActionTimer(battleId = appState.battle?.id ?? null, de
   return true;
 }
 
+function ensurePlayerAutoBattleProgress() {
+  if (
+    !appState.battle
+    || appState.battle.status !== "active"
+    || appState.battle.turnOwner !== "player"
+    || !appState.battle.autoBattleEnabled
+    || battleTempoLocked
+    || activeSkillCutin
+  ) {
+    return false;
+  }
+
+  if (shouldAutoAdvanceTurn(appState.battle)) {
+    startEnemyTurnSequence(endPlayerTurn(appState.battle));
+    return true;
+  }
+
+  if (autoBattleTimerId || battleTempoTimerIds.size > 0) {
+    return false;
+  }
+
+  scheduleAutoBattleStep();
+  return true;
+}
+
 function ensureBattleProgress() {
   if (!appState.battle || appState.battle.status !== "active" || activeSkillCutin) {
     return false;
@@ -166,24 +193,10 @@ function ensureBattleProgress() {
     }
 
     applyBattleState(finishEnemyTurn(appState.battle));
-    return true;
+    return ensurePlayerAutoBattleProgress() || true;
   }
 
-  if (!appState.battle.autoBattleEnabled) {
-    return false;
-  }
-
-  if (shouldAutoAdvanceTurn(appState.battle)) {
-    startEnemyTurnSequence(endPlayerTurn(appState.battle));
-    return true;
-  }
-
-  if (!battleTempoLocked && !autoBattleTimerId && battleTempoTimerIds.size === 0) {
-    scheduleAutoBattleStep();
-    return true;
-  }
-
-  return false;
+  return ensurePlayerAutoBattleProgress();
 }
 
 function finishPlayerFlow(nextBattleState) {
@@ -447,11 +460,23 @@ function rerender() {
 
   renderLayout(appRoot, getRenderableAppState(), {
     onCitySelect: (cityId) => {
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
+      if (appState.pendingBattleChoice?.type === "defense") {
+        return;
+      }
+
       clearBattleTempoTimers();
       appState = selectCity(appState, cityId);
       rerender();
     },
     onAttackCity: (cityId) => {
+      if (appState.mode !== "world" || appState.world.turnOwner !== "player" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
       clearBattleTempoTimers();
       clearAutoBattleTimer();
       appState = openBattleChoice(appState, cityId);
@@ -470,6 +495,26 @@ function rerender() {
       clearBattleTempoTimers();
       clearAutoBattleTimer();
       appState = cancelBattleChoice(appState);
+      rerender();
+    },
+    onEndWorldTurn: () => {
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
+      appState = endWorldTurn(appState);
+      rerender();
+    },
+    onConfirmEnemyTurnResult: () => {
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
+      appState = confirmEnemyTurnResult(appState);
       rerender();
     },
     onBattleSelectUnit: (unitId) => {
@@ -650,7 +695,7 @@ function rerender() {
     && appState.battle.turnOwner === "player"
     && !battleTempoLocked
   ) {
-    scheduleAutoBattleStep();
+    ensurePlayerAutoBattleProgress();
   }
 }
 

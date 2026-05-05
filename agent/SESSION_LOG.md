@@ -1,5 +1,33 @@
 # Session Log
 
+## 2026-05-05
+
+- Added the first world-turn loop with `턴 종료`, `world.turnOwner`, and player/enemy world-turn presentation on the world map.
+- Added MVP enemy invasion rules in `js/core/world_rules.js` with connected-city candidate selection and one invasion attempt per enemy turn at `ENEMY_INVASION_CHANCE = 0.45`.
+- Extended `js/core/app_state.js` so enemy turns can either open a defense battle choice or show a no-invasion result panel, and the next player world turn increments after enemy resolution finishes.
+- Added battle context tracking to `js/core/battle_state.js` so attack and defense battles are distinguished without changing the existing MVP roster system.
+- Reused and extended the existing battle choice UI so attack battles still support `직접 지휘` / `자동 위임`, while enemy invasions now support `직접 방어` / `자동 방어`.
+- Added defense battle ownership rules so defense victories keep the city, defense defeats transfer the city to the enemy, and defense retreat is treated as city loss for this MVP.
+- Preserved existing battle rules, hero stats, cut-ins, auto-battle stability, board size, and BGM while adding the world turn + invasion loop in `v0.2-10 World Turn + Enemy Invasion MVP`.
+- Ran `node --check js/core/app_state.js`.
+- Ran `node --check js/core/world_rules.js`.
+- Ran `node --check js/core/battle_state.js`.
+- Ran `node --check js/ui/world_map_ui.js`.
+- Ran `node --check js/main.js`.
+- Root-fixed the remaining auto-battle deadlock in `js/core/battle_rules.js` by replacing player auto-battle reference-comparison fallback with actual actor `hasActed` verification.
+- Added a shared automatic-action guard so if an acting unit is still alive but still has `hasActed: false` after an automatic action result, that same unit is forced into a safe wait.
+- Applied the same actor-consumption guard to enemy planned actions, including skill, strategy, attack, move, status-skip, and wait-result paths.
+- Preserved manual battle behavior, cut-ins, battle rules, board size, unit stats, and world-map flow in `v0.2-9d-hotfix7 Auto Battle hasActed Fallback Root Fix`.
+- Ran `node --check js/core/battle_rules.js`.
+- Traced the remaining auto-battle freeze around `continueEnemyTurnSequence(...)`, `finishEnemyTurn(...)`, `applyBattleState(...)`, `rerender(...)`, and `scheduleAutoBattleStep(...)`.
+- Confirmed the freeze was a controller-side resume gap after enemy turn end rather than a JavaScript exception or battle-rule failure.
+- Added a dedicated `ensurePlayerAutoBattleProgress()` guard in `js/main.js` so player-side auto battle is re-scheduled when battle state returns to `turnOwner: "player"` with auto battle still enabled.
+- Updated `ensureBattleProgress()` so enemy-turn completion now immediately re-checks player auto-battle continuation after `finishEnemyTurn(...)`.
+- Updated the rerender tail auto-battle hook to use the shared player auto-progress guard instead of directly scheduling a timer.
+- Preserved manual battle controls, battle rules, AI scoring, cut-ins, status-skip handling, damage formulas, board size, stats, and world-map flow in `v0.2-9d-hotfix6 Resume Player Auto Battle After Enemy Turn`.
+- Ran `node --check js/main.js`.
+- Ran `node --check js/core/battle_rules.js`.
+
 ## 2026-04-30
 
 - Created GitHub repository: kimjak-app/SamWar_web.

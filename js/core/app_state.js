@@ -3,7 +3,13 @@ import { factions } from "../../data/factions.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
 import { createInitialBattleState } from "./battle_state.js";
-import { canAttackCity, getAttackSourceCity, occupyCity } from "./world_rules.js";
+import {
+  ENEMY_INVASION_CHANCE,
+  canAttackCity,
+  getAttackSourceCity,
+  occupyCity,
+  rollEnemyInvasion,
+} from "./world_rules.js";
 
 const DEFAULT_SELECTED_CITY_ID = "hanseong";
 
@@ -27,6 +33,8 @@ export function createInitialAppState() {
       factions,
       heroes,
       skills,
+      turnOwner: "player",
+      pendingEnemyTurnResult: null,
     },
   };
 }
@@ -38,11 +46,30 @@ export function selectCity(appState, cityId) {
       ...appState.selection,
       cityId,
     },
-    pendingBattleChoice: null,
+    pendingBattleChoice: appState.pendingBattleChoice?.type === "attack"
+      ? null
+      : appState.pendingBattleChoice,
   };
 }
 
-function buildPendingBattleChoice(appState, cityId) {
+function advanceWorldTurn(appState, overrides = {}) {
+  return {
+    ...appState,
+    meta: {
+      ...appState.meta,
+      turn: appState.meta.turn + 1,
+    },
+    world: {
+      ...appState.world,
+      turnOwner: "player",
+      pendingEnemyTurnResult: null,
+    },
+    pendingBattleChoice: null,
+    ...overrides,
+  };
+}
+
+function buildAttackBattleChoice(appState, cityId) {
   const defenderCity = appState.world.cities.find((city) => city.id === cityId);
   const attackerCity = getAttackSourceCity(appState.world.cities, cityId);
 
@@ -56,12 +83,60 @@ function buildPendingBattleChoice(appState, cityId) {
     originCityName: attackerCity.name,
     targetCityId: defenderCity.id,
     targetCityName: defenderCity.name,
+    title: "전투 방식을 선택하세요",
+    eyebrow: "Battle Mode",
+    description: "공격 방식을 선택하세요.",
+    confirmManualLabel: "직접 지휘",
+    confirmAutoLabel: "자동 위임",
+    showCancel: true,
     isRemoteBattle: attackerCity.id !== DEFAULT_SELECTED_CITY_ID,
+    battleContext: {
+      type: "attack",
+      attackerCityId: attackerCity.id,
+      defenderCityId: defenderCity.id,
+    },
+  };
+}
+
+function buildDefenseBattleChoice(appState, invasionCandidate) {
+  const attackerCity = appState.world.cities.find((city) => city.id === invasionCandidate?.attackerCityId);
+  const defenderCity = appState.world.cities.find((city) => city.id === invasionCandidate?.defenderCityId);
+
+  if (!attackerCity || !defenderCity) {
+    return null;
+  }
+
+  return {
+    type: "defense",
+    originCityId: attackerCity.id,
+    originCityName: attackerCity.name,
+    targetCityId: defenderCity.id,
+    targetCityName: defenderCity.name,
+    title: "적군이 침공했습니다!",
+    eyebrow: "Enemy Invasion",
+    description: "방어 방식을 선택하세요.",
+    confirmManualLabel: "직접 방어",
+    confirmAutoLabel: "자동 방어",
+    showCancel: false,
+    isRemoteBattle: false,
+    battleContext: {
+      type: "defense",
+      attackerCityId: attackerCity.id,
+      defenderCityId: defenderCity.id,
+    },
   };
 }
 
 export function openBattleChoice(appState, cityId) {
-  const pendingBattleChoice = buildPendingBattleChoice(appState, cityId);
+  if (
+    appState.mode !== "world"
+    || appState.world.turnOwner !== "player"
+    || appState.world.pendingEnemyTurnResult
+  ) {
+    return appState;
+  }
+
+  const pendingBattleChoice = buildAttackBattleChoice(appState, cityId);
 
   if (!pendingBattleChoice) {
     return appState;
@@ -74,7 +149,7 @@ export function openBattleChoice(appState, cityId) {
 }
 
 export function cancelBattleChoice(appState) {
-  if (!appState.pendingBattleChoice) {
+  if (!appState.pendingBattleChoice || !appState.pendingBattleChoice.showCancel) {
     return appState;
   }
 
@@ -85,12 +160,20 @@ export function cancelBattleChoice(appState) {
 }
 
 export function startBattle(appState, cityId, options = {}) {
-  const defenderCity = appState.world.cities.find((city) => city.id === cityId);
-  const attackerCity = getAttackSourceCity(appState.world.cities, cityId);
+  const pendingBattleChoice = appState.pendingBattleChoice?.targetCityId === cityId
+    ? appState.pendingBattleChoice
+    : buildAttackBattleChoice(appState, cityId);
+  const defenderCity = appState.world.cities.find((city) => city.id === pendingBattleChoice?.targetCityId);
+  const attackerCity = appState.world.cities.find((city) => city.id === pendingBattleChoice?.originCityId);
 
-  if (!defenderCity || !attackerCity || !canAttackCity(appState.world.cities, defenderCity)) {
+  if (!pendingBattleChoice || !defenderCity || !attackerCity) {
     return appState;
   }
+
+  const battleContext = {
+    ...pendingBattleChoice.battleContext,
+    controlMode: options.autoBattleEnabled === true ? "auto" : "manual",
+  };
 
   return {
     ...appState,
@@ -104,6 +187,7 @@ export function startBattle(appState, cityId, options = {}) {
       attackerCity,
       defenderCity,
       autoBattleEnabled: options.autoBattleEnabled === true,
+      battleContext,
     }),
   };
 }
@@ -116,6 +200,31 @@ export function updateBattleState(appState, battleState) {
 }
 
 export function retreatFromBattle(appState) {
+  const battleContext = appState.battle?.battleContext ?? null;
+
+  if (battleContext?.type === "defense") {
+    const updatedCities = occupyCity(
+      appState.world.cities,
+      battleContext.defenderCityId,
+      "enemy",
+    );
+
+    return advanceWorldTurn(appState, {
+      mode: "world",
+      battle: null,
+      selection: {
+        ...appState.selection,
+        cityId: battleContext.defenderCityId,
+      },
+      world: {
+        ...appState.world,
+        cities: updatedCities,
+        turnOwner: "player",
+        pendingEnemyTurnResult: null,
+      },
+    });
+  }
+
   return {
     ...appState,
     mode: "world",
@@ -129,6 +238,33 @@ export function returnFromBattle(appState) {
 
   if (!battle) {
     return retreatFromBattle(appState);
+  }
+
+  const battleContext = battle.battleContext ?? {
+    type: "attack",
+    attackerCityId: battle.attackerCityId,
+    defenderCityId: battle.defenderCityId,
+  };
+
+  if (battleContext.type === "defense") {
+    const updatedCities = battle.status === "won"
+      ? appState.world.cities
+      : occupyCity(appState.world.cities, battle.defenderCityId, "enemy");
+
+    return advanceWorldTurn(appState, {
+      mode: "world",
+      battle: null,
+      selection: {
+        ...appState.selection,
+        cityId: battle.defenderCityId,
+      },
+      world: {
+        ...appState.world,
+        cities: updatedCities,
+        turnOwner: "player",
+        pendingEnemyTurnResult: null,
+      },
+    });
   }
 
   if (battle.status === "won") {
@@ -160,4 +296,53 @@ export function returnFromBattle(appState) {
     battle: null,
     pendingBattleChoice: null,
   };
+}
+
+export function endWorldTurn(appState) {
+  if (
+    appState.mode !== "world"
+    || appState.world.turnOwner !== "player"
+    || appState.pendingBattleChoice
+    || appState.world.pendingEnemyTurnResult
+  ) {
+    return appState;
+  }
+
+  const invasionCandidate = rollEnemyInvasion(appState.world.cities, ENEMY_INVASION_CHANCE);
+
+  if (invasionCandidate) {
+    return {
+      ...appState,
+      selection: {
+        ...appState.selection,
+        cityId: invasionCandidate.defenderCityId,
+      },
+      pendingBattleChoice: buildDefenseBattleChoice(appState, invasionCandidate),
+      world: {
+        ...appState.world,
+        turnOwner: "enemy",
+        pendingEnemyTurnResult: null,
+      },
+    };
+  }
+
+  return {
+    ...appState,
+    world: {
+      ...appState.world,
+      turnOwner: "enemy",
+      pendingEnemyTurnResult: {
+        type: "no_invasion",
+        message: "적군은 이번 턴 움직이지 않았습니다.",
+      },
+    },
+  };
+}
+
+export function confirmEnemyTurnResult(appState) {
+  if (!appState.world.pendingEnemyTurnResult) {
+    return appState;
+  }
+
+  return advanceWorldTurn(appState);
 }

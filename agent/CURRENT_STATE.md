@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.2-9d-hotfix5 Auto Battle Sequencer Deadlock Guard`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.2-10 World Turn + Enemy Invasion MVP`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -41,6 +41,9 @@ Current recorded build state:
 - `v0.2-9d-hotfix3` Auto Battle Status Skip Continuation Fix
 - `v0.2-9d-hotfix4` Confusion Skip Deadlock Fix
 - `v0.2-9d-hotfix5` Auto Battle Sequencer Deadlock Guard
+- `v0.2-9d-hotfix6` Resume Player Auto Battle After Enemy Turn
+- `v0.2-9d-hotfix7` Auto Battle hasActed Fallback Root Fix
+- `v0.2-10` World Turn + Enemy Invasion MVP
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -110,6 +113,15 @@ Current recorded build state:
 - Auto battle now has a stronger controller-level progression guard after automatic actions.
 - Enemy skill cut-in resolution now always continues to the next enemy action or enemy turn end, and normal wait/move/strategy actions are also guarded against dead-end states.
 - The guard applies to both world-map Auto Battle and in-battle Auto Battle while preserving status-skip handling, manual battle, cut-ins, battle rules, board size, and world flow in `v0.2-9d-hotfix5`.
+- Auto battle now also resumes correctly when the enemy turn ends and control returns to the player turn with `autoBattleEnabled` still active.
+- The specific freeze state `player turn + phase select + autoBattleEnabled + no visible error + no timer` is now covered by a dedicated player auto-battle progress guard.
+- Previous `status_skip` handling and sequencer guard fixes remain intact, and manual battle plus cut-ins were preserved in `v0.2-9d-hotfix6`.
+- Auto battle fallback now checks the actual acting unit's `hasActed` state instead of relying on object reference comparison.
+- Player auto battle no longer retries the same unit when a partial automatic action returns a new state without consuming that unit's action.
+- Enemy planned actions now use the same actor-consumption guard, while manual battle, cut-ins, battle rules, board size, and world flow remain preserved in `v0.2-9d-hotfix7`.
+- World map now has a player-side `턴 종료` button and a lightweight world turn owner loop starting at `제 1턴 / 아군 턴`.
+- Enemy turn can attempt one probabilistic invasion per turn using connected enemy-city -> player-city candidates, and no-invasion turns show a confirmation result panel before advancing to the next player turn.
+- Enemy invasion now opens a defense battle choice UI with `직접 방어` and `자동 방어`, and defense battle results keep or transfer the defending city while existing player attack battle choice, battle rules, cut-ins, auto battle, board size, and BGM remain preserved in `v0.2-10`.
 - Simple BGM system is integrated:
   - `assets/audio/world_map_bgm.mp3`
   - `assets/audio/battle_bgm.mp3`

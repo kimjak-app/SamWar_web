@@ -911,6 +911,20 @@ function applyAiWait(battleState, unitId, facingDirection = null) {
   return appendLog(nextState, `${actingUnit.name}이 대기했습니다.`);
 }
 
+function ensureAutoActorHasActed(nextState, actorUnitId, fallbackFacing = null) {
+  if (!nextState || nextState.status !== "active") {
+    return nextState;
+  }
+
+  const resultingActor = getUnitById(nextState, actorUnitId);
+
+  if (!resultingActor || !resultingActor.isAlive || resultingActor.hasActed) {
+    return nextState;
+  }
+
+  return applyAiWait(nextState, actorUnitId, resultingActor.facing ?? fallbackFacing);
+}
+
 function applyStatusBlockedAction(battleState, unitId) {
   const actingUnit = getUnitById(battleState, unitId);
 
@@ -1002,15 +1016,23 @@ function applyAiAction(battleState, unitId) {
       }));
     }
 
-    return setOutcomeStatus(nextState);
+    return ensureAutoActorHasActed(setOutcomeStatus(nextState), actingUnit.id, action.facingDirection);
   }
 
   if (action.type === "strategy" && action.targetUnitId) {
-    return setOutcomeStatus(applyStrategy(battleState, actingUnit.id, action.targetUnitId));
+    return ensureAutoActorHasActed(
+      setOutcomeStatus(applyStrategy(battleState, actingUnit.id, action.targetUnitId)),
+      actingUnit.id,
+      action.facingDirection,
+    );
   }
 
   if (action.type === "attack" && action.targetUnitId) {
-    return applyResolvedBasicAttack(battleState, actingUnit.id, action.targetUnitId);
+    return ensureAutoActorHasActed(
+      applyResolvedBasicAttack(battleState, actingUnit.id, action.targetUnitId),
+      actingUnit.id,
+      action.facingDirection,
+    );
   }
 
   if (action.type === "move" && action.movePosition) {
@@ -1024,21 +1046,41 @@ function applyAiAction(battleState, unitId) {
     const followUpAction = movedUnit ? getAiTurnAction(nextState, movedUnit) : null;
 
     if (followUpAction?.type === "skill") {
-      return applyAiAction(nextState, actingUnit.id);
+      return ensureAutoActorHasActed(
+        applyAiAction(nextState, actingUnit.id),
+        actingUnit.id,
+        followUpAction.facingDirection ?? action.facingDirection,
+      );
     }
 
     if (followUpAction?.type === "attack") {
-      return applyResolvedBasicAttack(nextState, actingUnit.id, followUpAction.targetUnitId);
+      return ensureAutoActorHasActed(
+        applyResolvedBasicAttack(nextState, actingUnit.id, followUpAction.targetUnitId),
+        actingUnit.id,
+        followUpAction.facingDirection ?? action.facingDirection,
+      );
     }
 
     if (followUpAction?.type === "strategy" && followUpAction.targetUnitId) {
-      return setOutcomeStatus(applyStrategy(nextState, actingUnit.id, followUpAction.targetUnitId));
+      return ensureAutoActorHasActed(
+        setOutcomeStatus(applyStrategy(nextState, actingUnit.id, followUpAction.targetUnitId)),
+        actingUnit.id,
+        followUpAction.facingDirection ?? action.facingDirection,
+      );
     }
 
-    return applyAiWait(nextState, actingUnit.id, followUpAction?.facingDirection ?? action.facingDirection);
+    return ensureAutoActorHasActed(
+      applyAiWait(nextState, actingUnit.id, followUpAction?.facingDirection ?? action.facingDirection),
+      actingUnit.id,
+      followUpAction?.facingDirection ?? action.facingDirection,
+    );
   }
 
-  return applyAiWait(battleState, actingUnit.id, action.facingDirection);
+  return ensureAutoActorHasActed(
+    applyAiWait(battleState, actingUnit.id, action.facingDirection),
+    actingUnit.id,
+    action.facingDirection,
+  );
 }
 
 export function planNextEnemyAction(battleState) {
@@ -1103,7 +1145,11 @@ export function executePlannedEnemyAction(battleState, plannedAction) {
   }
 
   if (plannedAction.type === "status_skip") {
-    return applyStatusBlockedAction(battleState, actingUnit.id);
+    return ensureAutoActorHasActed(
+      applyStatusBlockedAction(battleState, actingUnit.id),
+      actingUnit.id,
+      plannedAction.facingDirection,
+    );
   }
 
   if (plannedAction.type === "skill") {
@@ -1116,27 +1162,47 @@ export function executePlannedEnemyAction(battleState, plannedAction) {
       }));
     }
 
-    return setOutcomeStatus(nextState);
-  }
-
-  if (plannedAction.type === "strategy" && plannedAction.targetUnitId) {
-    return setOutcomeStatus(applyStrategy(battleState, actingUnit.id, plannedAction.targetUnitId));
-  }
-
-  if (plannedAction.type === "attack" && plannedAction.targetUnitId) {
-    return applyResolvedBasicAttack(battleState, actingUnit.id, plannedAction.targetUnitId);
-  }
-
-  if (plannedAction.type === "move" && plannedAction.movePosition) {
-    return applyAiMove(
-      battleState,
+    return ensureAutoActorHasActed(
+      setOutcomeStatus(nextState),
       actingUnit.id,
-      plannedAction.movePosition,
       plannedAction.facingDirection,
     );
   }
 
-  return applyAiWait(battleState, actingUnit.id, plannedAction.facingDirection);
+  if (plannedAction.type === "strategy" && plannedAction.targetUnitId) {
+    return ensureAutoActorHasActed(
+      setOutcomeStatus(applyStrategy(battleState, actingUnit.id, plannedAction.targetUnitId)),
+      actingUnit.id,
+      plannedAction.facingDirection,
+    );
+  }
+
+  if (plannedAction.type === "attack" && plannedAction.targetUnitId) {
+    return ensureAutoActorHasActed(
+      applyResolvedBasicAttack(battleState, actingUnit.id, plannedAction.targetUnitId),
+      actingUnit.id,
+      plannedAction.facingDirection,
+    );
+  }
+
+  if (plannedAction.type === "move" && plannedAction.movePosition) {
+    return ensureAutoActorHasActed(
+      applyAiMove(
+        battleState,
+        actingUnit.id,
+        plannedAction.movePosition,
+        plannedAction.facingDirection,
+      ),
+      actingUnit.id,
+      plannedAction.facingDirection,
+    );
+  }
+
+  return ensureAutoActorHasActed(
+    applyAiWait(battleState, actingUnit.id, plannedAction.facingDirection),
+    actingUnit.id,
+    plannedAction.facingDirection,
+  );
 }
 
 export function endPlayerTurn(battleState) {
@@ -1243,11 +1309,9 @@ export function performAutoBattleStep(battleState) {
     return applyStatusBlockedAction(battleState, actingPlayer.id);
   }
 
-  const nextState = applyAiAction(battleState, actingPlayer.id);
-
-  if (nextState !== battleState) {
-    return nextState;
-  }
-
-  return applyAiWait(battleState, actingPlayer.id, actingPlayer.facing);
+  return ensureAutoActorHasActed(
+    applyAiAction(battleState, actingPlayer.id),
+    actingPlayer.id,
+    actingPlayer.facing,
+  );
 }
