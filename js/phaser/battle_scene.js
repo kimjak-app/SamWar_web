@@ -610,6 +610,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         sprite.displayWidth = 96;
         sprite.scaleY = sprite.scaleX;
         sprite.setAlpha(0.92);
+        sprite.setFlipX(unit.facing === "right");
         return sprite;
       }
 

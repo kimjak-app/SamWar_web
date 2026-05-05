@@ -2,6 +2,46 @@
 
 ## 2026-05-05
 
+## v0.3-2e Unit Sprite Facing Flip
+- Confirmed both blue and red battlefield unit-token assets face left by default.
+- Added `sprite.setFlipX(unit.facing === "right")` only to battlefield unit token sprites.
+- Facing right now visually flips the unit sprite.
+- Facing left/up/down keeps the original left-facing sprite.
+- Hero portrait badges, HP bars, troop text, facing arrows, cut-ins, and DOM overlays were not flipped.
+- Browser verification confirmed units now face left/right correctly.
+- No Phaser render config, texture filters, mipmap settings, pixelArt, antialias, or roundPixels settings were changed.
+- No battle rules, auto battle, cut-ins, world turn, invasion, or ownership logic were changed.
+
+## Rejected Experiment: v0.3-2c-mipmap-test
+- Tested `mipmapFilter: 'LINEAR_MIPMAP_LINEAR'` in Phaser render config.
+- It slightly improved battlefield hero badge clarity, but caused unacceptable visual/cut-in regression.
+- The change was rolled back.
+- Do not reintroduce mipmap/pixel/filter/sharpness experiments during MVP unless isolated safely.
+- Completed `v0.3-2e Unit Sprite Facing Flip`.
+- Updated only `js/phaser/battle_scene.js` so battlefield unit token sprites now apply `sprite.setFlipX(unit.facing === "right")`.
+- Both blue/red battlefield unit token assets are treated as left-facing by default.
+- The flip rule is shared for both sides:
+  - `right` flips the token sprite
+  - `left` / `up` / `down` keep the original left-facing sprite
+- FlipX was applied only to the battlefield unit token sprite.
+- Hero portrait badges, HP bar, troop number, facing arrow text, selection highlight, and cut-ins were not modified.
+- Cut-ins remain DOM overlay rendering and were not modified.
+- No Phaser config, render filters, asset files, or battle logic were changed.
+- Ran `node --check js/phaser/battle_scene.js`.
+- Completed `v0.3-2d Remove Facing Flip Regression Only`.
+- Re-checked `js/phaser/battle_scene.js` and `js/phaser/phaser_battle_mount.js` for battlefield facing-flip regression sources.
+- Confirmed the battlefield portrait helper still preserves `unit.battlefieldPortraitImage ?? unit.portraitImage ?? null`.
+- Confirmed battlefield unit token loading still preserves:
+  - `assets/unit_tokens_battlefield/unit_blue_battlefield.png`
+  - `assets/unit_tokens_battlefield/unit_red_battlefield.png`
+- Confirmed Phaser mount render config remains simple with only `render.antialias: true` and no added filter/scale mutations.
+- Updated `js/phaser/battle_scene.js` only to make the intended behavior explicit:
+  - battlefield unit token sprites remain non-mirrored
+  - facing arrow UI remains the sole direction indicator
+  - no flipX / negative-scale battlefield sprite transform was introduced
+- Preserved HQ battlefield hero portrait activation, 256px battlefield unit token sources, compact HUD layout, battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic.
+- Ran `node --check js/phaser/battle_scene.js`.
+- Ran `node --check js/phaser/phaser_battle_mount.js`.
 - Completed `v0.3-2c Battlefield Hero Portrait HQ Asset Activation`.
 - Updated `js/phaser/battle_scene.js` so battlefield hero badges now use `unit.battlefieldPortraitImage` first and `unit.portraitImage` as fallback again.
 - Confirmed all four MVP heroes in `data/heroes.js` already had the correct `battlefieldPortraitImage` paths:

@@ -1,25 +1,27 @@
-# Next Tasks
+# Next Task Priority
 
-Current recorded build state before the next task: `v0.3-2c Battlefield Hero Portrait HQ Asset Activation`.
+Current recorded build state before the next task: `v0.3-2e Unit Sprite Facing Flip`.
 
-## Primary Next Session Target
-`Browser-test HQ battlefield hero portrait clarity`
+1. `v0.3-3 Status Effect Icons`
+   - Start with confusion icon only.
+   - Show small icon near battlefield unit HUD.
+   - Keep existing status text in right `UNIT` panel.
+   - Do not redesign HUD yet.
 
-## Priority Order
-1. Browser-test HQ battlefield hero portrait clarity
-   - Verify battlefield hero badges now use the HQ `battlefieldPortraitImage` source and look sharper than the temporary fallback state.
-   - Confirm right UNIT roster and selected-unit summary portraits remain unchanged.
-2. Tune battlefield portrait/arrow/HP offsets if needed
-   - Adjust Phaser-only HUD offsets only if the activated HQ portrait assets change the visual balance.
-   - Keep battle logic and rendering settings untouched.
-3. Add status effect icons
-   - Add explicit battlefield status markers in a later focused pass.
-4. Add hero portraits to world-map city / garrison UI
-   - Reuse the same portrait assets for stronger world-side identity later.
-5. Defense battle UX polish
-   - Improve invasion/defense clarity without changing the core flow.
-6. SFX / battle sound effects
-   - Add battle feedback audio in a separate pass.
+2. World-map city / garrison hero portrait UI
+   - Show who is stationed or associated with a city.
+   - Keep MVP simple.
+
+3. Defense battle UX polish
+   - Improve invasion/defense choice messaging.
+   - Clarify city loss/defense victory results.
+
+4. SFX / battle sound effects
+   - Add later after core UI flow stabilizes.
+
+5. Battlefield portrait polish backlog
+   - Improve hero badge clarity later.
+   - Do not block MVP progress.
 
 ## Constraints To Preserve
 - Direct Codex Paste Mode remains the working method.
@@ -27,21 +29,14 @@ Current recorded build state before the next task: `v0.3-2c Battlefield Hero Por
 - Do not merge Phaser rendering logic into `js/core` battle rules.
 - Keep heroes, skills, rosters, and strategies data-driven.
 - Preserve the fixed MVP roster for now.
-- Avoid adding too many systems in one task.
-- Preserve the hotfix6 player auto-battle resume guard across enemy-turn -> player-turn transitions.
-- Preserve the hotfix7 actor `hasActed` fallback guard for both player auto battle and enemy planned actions.
-- Preserve the v0.2-10 attack/defense battle-context split and defense-city ownership rules.
-- Preserve the v0.3.0 portrait-data linkage and safe fallback rendering behavior.
-- Preserve the v0.3-1 battlefield portrait badge rendering without changing core hit-zone behavior.
-- Preserve the v0.3-2 compact battlefield HUD layout and hidden battlefield cooldown text.
-- Preserve the dedicated battlefield portrait source priority:
+- Keep the current compact battlefield HUD.
+- Preserve battlefield portrait source priority:
   - `battlefieldPortraitImage` first
   - `portraitImage` fallback
-- Preserve the v0.3-2b safe HUD micro tuning approach:
-  - no Phaser filter/global sharpness changes
-  - no `pixelArt` or `NEAREST` changes
-  - only safe HUD coordinate/style tuning unless browser verification proves otherwise
-- Preserve the v0.3-2b safe battlefield asset source switch approach:
-  - no asset deletion from `assets/units/`
-  - battlefield unit sprite source switching only
-  - no Phaser filter/global sharpness changes
+- Preserve dedicated 256px battlefield unit token assets.
+- Preserve unit token flip rule:
+  - assets face left by default
+  - flip only when `unit.facing === "right"`
+- Do not casually touch Phaser render/filter/sharpness settings.
+- Do not tune combat balance yet.
+- Balance will be handled after more core systems are in place.
