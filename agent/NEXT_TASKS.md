@@ -1,23 +1,23 @@
 # Next Tasks
 
-Current recorded build state before the next task: `v0.3-1 Battlefield Unit Portrait Badge`.
+Current recorded build state before the next task: `v0.3-2 Battlefield Unit HUD Cleanup`.
 
 ## Primary Next Session Target
-`Browser-test battlefield portrait badge size and placement`
+`Browser-test compact battlefield HUD readability`
 
 ## Priority Order
-1. Browser-test battlefield portrait badge size and placement
-   - Verify the new 28px badge placement on the `14x8` board and confirm it does not block interactions.
-   - Confirm all four MVP heroes render clearly in battle.
-2. Tune badge size / position if needed
-   - Adjust Phaser-only placement or size after browser review.
+1. Browser-test compact battlefield HUD readability
+   - Verify the cleaner HUD layout, thinner HP bar, and inline troop/facing text in the browser.
+   - Confirm battlefield interactions remain intact after the visual cleanup.
+2. Tune portrait badge size / position if needed
+   - Adjust Phaser-only placement after browser review.
    - Avoid touching battle logic or portrait assets.
-3. Compact battlefield unit HUD text
-   - Revisit battlefield text density now that badge identity is in place.
-4. Add status effect icons
+3. Add status effect icons
    - Add explicit battlefield status markers in a later focused pass.
-5. Add hero portraits to world-map city / garrison UI
+4. Add hero portraits to world-map city / garrison UI
    - Reuse the same portrait assets for stronger world-side identity later.
+5. Defense battle UX polish
+   - Improve invasion/defense clarity without changing the core flow.
 
 ## Constraints To Preserve
 - Direct Codex Paste Mode remains the working method.
@@ -31,3 +31,4 @@ Current recorded build state before the next task: `v0.3-1 Battlefield Unit Port
 - Preserve the v0.2-10 attack/defense battle-context split and defense-city ownership rules.
 - Preserve the v0.3.0 portrait-data linkage and safe fallback rendering behavior.
 - Preserve the v0.3-1 battlefield portrait badge rendering without changing core hit-zone behavior.
+- Preserve the v0.3-2 compact battlefield HUD layout and hidden battlefield cooldown text.

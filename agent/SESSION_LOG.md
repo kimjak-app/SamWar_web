@@ -2,6 +2,12 @@
 
 ## 2026-05-05
 
+- Cleaned up the battlefield unit HUD in `js/phaser/battle_scene.js` by removing battlefield unit name labels and hiding direct battlefield cooldown text.
+- Simplified battlefield troop text from `병력 current / max` to `current / max` and moved the facing arrow inline with that text.
+- Made battlefield HP bars thinner and positioned the HP bar plus troop text closer to the unit sprite for a more compact HUD.
+- Increased battlefield portrait badges from 28px to 32px and changed the badge frame from gold-accented styling to a thin dark/black border.
+- Kept status icon redesign deferred while preserving battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic in `v0.3-2 Battlefield Unit HUD Cleanup`.
+- Ran `node --check js/phaser/battle_scene.js`.
 - Updated `js/phaser/battle_scene.js` so battle scenes now preload hero portrait textures from existing `unit.portraitImage` data when available.
 - Added a small 28px battlefield portrait badge to each rendered unit, positioned near the upper-left of the unit sprite with a simple gold-framed backing.
 - Added safe battlefield portrait fallback rendering so missing portrait textures do not break unit rendering or battlefield interaction.

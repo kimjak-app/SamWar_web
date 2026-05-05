@@ -433,43 +433,23 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
         const unitPoint = this.getUnitPoint(unit);
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
-        const skill = getSkillById(this.battleState.skills, unit.skillId);
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
         const selectionRing = this.add.ellipse(0, 26, 86, 26, 0xf8d798, unit.id === selectedUnitId ? 0.24 : 0)
           .setStrokeStyle(unit.id === selectedUnitId ? 3 : 2, 0xf8d798, unit.id === selectedUnitId ? 0.85 : 0.28);
-        const label = this.add.text(0, -96, unit.name, {
-          color: "#f3ead9",
-          fontFamily: "Segoe UI, sans-serif",
-          fontSize: "18px",
-          fontStyle: "bold",
-          align: "center",
-        }).setOrigin(0.5, 0.5);
-        const facingText = this.add.text(0, -118, getDirectionLabel(unit.facing), {
-          color: "#f8d798",
-          fontFamily: "Segoe UI, sans-serif",
-          fontSize: "20px",
-          fontStyle: "bold",
-          align: "center",
-        }).setOrigin(0.5, 0.5);
-        const hpText = this.add.text(0, 80, `병력 ${unit.troops} / ${unit.maxTroops}`, {
+        const facingLabel = getDirectionLabel(unit.facing);
+        const hpText = this.add.text(0, 72, `${unit.troops} / ${unit.maxTroops}${facingLabel ? ` ${facingLabel}` : ""}`, {
           color: "#dbe6f3",
           fontFamily: "Segoe UI, sans-serif",
-          fontSize: "16px",
+          fontSize: "15px",
           align: "center",
         }).setOrigin(0.5, 0.5);
-        const cooldownText = this.add.text(0, 98, `${skill?.name ?? "특기"} CD ${unit.currentSkillCooldown}`, {
-          color: "#d1b075",
-          fontFamily: "Segoe UI, sans-serif",
-          fontSize: "12px",
-          align: "center",
-        }).setOrigin(0.5, 0.5);
-        const hpBarTrack = this.add.rectangle(0, 62, 90, 10, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
+        const hpBarTrack = this.add.rectangle(0, 56, 90, 5, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
         const hpRatio = unit.maxTroops > 0 ? Math.max(0, unit.troops) / unit.maxTroops : 0;
         const hpBarFill = this.add.rectangle(
           -45 + (90 * hpRatio) / 2,
-          62,
+          56,
           90 * hpRatio,
-          10,
+          5,
           fillColor,
           0.95,
         );
@@ -478,7 +458,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const portraitBadge = this.createUnitPortraitBadge(unit);
         const hitZone = this.add.zone(0, 8, 90, 110).setOrigin(0.5, 0.5);
 
-        unitGroup.add([selectionRing, tokenSprite, portraitBadge, hpBarTrack, hpBarFill, facingText, label, hpText, cooldownText, hitZone]);
+        unitGroup.add([selectionRing, tokenSprite, portraitBadge, hpBarTrack, hpBarFill, hpText, hitZone]);
 
         if (unit.isDefending) {
           unitGroup.add(this.add.text(0, -60, "방어", {
@@ -629,15 +609,15 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
     createUnitPortraitBadge(unit) {
       const badge = this.add.container(-28, -18);
-      const badgeFrame = this.add.rectangle(0, 0, 32, 32, 0x0d1622, 0.94)
-        .setStrokeStyle(2, 0xf8d798, 0.72);
+      const badgeFrame = this.add.rectangle(0, 0, 36, 36, 0x111111, 0.94)
+        .setStrokeStyle(1, 0x000000, 0.85);
       badge.add(badgeFrame);
 
       const portraitTextureKey = this.getPortraitTextureKey(unit);
 
       if (unit.portraitImage && this.textures.exists(portraitTextureKey)) {
         const portraitImage = this.add.image(0, 0, portraitTextureKey)
-          .setDisplaySize(28, 28);
+          .setDisplaySize(32, 32);
         badge.add(portraitImage);
       } else {
         const fallbackText = this.add.text(0, 0, "?", {

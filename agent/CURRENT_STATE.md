@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.3-1 Battlefield Unit Portrait Badge`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.3-2 Battlefield Unit HUD Cleanup`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -46,6 +46,7 @@ Current recorded build state:
 - `v0.2-10` World Turn + Enemy Invasion MVP
 - `v0.3.0` Hero Portrait UI
 - `v0.3-1` Battlefield Unit Portrait Badge
+- `v0.3-2` Battlefield Unit HUD Cleanup
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -130,6 +131,9 @@ Current recorded build state:
 - Small 28px hero portrait badges are now rendered directly on battlefield units using existing `unit.portraitImage` data from `v0.3.0`.
 - Battlefield badges are placed near the unit sprite without replacing the existing HP bar, name label, cooldown text, or click handling.
 - Status icons and broader unit HUD cleanup were intentionally deferred, while battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved in `v0.3-1`.
+- Battlefield unit name labels are now removed so the Phaser battlefield stays visually cleaner while identity remains available through portraits and the right UNIT panel.
+- Battlefield troop text is now simplified from `병력 110 / 110` to `110 / 110` with the facing arrow shown inline, and HP bars are thinner and placed closer to the unit sprite.
+- Portrait badges are now 32px with a thin dark/black border, while skill cooldown/status icon redesign remains deferred and battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved in `v0.3-2`.
 - Simple BGM system is integrated:
   - `assets/audio/world_map_bgm.mp3`
   - `assets/audio/battle_bgm.mp3`
