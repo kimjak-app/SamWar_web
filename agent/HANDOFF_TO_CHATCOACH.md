@@ -1,7 +1,7 @@
 # Handoff to ChatCoach
 
 ## Completed Task
-`v0.3-2b Safe Battlefield HUD Micro Tuning` was completed.
+`v0.3-2b Safe Battlefield Asset Source Switch` was completed.
 
 ## Changed Files
 - `js/phaser/battle_scene.js`
@@ -11,7 +11,7 @@
 - `agent/NEXT_TASKS.md`
 
 ## Current State
-- Current recorded milestone is `v0.3-2b Safe Battlefield HUD Micro Tuning complete`.
+- Current recorded milestone is `v0.3-2b Safe Battlefield Asset Source Switch complete`.
 - World map remains fullscreen with 4 MVP cities: `낙양`, `평양`, `한성`, `교토`.
 - World map attack loop still uses the pre-battle choice flow:
   - select enemy city
@@ -32,8 +32,13 @@
 - Right `UNIT / 부대 목록` roster cards now show hero portraits for both player and enemy units.
 - Selected-unit summary now shows the selected hero portrait.
 - Missing portrait data now falls back safely without breaking the battle UI.
+- Battlefield unit sprites now use dedicated 256x256 battlefield token assets:
+  - `assets/unit_tokens_battlefield/unit_blue_battlefield.png`
+  - `assets/unit_tokens_battlefield/unit_red_battlefield.png`
+- Old unit assets in `assets/units/` were intentionally kept and not deleted.
 - Battlefield units now also show compact 32px hero portrait badges near the unit sprite.
-- Battlefield portrait badges now prefer dedicated `battlefieldPortraitImage` assets and fall back to `portraitImage` only when needed.
+- Battlefield portrait badges now use the existing higher-quality `portraitImage` source for stability and quality.
+- Low-quality `battlefieldPortraitImage` assets remain preserved in data but are not used for battlefield badge rendering in this patch.
 - Battlefield unit name labels are now removed from the Phaser battlefield.
 - Battlefield troop text remains simplified to `current / max`.
 - Battlefield portrait badge border is now reduced further to an almost invisible dark outline.
@@ -60,6 +65,8 @@
 
 ## Known Issues
 - Browser verification for battlefield portrait readability and spacing is still pending.
+- Browser verification for the new 256 battlefield unit token quality is still pending.
+- Browser verification that battlefield badges are now using the 512px `portraitImage` source is still pending.
 - Browser verification for the safer portrait-border softness and tighter arrow / HP / troop placement is still pending.
 - Browser verification for hero portrait readability and spacing is still pending.
 - Browser verification for the new world turn + enemy invasion loop is still pending.
@@ -79,7 +86,10 @@
 - Confirm battle rules remain separated from Phaser rendering.
 - Confirm hero, skill, roster, and strategy content remain data-driven.
 - Confirm auto battle can run for multiple full turns without freezing after wait, move, strategy success/failure, skill, or status skip.
-- Confirm battlefield portrait badges use the dedicated battlefield portrait assets and look cleaner than the prior general portrait source.
+- Confirm blue/player battlefield units use `unit_blue_battlefield.png`.
+- Confirm red/enemy battlefield units use `unit_red_battlefield.png`.
+- Confirm old unit assets remain untouched in `assets/units/`.
+- Confirm battlefield portrait badges use the existing 512px `portraitImage` source rather than the low-quality battlefield portrait source.
 - Confirm the battlefield portrait frame feels almost absent and no yellow/gold frame remains.
 - Confirm the facing arrow above the unit now sits closer without overlapping the portrait badge or unit sprite.
 - Confirm the HP bar plus troop number sit closer to the unit and still feel readable without overlap.
@@ -104,15 +114,17 @@
 - Confirm no stat rebalance, cut-in timing change, or world-turn/invasion system was bundled into this patch.
 
 ## Suggested Next Task
-Suggested next task: `Browser-test safe HUD micro tuning`.
+Suggested next task: `Browser-test new 256 battlefield unit token quality`.
 
 Main candidates:
 
-1. Browser-test safe HUD micro tuning
-2. Add status effect icons
-3. Add hero portraits to world-map city / garrison UI
-4. Defense battle UX polish
-5. SFX / battle sound effects
+1. Browser-test new 256 battlefield unit token quality
+2. Tune battlefield portrait/arrow/HP offsets if needed
+3. Create higher-quality battlefield portrait assets later if desired
+4. Add status effect icons
+5. Add hero portraits to world-map city / garrison UI
+6. Defense battle UX polish
+7. SFX / battle sound effects
 
 ## New Chat Start Prompt
 채코치, SamWar_web 다음 세션 시작.
@@ -121,9 +133,11 @@ GitHub 저장소는 kimjak-app/SamWar_web이고, 공통 룰은 kimjak-app/_rules
 프로젝트 상태는 agent/CURRENT_STATE.md, agent/SESSION_LOG.md, agent/HANDOFF_TO_CHATCOACH.md, agent/NEXT_TASKS.md 기준으로 이어가자.
 
 현재 상태:
-- v0.3-2b Safe Battlefield HUD Micro Tuning까지 완료.
-- 전장 portrait badge는 이제 dedicated battlefield portrait asset을 우선 사용한다.
+- v0.3-2b Safe Battlefield Asset Source Switch까지 완료.
+- 전장 유닛 스프라이트는 이제 dedicated 256x256 battlefield token asset을 사용한다.
+- 기존 `assets/units/` 구 유닛 에셋은 백업/롤백용으로 유지되고 삭제하지 않았다.
 - `battlefieldPortraitImage`가 hero data와 battle unit 양쪽에 추가됐다.
+- 하지만 이번 패치에서는 저화질 128px battlefield portrait 대신 기존 512px `portraitImage`를 전장 badge source로 사용한다.
 - portrait frame은 거의 안 보이지 않을 정도의 dark outline로 더 줄였다.
 - facing arrow는 유닛 위를 유지하면서 더 가까이 붙였고 HP bar와 troop number도 sprite 쪽으로 더 당겼다.
 - Phaser rendering filter / pixelArt / NEAREST / global sharpness 설정은 이번 패치에서 의도적으로 건드리지 않았다.

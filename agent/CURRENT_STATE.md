@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.3-2b Safe Battlefield HUD Micro Tuning`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.3-2b Safe Battlefield Asset Source Switch`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -49,6 +49,7 @@ Current recorded build state:
 - `v0.3-2` Battlefield Unit HUD Cleanup
 - `v0.3-2a` Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch
 - `v0.3-2b` Safe Battlefield HUD Micro Tuning
+- `v0.3-2b` Safe Battlefield Asset Source Switch
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -80,10 +81,11 @@ Current recorded build state:
 - Battle log remains scroll-contained and does not push the command bar down.
 - Right unit roster panel remains internally scrollable.
 - Battle uses:
-  - `assets/units/unit_player_mvp.png`
-  - `assets/units/unit_enemy_mvp.png`
+  - `assets/unit_tokens_battlefield/unit_blue_battlefield.png`
+  - `assets/unit_tokens_battlefield/unit_red_battlefield.png`
   - `assets/battle/battlefield_14x8_mvp.png`
   - old rollback asset preserved: `assets/battle/battlefield_mvp.png`
+- Old unit token assets in `assets/units/` are intentionally preserved and not deleted.
 - Tactical battlefield is now `14x8`.
 - Heavy battlefield-wide background darkening was removed and reduced to a near-transparent readability pass.
 - Fixed MVP start positions were expanded for the larger board:
@@ -136,13 +138,19 @@ Current recorded build state:
 - Battlefield unit name labels are now removed so the Phaser battlefield stays visually cleaner while identity remains available through portraits and the right UNIT panel.
 - Battlefield troop text is now simplified from `병력 110 / 110` to `110 / 110` with the facing arrow shown inline, and HP bars are thinner and placed closer to the unit sprite.
 - Portrait badges are now 32px with a thin dark/black border, while skill cooldown/status icon redesign remains deferred and battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved in `v0.3-2`.
-- Battlefield portrait badges now use dedicated `battlefieldPortraitImage` assets first, with fallback to the existing general portrait only when needed.
-- `battlefieldPortraitImage` is now copied into battle units so roster/selected-summary portraits and battlefield portraits can use separate sources safely.
+- `battlefieldPortraitImage` is still copied into battle units so separate battlefield-specific portrait assets remain available for later use.
+- `v0.3-2b` Safe Battlefield Asset Source Switch now keeps battlefield portrait badge rendering on the existing higher-quality `portraitImage` source instead of the lower-quality `battlefieldPortraitImage` source.
 - Battlefield portrait frame intensity was first reduced in `v0.3-2a`.
 - `v0.3-2b` safely tightens the compact battlefield HUD from that restored stable baseline:
   - portrait border is reduced again to an almost invisible dark outline
   - facing arrow is moved closer to the unit
   - HP bar and troop number are moved closer to the unit
+  - Phaser rendering filters, `pixelArt`, `NEAREST`, and global sharpness settings were intentionally not touched
+  - battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved
+- `v0.3-2b` Safe Battlefield Asset Source Switch also preserves the compact HUD while changing only battlefield art sources:
+  - battlefield unit sprites now use dedicated 256x256 battlefield unit-token assets
+  - old unit assets were intentionally kept and not deleted
+  - low-quality 128px `battlefieldPortraitImage` assets are preserved but not used for battlefield portrait rendering
   - Phaser rendering filters, `pixelArt`, `NEAREST`, and global sharpness settings were intentionally not touched
   - battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved
 - Simple BGM system is integrated:
@@ -269,12 +277,14 @@ Current recorded build state:
    - animation skip
 
 ## Suggested Next Direction
-Suggested next task: `Browser-test safe HUD micro tuning`.
+Suggested next task: `Browser-test new 256 battlefield unit token quality`.
 
 Main candidates:
 
-1. Browser-test safe HUD micro tuning
-2. Add status effect icons
-3. Add hero portraits to world-map city / garrison UI
-4. Defense battle UX polish
-5. SFX / battle sound effects
+1. Browser-test new 256 battlefield unit token quality
+2. Tune battlefield portrait/arrow/HP offsets if needed
+3. Create higher-quality battlefield portrait assets later if desired
+4. Add status effect icons
+5. Add hero portraits to world-map city / garrison UI
+6. Defense battle UX polish
+7. SFX / battle sound effects

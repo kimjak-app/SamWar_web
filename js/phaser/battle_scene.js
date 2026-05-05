@@ -90,8 +90,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
   const sceneKey = `samwar-battle-${battleState.id}`;
   const BATTLEFIELD_KEY = "battlefield-14x8-mvp";
   const BATTLEFIELD_FALLBACK_KEY = "battlefield-mvp";
-  const PLAYER_TOKEN_KEY = "unit-player-mvp";
-  const ENEMY_TOKEN_KEY = "unit-enemy-mvp";
+  const PLAYER_TOKEN_KEY = "unit-player-battlefield";
+  const ENEMY_TOKEN_KEY = "unit-enemy-battlefield";
   const PORTRAIT_TEXTURE_PREFIX = "battle-portrait";
 
   return class BattleScene extends PhaserLib.Scene {
@@ -122,7 +122,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
     }
 
     getBattlefieldPortraitPath(unit) {
-      return unit.battlefieldPortraitImage ?? unit.portraitImage ?? null;
+      return unit.portraitImage ?? null;
     }
 
     preload() {
@@ -135,11 +135,11 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       }
 
       if (!this.textures.exists(PLAYER_TOKEN_KEY)) {
-        this.load.image(PLAYER_TOKEN_KEY, "assets/units/unit_player_mvp.png");
+        this.load.image(PLAYER_TOKEN_KEY, "assets/unit_tokens_battlefield/unit_blue_battlefield.png");
       }
 
       if (!this.textures.exists(ENEMY_TOKEN_KEY)) {
-        this.load.image(ENEMY_TOKEN_KEY, "assets/units/unit_enemy_mvp.png");
+        this.load.image(ENEMY_TOKEN_KEY, "assets/unit_tokens_battlefield/unit_red_battlefield.png");
       }
 
       this.battleState.units.forEach((unit) => {

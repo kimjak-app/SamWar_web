@@ -2,6 +2,15 @@
 
 ## 2026-05-05
 
+- Completed `v0.3-2b Safe Battlefield Asset Source Switch`.
+- Updated only `js/phaser/battle_scene.js` for source switching:
+  - battlefield unit sprites now use dedicated 256x256 battlefield token assets from `assets/unit_tokens_battlefield/`
+  - battlefield portrait badges now use the existing higher-quality `unit.portraitImage` source
+  - lower-quality `unit.battlefieldPortraitImage` data is preserved but not used for battlefield badge rendering in this patch
+- Intentionally kept the old unit assets in `assets/units/` untouched and did not delete or rename them.
+- Intentionally did not touch Phaser rendering filters, `pixelArt`, `NEAREST`, texture filtering, or global sharpness settings.
+- Preserved battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic.
+- Ran `node --check js/phaser/battle_scene.js`.
 - Completed `v0.3-2b Safe Battlefield HUD Micro Tuning` starting from the restored stable `v0.3-2a` baseline.
 - Updated only `js/phaser/battle_scene.js` for safe coordinate/style tuning:
   - reduced the battlefield portrait border to an almost invisible dark outline
