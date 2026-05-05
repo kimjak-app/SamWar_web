@@ -1,23 +1,22 @@
 # Next Tasks
 
-Current recorded build state before the next task: `v0.3-2a Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch`.
+Current recorded build state before the next task: `v0.3-2b Safe Battlefield HUD Micro Tuning`.
 
 ## Primary Next Session Target
-`Browser-test battlefield portrait readability and spacing`
+`Browser-test safe HUD micro tuning`
 
 ## Priority Order
-1. Browser-test battlefield portrait readability and spacing
-   - Verify dedicated battlefield portraits, the softer frame, and compact HP/troop placement in the browser.
-   - Confirm battlefield interactions remain intact after the micro tuning.
-2. Tune arrow size / position if needed
-   - Adjust Phaser-only facing-arrow placement after browser review.
-   - Avoid touching battle logic or portrait assets.
-3. Add status effect icons
+1. Browser-test safe HUD micro tuning
+   - Verify the almost-invisible dark portrait border and the tighter arrow / HP / troop placement in the browser.
+   - Confirm battlefield rendering remains smooth and not pixelated after the safe tuning pass.
+2. Add status effect icons
    - Add explicit battlefield status markers in a later focused pass.
-4. Add hero portraits to world-map city / garrison UI
+3. Add hero portraits to world-map city / garrison UI
    - Reuse the same portrait assets for stronger world-side identity later.
-5. Defense battle UX polish
+4. Defense battle UX polish
    - Improve invasion/defense clarity without changing the core flow.
+5. SFX / battle sound effects
+   - Add battle feedback audio in a separate pass.
 
 ## Constraints To Preserve
 - Direct Codex Paste Mode remains the working method.
@@ -32,4 +31,8 @@ Current recorded build state before the next task: `v0.3-2a Battlefield HUD Micr
 - Preserve the v0.3.0 portrait-data linkage and safe fallback rendering behavior.
 - Preserve the v0.3-1 battlefield portrait badge rendering without changing core hit-zone behavior.
 - Preserve the v0.3-2 compact battlefield HUD layout and hidden battlefield cooldown text.
-- Preserve the v0.3-2a dedicated battlefield portrait source split and subtle-frame treatment.
+- Preserve the v0.3-2a dedicated battlefield portrait source split and fallback behavior.
+- Preserve the v0.3-2b safe HUD micro tuning approach:
+  - no Phaser filter/global sharpness changes
+  - no `pixelArt` or `NEAREST` changes
+  - only safe HUD coordinate/style tuning unless browser verification proves otherwise

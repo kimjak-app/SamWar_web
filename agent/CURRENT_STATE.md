@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-SamWar_web is updated through `v0.3-2a Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch`, and the agent docs reflect the latest handoff state.
+SamWar_web is updated through `v0.3-2b Safe Battlefield HUD Micro Tuning`, and the agent docs reflect the latest handoff state.
 
 ## Working Method
 - Direct Codex Paste Mode is the working method.
@@ -48,6 +48,7 @@ Current recorded build state:
 - `v0.3-1` Battlefield Unit Portrait Badge
 - `v0.3-2` Battlefield Unit HUD Cleanup
 - `v0.3-2a` Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch
+- `v0.3-2b` Safe Battlefield HUD Micro Tuning
 
 ## Current Working State Summary
 - World map is fullscreen and uses 4 MVP cities:
@@ -137,7 +138,13 @@ Current recorded build state:
 - Portrait badges are now 32px with a thin dark/black border, while skill cooldown/status icon redesign remains deferred and battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved in `v0.3-2`.
 - Battlefield portrait badges now use dedicated `battlefieldPortraitImage` assets first, with fallback to the existing general portrait only when needed.
 - `battlefieldPortraitImage` is now copied into battle units so roster/selected-summary portraits and battlefield portraits can use separate sources safely.
-- Battlefield portrait frame intensity is now reduced to a nearly invisible dark border, the facing arrow is moved above the unit for readability, and HP bar plus troop text sit closer to the sprite while battlefield names remain hidden and status/cooldown icon work stays deferred in `v0.3-2a`.
+- Battlefield portrait frame intensity was first reduced in `v0.3-2a`.
+- `v0.3-2b` safely tightens the compact battlefield HUD from that restored stable baseline:
+  - portrait border is reduced again to an almost invisible dark outline
+  - facing arrow is moved closer to the unit
+  - HP bar and troop number are moved closer to the unit
+  - Phaser rendering filters, `pixelArt`, `NEAREST`, and global sharpness settings were intentionally not touched
+  - battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic remain preserved
 - Simple BGM system is integrated:
   - `assets/audio/world_map_bgm.mp3`
   - `assets/audio/battle_bgm.mp3`
@@ -262,12 +269,12 @@ Current recorded build state:
    - animation skip
 
 ## Suggested Next Direction
-Suggested next task: `v0.2-10 World Turn + Enemy Invasion MVP`.
+Suggested next task: `Browser-test safe HUD micro tuning`.
 
 Main candidates:
 
-1. `v0.2-10 World Turn + Enemy Invasion MVP`
-2. Defense battle manual/auto choice using the new battle mode choice structure
-3. Tune battle difficulty / balance after `14x8` testing
-4. Hero portrait UI
+1. Browser-test safe HUD micro tuning
+2. Add status effect icons
+3. Add hero portraits to world-map city / garrison UI
+4. Defense battle UX polish
 5. SFX / battle sound effects

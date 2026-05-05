@@ -2,6 +2,15 @@
 
 ## 2026-05-05
 
+- Completed `v0.3-2b Safe Battlefield HUD Micro Tuning` starting from the restored stable `v0.3-2a` baseline.
+- Updated only `js/phaser/battle_scene.js` for safe coordinate/style tuning:
+  - reduced the battlefield portrait border to an almost invisible dark outline
+  - moved the direction arrow closer to the unit
+  - moved the HP bar and troop number closer to the unit
+- Preserved `unit.battlefieldPortraitImage` as the primary battlefield portrait source with `unit.portraitImage` fallback unchanged.
+- Intentionally did not touch Phaser rendering filters, `pixelArt`, `NEAREST`, texture filtering, or global sharpness settings.
+- Preserved battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic.
+- Ran `node --check js/phaser/battle_scene.js`.
 - Added `battlefieldPortraitImage` to all four MVP heroes in `data/heroes.js` while keeping the existing `portraitImage` field unchanged for roster and selected-summary UI.
 - Extended `js/core/battle_state.js` so battle units now copy `battlefieldPortraitImage` separately from the normal portrait source.
 - Updated `js/phaser/battle_scene.js` so battlefield portrait badges now prefer dedicated battlefield portrait assets and only fall back to `portraitImage` when needed.

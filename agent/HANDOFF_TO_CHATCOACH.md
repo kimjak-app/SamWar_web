@@ -1,11 +1,9 @@
 # Handoff to ChatCoach
 
 ## Completed Task
-`v0.3-2a Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch` was completed.
+`v0.3-2b Safe Battlefield HUD Micro Tuning` was completed.
 
 ## Changed Files
-- `data/heroes.js`
-- `js/core/battle_state.js`
 - `js/phaser/battle_scene.js`
 - `agent/CURRENT_STATE.md`
 - `agent/SESSION_LOG.md`
@@ -13,7 +11,7 @@
 - `agent/NEXT_TASKS.md`
 
 ## Current State
-- Current recorded milestone is `v0.3-2a Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch complete`.
+- Current recorded milestone is `v0.3-2b Safe Battlefield HUD Micro Tuning complete`.
 - World map remains fullscreen with 4 MVP cities: `낙양`, `평양`, `한성`, `교토`.
 - World map attack loop still uses the pre-battle choice flow:
   - select enemy city
@@ -38,10 +36,11 @@
 - Battlefield portrait badges now prefer dedicated `battlefieldPortraitImage` assets and fall back to `portraitImage` only when needed.
 - Battlefield unit name labels are now removed from the Phaser battlefield.
 - Battlefield troop text remains simplified to `current / max`.
-- Facing arrow is now moved above the unit and made more readable.
-- Battlefield HP bars are now thinner and positioned even closer to the unit sprite.
-- Battlefield portrait badge borders now use a nearly invisible dark/black style.
+- Battlefield portrait badge border is now reduced further to an almost invisible dark outline.
+- Facing arrow remains above the unit and is now moved closer to the unit HUD cluster.
+- Battlefield HP bar and troop number are now moved closer to the unit sprite for a tighter compact layout.
 - Battlefield cooldown text is hidden for now, and status icon redesign remains intentionally deferred.
+- Phaser rendering filters, `pixelArt`, `NEAREST`, texture filtering, and global sharpness settings were intentionally not touched in this patch.
 - Click/hit-zone behavior remains intact.
 - Enemy invasion candidates are based on connected enemy-owned and player-owned cities only.
 - Invasion choice reuses the existing manual/auto battle choice structure:
@@ -56,13 +55,12 @@
 - No SFX work was added.
 
 ## Verification Result
-- `node --check data/heroes.js` passed.
-- `node --check js/core/battle_state.js` passed.
 - `node --check js/phaser/battle_scene.js` passed.
-- Agent docs were updated to reflect the latest `v0.3-2a` state and next priorities.
+- Agent docs were updated to reflect the latest `v0.3-2b` state and next priorities.
 
 ## Known Issues
 - Browser verification for battlefield portrait readability and spacing is still pending.
+- Browser verification for the safer portrait-border softness and tighter arrow / HP / troop placement is still pending.
 - Browser verification for hero portrait readability and spacing is still pending.
 - Browser verification for the new world turn + enemy invasion loop is still pending.
 - Browser verification for continued multi-turn auto-battle progression is still pending.
@@ -83,7 +81,9 @@
 - Confirm auto battle can run for multiple full turns without freezing after wait, move, strategy success/failure, skill, or status skip.
 - Confirm battlefield portrait badges use the dedicated battlefield portrait assets and look cleaner than the prior general portrait source.
 - Confirm the battlefield portrait frame feels almost absent and no yellow/gold frame remains.
-- Confirm the facing arrow above the unit is clearer and the HP bar plus troop number sit close to the sprite without overlap.
+- Confirm the facing arrow above the unit now sits closer without overlapping the portrait badge or unit sprite.
+- Confirm the HP bar plus troop number sit closer to the unit and still feel readable without overlap.
+- Confirm battlefield portraits, unit sprites, and troop text remain smooth and not pixelated/blocky.
 - Confirm all four MVP battlefield units still show 32px portrait badges without breaking selection/move/attack/skill interactions.
 - Confirm all four MVP portraits render correctly in the right roster and selected-unit summary without clipping or making text unreadable.
 - Confirm player roster cards remain clickable and selected-card highlighting still works with portrait thumbnails.
@@ -104,15 +104,15 @@
 - Confirm no stat rebalance, cut-in timing change, or world-turn/invasion system was bundled into this patch.
 
 ## Suggested Next Task
-Suggested next task: `Browser-test battlefield portrait readability and spacing`.
+Suggested next task: `Browser-test safe HUD micro tuning`.
 
 Main candidates:
 
-1. Browser-test battlefield portrait readability and spacing
-2. Tune arrow size / position if needed
-3. Add status effect icons
-4. Add hero portraits to world-map city / garrison UI
-5. Defense battle UX polish
+1. Browser-test safe HUD micro tuning
+2. Add status effect icons
+3. Add hero portraits to world-map city / garrison UI
+4. Defense battle UX polish
+5. SFX / battle sound effects
 
 ## New Chat Start Prompt
 채코치, SamWar_web 다음 세션 시작.
@@ -121,11 +121,12 @@ GitHub 저장소는 kimjak-app/SamWar_web이고, 공통 룰은 kimjak-app/_rules
 프로젝트 상태는 agent/CURRENT_STATE.md, agent/SESSION_LOG.md, agent/HANDOFF_TO_CHATCOACH.md, agent/NEXT_TASKS.md 기준으로 이어가자.
 
 현재 상태:
-- v0.3-2a Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch까지 완료.
+- v0.3-2b Safe Battlefield HUD Micro Tuning까지 완료.
 - 전장 portrait badge는 이제 dedicated battlefield portrait asset을 우선 사용한다.
 - `battlefieldPortraitImage`가 hero data와 battle unit 양쪽에 추가됐다.
-- portrait frame은 거의 안 보일 정도의 dark border로 줄였고, facing arrow는 유닛 위로 옮겨 더 크게 보이게 했다.
-- HP bar와 troop number는 sprite 쪽으로 더 가까워졌고 battlefield name은 계속 숨긴다.
+- portrait frame은 거의 안 보이지 않을 정도의 dark outline로 더 줄였다.
+- facing arrow는 유닛 위를 유지하면서 더 가까이 붙였고 HP bar와 troop number도 sprite 쪽으로 더 당겼다.
+- Phaser rendering filter / pixelArt / NEAREST / global sharpness 설정은 이번 패치에서 의도적으로 건드리지 않았다.
 - status/cooldown icon 정리는 여전히 다음 작업으로 미뤘다.
 - 전투 규칙, 자동전투, 컷인, 월드 턴, 침공, 도시 점유 흐름은 유지된다.
 - Direct Codex Paste Mode로 작업 중이고 CODEX_INBOX.md는 메인 작업 소스로 쓰지 않음.

@@ -442,7 +442,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
         const selectionRing = this.add.ellipse(0, 26, 86, 26, 0xf8d798, unit.id === selectedUnitId ? 0.24 : 0)
           .setStrokeStyle(unit.id === selectedUnitId ? 3 : 2, 0xf8d798, unit.id === selectedUnitId ? 0.85 : 0.28);
-        const facingText = this.add.text(0, -84, getDirectionLabel(unit.facing), {
+        const facingText = this.add.text(0, -70, getDirectionLabel(unit.facing), {
           color: "#f3ead9",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "22px",
@@ -451,17 +451,17 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           stroke: "#081018",
           strokeThickness: 3,
         }).setOrigin(0.5, 0.5);
-        const hpText = this.add.text(0, 64, `${unit.troops} / ${unit.maxTroops}`, {
+        const hpText = this.add.text(0, 54, `${unit.troops} / ${unit.maxTroops}`, {
           color: "#dbe6f3",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "15px",
           align: "center",
         }).setOrigin(0.5, 0.5);
-        const hpBarTrack = this.add.rectangle(0, 49, 90, 5, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
+        const hpBarTrack = this.add.rectangle(0, 40, 90, 5, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
         const hpRatio = unit.maxTroops > 0 ? Math.max(0, unit.troops) / unit.maxTroops : 0;
         const hpBarFill = this.add.rectangle(
           -45 + (90 * hpRatio) / 2,
-          49,
+          40,
           90 * hpRatio,
           5,
           fillColor,
@@ -475,7 +475,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         unitGroup.add([selectionRing, tokenSprite, portraitBadge, facingText, hpBarTrack, hpBarFill, hpText, hitZone]);
 
         if (unit.isDefending) {
-          unitGroup.add(this.add.text(0, -60, "방어", {
+          unitGroup.add(this.add.text(0, -52, "방어", {
             color: "#c7d2fe",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
@@ -623,8 +623,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
     createUnitPortraitBadge(unit) {
       const badge = this.add.container(-28, -18);
-      const badgeFrame = this.add.rectangle(0, 0, 36, 36, 0x101010, 0.12)
-        .setStrokeStyle(1, 0x000000, 0.12);
+      const badgeFrame = this.add.rectangle(0, 0, 36, 36, 0x101010, 0.05)
+        .setStrokeStyle(1, 0x000000, 0.10);
       badge.add(badgeFrame);
 
       const portraitTextureKey = this.getPortraitTextureKey(unit);
