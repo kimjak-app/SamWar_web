@@ -141,6 +141,8 @@ export const heroes = [
     uniqueSkillId: "crescent_blade_slash",
     skillId: "crescent_blade_slash",
     skillCooldown: 3,
+    portraitImage: "assets/portraits/guan_yu_portrait.png",
+    battlefieldPortraitImage: "assets/portraits_battlefield/guan_yu_battlefield.png",
   },
   {
     id: "zhang_fei",
@@ -168,5 +170,7 @@ export const heroes = [
     uniqueSkillId: "changban_shatter",
     skillId: "changban_shatter",
     skillCooldown: 4,
+    portraitImage: "assets/portraits/zhang_fei_portrait.png",
+    battlefieldPortraitImage: "assets/portraits_battlefield/zhang_fei_battlefield.png",
   },
 ];

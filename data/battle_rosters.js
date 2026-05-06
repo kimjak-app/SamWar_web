@@ -1,7 +1,11 @@
 export const battleRosters = {
   defaultPlayerAttack: ["yi_sun_sin", "jeong_do_jeon"],
   defaultEnemyDefense: ["nobunaga", "kenshin"],
-  luoyangEnemyDefense: ["guan_yu", "zhang_fei"],
+  cityDefenderRosters: {
+    hanseong: ["yi_sun_sin", "jeong_do_jeon"],
+    luoyang: ["guan_yu", "zhang_fei"],
+    kyoto: ["nobunaga", "kenshin"],
+  },
 };
 
 export const battleSpawnPositions = {

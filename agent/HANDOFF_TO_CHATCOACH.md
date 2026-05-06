@@ -1,6 +1,6 @@
-# SamWar_web Handoff — After v0.3-4a
+# SamWar_web Handoff — After v0.3-4d
 
-The project is currently stable after the `v0.3-4a` China hero data and skills patch.
+The project is currently stable after the `v0.3-4d` Luoyang-Pyongyang land route patch.
 
 ## Major Completed Systems
 1. `14x8` battle map
@@ -20,6 +20,11 @@ The project is currently stable after the `v0.3-4a` China hero data and skills p
 15. mobile home-screen shortcut icon asset set connected
 16. Luoyang enemy roster can field Guan Yu and Zhang Fei
 17. Guan Yu `언월참` and Zhang Fei `장판파열` are wired into battle logic
+18. Guan Yu and Zhang Fei portrait, battlefield portrait, and cut-in asset paths are wired
+19. Hanseong is now the only player-owned starting city
+20. Luoyang, Pyongyang, and Kyoto are enemy-owned at start
+21. City defender rosters are explicit for Hanseong, Luoyang, and Kyoto
+22. Luoyang and Pyongyang are directly connected by land route
 
 ## Current Stable Visual Decisions
 - Battlefield unit names are hidden.
@@ -39,7 +44,13 @@ The project is currently stable after the `v0.3-4a` China hero data and skills p
 - Battlefield hero badges still use `battlefieldPortraitImage` first and `portraitImage` as fallback.
 - Unique skill cut-ins work and remain DOM overlay driven.
 - Guan Yu and Zhang Fei hero data were added for Luoyang enemy battles.
-- Guan Yu and Zhang Fei visual assets are intentionally deferred in this patch.
+- Guan Yu and Zhang Fei asset paths are now wired for roster portraits, battlefield badges, and cut-ins.
+- Image detail polishing is intentionally deferred to a later asset polish pass.
+- Hanseong is the only player-owned starting city.
+- Luoyang, Pyongyang, and Kyoto are enemy-owned.
+- Hanseong, Luoyang, and Kyoto now have explicit city defender rosters.
+- Pyongyang hero roster is still pending and uses fallback behavior.
+- Luoyang-Pyongyang land route is now connected.
 - The world map attack/defense flow is connected to city ownership transfer.
 - Manual battle and auto battle are both part of the stable MVP path.
 - `assets/units/` legacy unit art remains preserved and should not be deleted.
@@ -47,6 +58,6 @@ The project is currently stable after the `v0.3-4a` China hero data and skills p
 - Mobile home-screen shortcut icon files and `manifest.webmanifest` are connected.
 
 ## Recommended Next Start
-- Start from the current stable version: `v0.3-4a China Hero Data & Skills`.
+- Start from the current stable version: `v0.3-4d Add Luoyang-Pyongyang Land Route`.
 - Read `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, and `agent/NEXT_TASKS.md` first.
 - Treat this as a continuation handoff, not a rollback point.

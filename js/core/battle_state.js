@@ -64,12 +64,22 @@ function buildBattleUnit(heroId) {
   };
 }
 
-function getEnemyDefenseRoster(defenderCity) {
-  if (defenderCity?.id === "luoyang") {
-    return battleRosters.luoyangEnemyDefense ?? battleRosters.defaultEnemyDefense;
+function getCityDefenderRoster(city) {
+  if (!city?.id) {
+    return null;
   }
 
-  return battleRosters.defaultEnemyDefense;
+  return battleRosters.cityDefenderRosters?.[city.id] ?? null;
+}
+
+function getPlayerRoster(attackerCity, defenderCity, battleContext) {
+  const rosterCity = battleContext?.type === "defense" ? defenderCity : attackerCity;
+  return getCityDefenderRoster(rosterCity) ?? battleRosters.defaultPlayerAttack;
+}
+
+function getEnemyRoster(attackerCity, defenderCity, battleContext) {
+  const rosterCity = battleContext?.type === "defense" ? attackerCity : defenderCity;
+  return getCityDefenderRoster(rosterCity) ?? battleRosters.defaultEnemyDefense;
 }
 
 export function createInitialBattleState({
@@ -79,18 +89,18 @@ export function createInitialBattleState({
   battleContext = null,
 }) {
   battleSequence += 1;
-
-  const rosterUnitIds = [
-    ...battleRosters.defaultPlayerAttack,
-    ...getEnemyDefenseRoster(defenderCity),
-  ];
-  const units = rosterUnitIds.map(buildBattleUnit).filter(Boolean);
   const resolvedBattleContext = battleContext ?? {
     type: "attack",
     controlMode: autoBattleEnabled ? "auto" : "manual",
     attackerCityId: attackerCity.id,
     defenderCityId: defenderCity.id,
   };
+
+  const rosterUnitIds = [
+    ...getPlayerRoster(attackerCity, defenderCity, resolvedBattleContext),
+    ...getEnemyRoster(attackerCity, defenderCity, resolvedBattleContext),
+  ];
+  const units = rosterUnitIds.map(buildBattleUnit).filter(Boolean);
   const openingLog = resolvedBattleContext.type === "defense"
     ? `${attackerCity.name}의 침공을 ${defenderCity.name}에서 맞아 방어전을 개시했습니다.`
     : `${attackerCity.name}에서 ${defenderCity.name} 공격을 개시했습니다.`;

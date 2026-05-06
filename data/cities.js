@@ -6,7 +6,7 @@ export const cities = [
     ownerFactionId: "enemy",
     x: 15,
     y: 68,
-    neighbors: ["hanseong"],
+    neighbors: ["hanseong", "pyeongyang"],
   },
   {
     id: "pyeongyang",
@@ -15,7 +15,7 @@ export const cities = [
     ownerFactionId: "enemy",
     x: 39,
     y: 33.8,
-    neighbors: ["hanseong", "kyoto"],
+    neighbors: ["hanseong", "luoyang", "kyoto"],
   },
   {
     id: "hanseong",
@@ -30,7 +30,7 @@ export const cities = [
     id: "kyoto",
     name: "교토",
     region: "일본열도",
-    ownerFactionId: "player",
+    ownerFactionId: "enemy",
     x: 84,
     y: 61.8,
     neighbors: ["hanseong", "pyeongyang"],

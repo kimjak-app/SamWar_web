@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-- Current Version: `v0.3-4a China Hero Data & Skills`
+- Current Version: `v0.3-4d Add Luoyang-Pyongyang Land Route`
 - Status: `Stable browser-confirmed MVP visual state`
 
 ## Working Method
@@ -56,6 +56,9 @@ Current recorded build state:
 - `v0.3-3b` Battle Result Music
 - `v0.3-3c` Mobile Shortcut Icon
 - `v0.3-4a` China Hero Data & Skills
+- `v0.3-4b` Guan Yu / Zhang Fei Visual Assets
+- `v0.3-4c` City Hero Roster Assignment + Enemy City Ownership
+- `v0.3-4d` Add Luoyang-Pyongyang Land Route
 
 Stable visual-state chain:
 
@@ -70,6 +73,9 @@ Stable visual-state chain:
 - `v0.3-3b` Battle Result Music
 - `v0.3-3c` Mobile Shortcut Icon
 - `v0.3-4a` China Hero Data & Skills
+- `v0.3-4b` Guan Yu / Zhang Fei Visual Assets
+- `v0.3-4c` City Hero Roster Assignment + Enemy City Ownership
+- `v0.3-4d` Add Luoyang-Pyongyang Land Route
 
 ## Current Working Features
 - `14x8` battlefield works.
@@ -92,10 +98,18 @@ Stable visual-state chain:
 - City ownership changes after attack/defense results.
 - GitHub Pages mobile shortcut icon / PWA manifest is connected.
 - Luoyang can now field Guan Yu and Zhang Fei as enemy heroes.
+- Guan Yu and Zhang Fei portraits, battlefield badges, and unique skill cutins are wired.
+- Hanseong is now the only player-owned starting city.
+- Luoyang, Pyongyang, and Kyoto are enemy-owned.
+- Luoyang uses Guan Yu/Zhang Fei as its defender roster.
+- Kyoto uses Nobunaga/Kenshin as its defender roster.
+- Hanseong uses Yi Sun-sin/Jeong Do-jeon as its defender roster.
+- Luoyang and Pyongyang are now directly connected by land route.
 
 ## Current Stable Visual Notes
 - Battlefield hero badges use `battlefieldPortraitImage` first and `portraitImage` as fallback.
 - Battlefield hero badge clarity is acceptable for MVP.
+- Visual polish/detail edits for Guan Yu and Zhang Fei assets are deferred to a later asset polish pass.
 - Unit token assets face left by default.
 - Unit token sprites flip only when `unit.facing === "right"`.
 - Battlefield unit names remain hidden.
@@ -109,8 +123,8 @@ Stable visual-state chain:
 - World-map garrison/hero portrait UI is not implemented yet.
 - Balance is not tuned yet.
 - Mobile gameplay layout is runnable but not fully optimized for phone screen yet.
-- Guan Yu/Zhang Fei visual assets and cut-ins are not implemented yet.
-
+- Pyongyang hero roster is still pending and uses fallback defender roster.
+- Balance tuning is deferred.
 ## Design Decisions To Preserve
 1. Direct Codex Paste Mode is the working method.
 2. Battle rules must stay separated from Phaser renderer.
@@ -120,4 +134,4 @@ Stable visual-state chain:
 6. Do not reintroduce mipmap/pixel/filter/sharpness experiments into the MVP baseline.
 
 ## Suggested Next Direction
-Suggested next task: `v0.3-4b China Hero Visual Assets`.
+Suggested next task: `v0.3-4e Pyongyang Hero Roster`.
