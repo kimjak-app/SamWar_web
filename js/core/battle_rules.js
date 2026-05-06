@@ -156,12 +156,15 @@ function applyTurnStartEffects(battleState, side) {
 
       if (unit.side === side) {
         const nextBuffTurns = Math.max(0, unit.buffTurns - 1);
+        const nextDefenseBuffTurns = Math.max(0, unit.defenseBuffTurns - 1);
 
         return {
           ...unit,
           currentSkillCooldown: unit.currentSkillCooldown > 0 ? unit.currentSkillCooldown - 1 : 0,
           buffTurns: nextBuffTurns,
           buffAttackBonus: nextBuffTurns > 0 ? unit.buffAttackBonus : 0,
+          defenseBuffTurns: nextDefenseBuffTurns,
+          buffDefenseBonus: nextDefenseBuffTurns > 0 ? unit.buffDefenseBonus : 0,
           actionBlockReason: null,
           hasMoved: false,
           hasActed: false,

@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-- Current Version: `v0.3-3c Mobile Shortcut Icon`
+- Current Version: `v0.3-4a China Hero Data & Skills`
 - Status: `Stable browser-confirmed MVP visual state`
 
 ## Working Method
@@ -55,6 +55,7 @@ Current recorded build state:
 - `v0.3-3a` Battle Result Cutin
 - `v0.3-3b` Battle Result Music
 - `v0.3-3c` Mobile Shortcut Icon
+- `v0.3-4a` China Hero Data & Skills
 
 Stable visual-state chain:
 
@@ -68,6 +69,7 @@ Stable visual-state chain:
 - `v0.3-3a` Battle Result Cutin
 - `v0.3-3b` Battle Result Music
 - `v0.3-3c` Mobile Shortcut Icon
+- `v0.3-4a` China Hero Data & Skills
 
 ## Current Working Features
 - `14x8` battlefield works.
@@ -89,6 +91,7 @@ Stable visual-state chain:
 - Manual/auto defense battle choice works.
 - City ownership changes after attack/defense results.
 - GitHub Pages mobile shortcut icon / PWA manifest is connected.
+- Luoyang can now field Guan Yu and Zhang Fei as enemy heroes.
 
 ## Current Stable Visual Notes
 - Battlefield hero badges use `battlefieldPortraitImage` first and `portraitImage` as fallback.
@@ -106,6 +109,7 @@ Stable visual-state chain:
 - World-map garrison/hero portrait UI is not implemented yet.
 - Balance is not tuned yet.
 - Mobile gameplay layout is runnable but not fully optimized for phone screen yet.
+- Guan Yu/Zhang Fei visual assets and cut-ins are not implemented yet.
 
 ## Design Decisions To Preserve
 1. Direct Codex Paste Mode is the working method.
@@ -116,4 +120,4 @@ Stable visual-state chain:
 6. Do not reintroduce mipmap/pixel/filter/sharpness experiments into the MVP baseline.
 
 ## Suggested Next Direction
-Suggested next task: `v0.3-4 Status Effect Icons`.
+Suggested next task: `v0.3-4b China Hero Visual Assets`.

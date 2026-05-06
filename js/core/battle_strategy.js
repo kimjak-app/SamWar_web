@@ -186,9 +186,12 @@ function clearStrategySelectionState(battleState) {
     highlights: {
       move: [],
       attack: [],
+      attackTargets: [],
+      skillTargets: [],
       skill: [],
       facing: [],
       strategy: [],
+      strategyTargets: [],
     },
   };
 }

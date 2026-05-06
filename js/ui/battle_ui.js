@@ -68,6 +68,10 @@ function formatStatusList(unit) {
     statuses.push("방어 태세");
   }
 
+  if ((unit?.buffDefenseBonus ?? 0) > 0 && (unit?.defenseBuffTurns ?? 0) > 0) {
+    statuses.push(`방어 보정 +${Math.round(unit.buffDefenseBonus * 100)}% ${unit.defenseBuffTurns}턴`);
+  }
+
   return statuses.length > 0 ? statuses.join(" · ") : "상태 이상 없음";
 }
 function renderBattleLog(logEntries) {
@@ -97,7 +101,6 @@ function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = fals
   if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
     statusParts.push(`개혁령 효과 +${Math.round(unit.buffAttackBonus * 100)}% · ${unit.buffTurns}턴`);
   }
-
   const statusText = formatStatusList(unit);
 
   if (statusText !== "상태 이상 없음") {

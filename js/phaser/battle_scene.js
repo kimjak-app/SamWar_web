@@ -66,6 +66,10 @@ function formatStatusList(unit) {
     statuses.push("방어 태세");
   }
 
+  if ((unit?.buffDefenseBonus ?? 0) > 0 && (unit?.defenseBuffTurns ?? 0) > 0) {
+    statuses.push(`방어 보정 +${Math.round(unit.buffDefenseBonus * 100)}% ${unit.defenseBuffTurns}턴`);
+  }
+
   return statuses.length > 0 ? statuses.join(" · ") : "상태 이상 없음";
 }
 
@@ -506,6 +510,16 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
         if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
           unitGroup.add(this.add.text(0, -130, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
+            color: "#9ef3b0",
+            fontFamily: "Segoe UI, sans-serif",
+            fontSize: "13px",
+            fontStyle: "bold",
+            align: "center",
+          }).setOrigin(0.5, 0.5));
+        }
+
+        if (unit.defenseBuffTurns > 0 && unit.buffDefenseBonus > 0) {
+          unitGroup.add(this.add.text(0, -112, `방어 +${Math.round(unit.buffDefenseBonus * 100)}%`, {
             color: "#9ef3b0",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",

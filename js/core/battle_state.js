@@ -47,6 +47,8 @@ function buildBattleUnit(heroId) {
     currentSkillCooldown: 0,
     buffAttackBonus: 0,
     buffTurns: 0,
+    buffDefenseBonus: 0,
+    defenseBuffTurns: 0,
     statusEffects: {
       confusion: 0,
       shake: 0,
@@ -62,6 +64,14 @@ function buildBattleUnit(heroId) {
   };
 }
 
+function getEnemyDefenseRoster(defenderCity) {
+  if (defenderCity?.id === "luoyang") {
+    return battleRosters.luoyangEnemyDefense ?? battleRosters.defaultEnemyDefense;
+  }
+
+  return battleRosters.defaultEnemyDefense;
+}
+
 export function createInitialBattleState({
   attackerCity,
   defenderCity,
@@ -72,7 +82,7 @@ export function createInitialBattleState({
 
   const rosterUnitIds = [
     ...battleRosters.defaultPlayerAttack,
-    ...battleRosters.defaultEnemyDefense,
+    ...getEnemyDefenseRoster(defenderCity),
   ];
   const units = rosterUnitIds.map(buildBattleUnit).filter(Boolean);
   const resolvedBattleContext = battleContext ?? {

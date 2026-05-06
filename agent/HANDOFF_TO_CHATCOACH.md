@@ -1,6 +1,6 @@
-# SamWar_web Handoff — After v0.3-3c
+# SamWar_web Handoff — After v0.3-4a
 
-The project is currently stable after the `v0.3-3c` mobile shortcut icon patch.
+The project is currently stable after the `v0.3-4a` China hero data and skills patch.
 
 ## Major Completed Systems
 1. `14x8` battle map
@@ -18,6 +18,8 @@ The project is currently stable after the `v0.3-3c` mobile shortcut icon patch.
 13. unit sprite left/right flip based on facing
 14. GitHub Pages mobile shortcut / PWA manifest wiring
 15. mobile home-screen shortcut icon asset set connected
+16. Luoyang enemy roster can field Guan Yu and Zhang Fei
+17. Guan Yu `언월참` and Zhang Fei `장판파열` are wired into battle logic
 
 ## Current Stable Visual Decisions
 - Battlefield unit names are hidden.
@@ -36,6 +38,8 @@ The project is currently stable after the `v0.3-3c` mobile shortcut icon patch.
 ## Current Stable State Notes
 - Battlefield hero badges still use `battlefieldPortraitImage` first and `portraitImage` as fallback.
 - Unique skill cut-ins work and remain DOM overlay driven.
+- Guan Yu and Zhang Fei hero data were added for Luoyang enemy battles.
+- Guan Yu and Zhang Fei visual assets are intentionally deferred in this patch.
 - The world map attack/defense flow is connected to city ownership transfer.
 - Manual battle and auto battle are both part of the stable MVP path.
 - `assets/units/` legacy unit art remains preserved and should not be deleted.
@@ -43,6 +47,6 @@ The project is currently stable after the `v0.3-3c` mobile shortcut icon patch.
 - Mobile home-screen shortcut icon files and `manifest.webmanifest` are connected.
 
 ## Recommended Next Start
-- Start from the current stable version: `v0.3-3c Mobile Shortcut Icon`.
+- Start from the current stable version: `v0.3-4a China Hero Data & Skills`.
 - Read `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, and `agent/NEXT_TASKS.md` first.
 - Treat this as a continuation handoff, not a rollback point.

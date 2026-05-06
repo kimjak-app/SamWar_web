@@ -1,5 +1,5 @@
 import { getDistance } from "./battle_grid.js";
-import { hasStatus } from "./battle_strategy.js";
+import { applyStatusToUnit, hasStatus } from "./battle_strategy.js";
 import { BATTLE_BALANCE } from "./battle_balance.js";
 
 export const DAMAGE_SCALE = BATTLE_BALANCE.damageScale;
@@ -27,7 +27,7 @@ export function getEffectiveAttack(unit) {
 }
 
 export function getEffectiveDefense(unit) {
-  let value = getGodotDefenseValue(unit);
+  let value = getGodotDefenseValue(unit) * (1 + (unit.buffDefenseBonus ?? 0));
 
   if (hasStatus(unit, "shake")) {
     value *= BATTLE_BALANCE.shakeMultiplier;
@@ -127,6 +127,18 @@ export function getSkillTargets(battleState, unit, skill) {
 function buildSkillDamage(caster, target, skillBonus = 0) {
   const rawDamage = (getEffectiveAttack(caster) - getEffectiveDefense(target) * 0.35) * DAMAGE_SCALE + skillBonus;
   return Math.max(BATTLE_BALANCE.minimumSkillDamage, Math.round(rawDamage));
+}
+
+function buildSkillDamageWithMultiplier(caster, target, skill) {
+  const baseDamage = buildSkillDamage(caster, target, skill?.bonusDamage ?? 0);
+  return Math.max(
+    BATTLE_BALANCE.minimumSkillDamage,
+    Math.round(baseDamage * (skill?.damageMultiplier ?? 1)),
+  );
+}
+
+function areUnitsAdjacent(leftUnit, rightUnit) {
+  return getDistance(leftUnit, rightUnit) === 1;
 }
 
 export function applyHakikjinBarrage(battleState, casterUnit, skill) {
@@ -237,7 +249,7 @@ export function applyReformOrder(battleState, casterUnit, skill) {
 }
 
 function applySingleTargetSkill(battleState, casterUnit, skill, targetUnit) {
-  const damage = buildSkillDamage(casterUnit, targetUnit, skill.bonusDamage ?? 0);
+  const damage = buildSkillDamageWithMultiplier(casterUnit, targetUnit, skill);
   const nextUnits = battleState.units.map((unit) => {
     if (unit.id === casterUnit.id) {
       return {
@@ -282,6 +294,125 @@ function applySingleTargetSkill(battleState, casterUnit, skill, targetUnit) {
   };
 }
 
+function applySelfDefenseSingleSkill(battleState, casterUnit, skill, targetUnit) {
+  const damage = buildSkillDamageWithMultiplier(casterUnit, targetUnit, skill);
+  const nextUnits = battleState.units.map((unit) => {
+    if (unit.id === casterUnit.id) {
+      return {
+        ...unit,
+        currentSkillCooldown: skill.cooldown,
+        hasActed: true,
+        buffDefenseBonus: skill.selfDefenseBonus ?? 0,
+        defenseBuffTurns: skill.selfDefenseTurns ?? 0,
+      };
+    }
+
+    if (unit.id === targetUnit.id) {
+      const nextHp = Math.max(0, unit.hp - damage);
+
+      return {
+        ...unit,
+        hp: nextHp,
+        troops: nextHp,
+        isAlive: nextHp > 0,
+      };
+    }
+
+    return unit;
+  });
+
+  return {
+    ...buildClearedSelectionState(battleState),
+    units: nextUnits,
+    log: [
+      ...battleState.log,
+      `${casterUnit.name}가 ${skill.name}으로 적 부대를 베어냈습니다.`,
+      `${targetUnit.name}에게 ${damage} 피해!`,
+      `${casterUnit.name}가 ${skill.name} 후 방어 태세를 굳혔습니다.`,
+    ],
+    lastAction: {
+      type: "skill",
+      skillId: skill.id,
+      actorUnitId: casterUnit.id,
+      targetUnitIds: [targetUnit.id, casterUnit.id],
+      effects: [
+        { unitId: casterUnit.id, kind: "skill_name", text: `${skill.name}!` },
+        { unitId: targetUnit.id, kind: "damage", text: `-${damage}` },
+        { unitId: casterUnit.id, kind: "buff", text: `방어 +${Math.round((skill.selfDefenseBonus ?? 0) * 100)}%` },
+      ],
+    },
+  };
+}
+
+function applySingleDamageAdjacentShakeSkill(battleState, casterUnit, skill, targetUnit) {
+  const damage = buildSkillDamageWithMultiplier(casterUnit, targetUnit, skill);
+  const shakenTargetIds = [];
+  const nextUnits = battleState.units.map((unit) => {
+    if (unit.id === casterUnit.id) {
+      return {
+        ...unit,
+        currentSkillCooldown: skill.cooldown,
+        hasActed: true,
+      };
+    }
+
+    if (unit.id === targetUnit.id) {
+      const nextHp = Math.max(0, unit.hp - damage);
+
+      return {
+        ...unit,
+        hp: nextHp,
+        troops: nextHp,
+        isAlive: nextHp > 0,
+      };
+    }
+
+    if (
+      unit.isAlive
+      && unit.side === targetUnit.side
+      && unit.id !== targetUnit.id
+      && areUnitsAdjacent(unit, targetUnit)
+      && Math.random() <= (skill.shakeChance ?? 0)
+    ) {
+      shakenTargetIds.push(unit.id);
+      return applyStatusToUnit(unit, "shake", skill.shakeTurns ?? 0);
+    }
+
+    return unit;
+  });
+
+  const logs = [
+    ...battleState.log,
+    `${casterUnit.name}가 ${skill.name}로 적 진형을 뒤흔들었습니다.`,
+    `${targetUnit.name}에게 ${damage} 피해!`,
+  ];
+  const effects = [
+    { unitId: casterUnit.id, kind: "skill_name", text: `${skill.name}!` },
+    { unitId: targetUnit.id, kind: "damage", text: `-${damage}` },
+  ];
+
+  shakenTargetIds.forEach((unitId) => {
+    const shakenUnit = battleState.units.find((unit) => unit.id === unitId);
+    if (shakenUnit) {
+      logs.push(`${casterUnit.name}의 ${skill.name}에 ${shakenUnit.name}가 동요했습니다.`);
+      effects.push({ unitId, kind: "status", text: `동요 ${skill.shakeTurns ?? 0}턴` });
+    }
+  });
+
+  return {
+    ...buildClearedSelectionState(battleState),
+    units: nextUnits,
+    log: logs,
+    lastAction: {
+      type: "skill",
+      skillId: skill.id,
+      actorUnitId: casterUnit.id,
+      targetUnitIds: [targetUnit.id, ...shakenTargetIds],
+      effects,
+    },
+  };
+}
+
 export function applySkill(battleState, casterUnitId, targetUnitId = null) {
   const casterUnit = battleState.units.find((unit) => unit.id === casterUnitId) ?? null;
 
@@ -315,6 +446,14 @@ export function applySkill(battleState, casterUnitId, targetUnitId = null) {
 
   if (skill.effectType === "ally_attack_buff") {
     return applyReformOrder(battleState, casterUnit, skill);
+  }
+
+  if (skill.effectType === "self_defense_single") {
+    return applySelfDefenseSingleSkill(battleState, casterUnit, skill, targetUnit);
+  }
+
+  if (skill.effectType === "single_damage_adjacent_shake") {
+    return applySingleDamageAdjacentShakeSkill(battleState, casterUnit, skill, targetUnit);
   }
 
   return applySingleTargetSkill(battleState, casterUnit, skill, targetUnit);

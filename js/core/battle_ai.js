@@ -32,8 +32,9 @@ function estimateSkillDamage(attacker, target, skill) {
     getEffectiveAttack(attacker)
     - getEffectiveDefense(target) * 0.35
   ) * BATTLE_BALANCE.damageScale + (skill?.bonusDamage ?? 0);
+  const scaledDamage = Math.max(BATTLE_BALANCE.minimumSkillDamage, Math.round(rawDamage)) * (skill?.damageMultiplier ?? 1);
 
-  return Math.max(BATTLE_BALANCE.minimumSkillDamage, Math.round(rawDamage));
+  return Math.max(BATTLE_BALANCE.minimumSkillDamage, Math.round(scaledDamage));
 }
 
 function getPreferredRange(unit, skill) {
@@ -82,6 +83,17 @@ export function scoreTargetForUnit(unit, target, battleState, options = {}) {
   if (skill?.id === "hakikjin_barrage") {
     const splashTargets = getSkillTargets(battleState, unit, skill);
     score += splashTargets.length * 12;
+  }
+
+  if (skill?.effectType === "self_defense_single" && (unit.buffDefenseBonus ?? 0) <= 0) {
+    score += 10;
+  }
+
+  if (skill?.effectType === "single_damage_adjacent_shake") {
+    const adjacentOpponents = getOpposingUnits(battleState, unit)
+      .filter((candidate) => candidate.id !== target.id && getDistance(candidate, target) === 1)
+      .length;
+    score += adjacentOpponents * 8 * (skill.shakeChance ?? 0);
   }
 
   if (unit.aiType === "aggressive") {
