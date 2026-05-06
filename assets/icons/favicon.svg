@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
-  <title>SamWar favicon</title>
-  <rect width="64" height="64" rx="14" fill="#0d1622"/>
-  <path d="M14 46V24l6-8h24l6 8v22H14Z" fill="#d1b075" opacity="0.18"/>
-  <path d="M20 24h24M24 16v8M32 16v8M40 16v8" stroke="#f8d798" stroke-width="2.4" stroke-linecap="round"/>
-  <text x="32" y="43" text-anchor="middle" font-size="24" font-family="Georgia, 'Times New Roman', serif" font-weight="700" fill="#f3ead9">SW</text>
-</svg>
