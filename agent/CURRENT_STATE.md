@@ -1,7 +1,7 @@
 # Current State
 
 ## Status
-- Current Version: `v0.3-2e Unit Sprite Facing Flip`
+- Current Version: `v0.3-3c Mobile Shortcut Icon`
 - Status: `Stable browser-confirmed MVP visual state`
 
 ## Working Method
@@ -52,6 +52,9 @@ Current recorded build state:
 - `v0.3-2b` Safe Battlefield Asset Source Switch
 - `v0.3-2c` Battlefield Hero Portrait HQ Asset Activation
 - `v0.3-2e` Unit Sprite Facing Flip
+- `v0.3-3a` Battle Result Cutin
+- `v0.3-3b` Battle Result Music
+- `v0.3-3c` Mobile Shortcut Icon
 
 Stable visual-state chain:
 
@@ -62,6 +65,9 @@ Stable visual-state chain:
 - `v0.3-2b` Safe Battlefield Asset Source Switch
 - `v0.3-2c` Battlefield Hero Portrait HQ Asset Activation
 - `v0.3-2e` Unit Sprite Facing Flip
+- `v0.3-3a` Battle Result Cutin
+- `v0.3-3b` Battle Result Music
+- `v0.3-3c` Mobile Shortcut Icon
 
 ## Current Working Features
 - `14x8` battlefield works.
@@ -82,6 +88,7 @@ Stable visual-state chain:
 - Enemy invasion MVP works.
 - Manual/auto defense battle choice works.
 - City ownership changes after attack/defense results.
+- GitHub Pages mobile shortcut icon / PWA manifest is connected.
 
 ## Current Stable Visual Notes
 - Battlefield hero badges use `battlefieldPortraitImage` first and `portraitImage` as fallback.
@@ -98,6 +105,7 @@ Stable visual-state chain:
 - SFX is not implemented yet.
 - World-map garrison/hero portrait UI is not implemented yet.
 - Balance is not tuned yet.
+- Mobile gameplay layout is runnable but not fully optimized for phone screen yet.
 
 ## Design Decisions To Preserve
 1. Direct Codex Paste Mode is the working method.
@@ -108,4 +116,4 @@ Stable visual-state chain:
 6. Do not reintroduce mipmap/pixel/filter/sharpness experiments into the MVP baseline.
 
 ## Suggested Next Direction
-Suggested next task: `v0.3-3 Status Effect Icons`.
+Suggested next task: `v0.3-4 Status Effect Icons`.

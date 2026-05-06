@@ -1,6 +1,6 @@
-# SamWar_web Handoff — After v0.3-2e
+# SamWar_web Handoff — After v0.3-3c
 
-The project is currently stable after the `v0.3` battlefield visual/HUD pass.
+The project is currently stable after the `v0.3-3c` mobile shortcut icon patch.
 
 ## Major Completed Systems
 1. `14x8` battle map
@@ -16,6 +16,8 @@ The project is currently stable after the `v0.3` battlefield visual/HUD pass.
 11. compact battlefield unit HUD
 12. dedicated 256px battlefield unit tokens
 13. unit sprite left/right flip based on facing
+14. GitHub Pages mobile shortcut / PWA manifest wiring
+15. mobile home-screen shortcut icon asset set connected
 
 ## Current Stable Visual Decisions
 - Battlefield unit names are hidden.
@@ -37,8 +39,10 @@ The project is currently stable after the `v0.3` battlefield visual/HUD pass.
 - The world map attack/defense flow is connected to city ownership transfer.
 - Manual battle and auto battle are both part of the stable MVP path.
 - `assets/units/` legacy unit art remains preserved and should not be deleted.
+- SamWar_web is GitHub Pages runnable on mobile.
+- Mobile home-screen shortcut icon files and `manifest.webmanifest` are connected.
 
 ## Recommended Next Start
-- Start from the current stable version: `v0.3-2e Unit Sprite Facing Flip`.
+- Start from the current stable version: `v0.3-3c Mobile Shortcut Icon`.
 - Read `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, and `agent/NEXT_TASKS.md` first.
 - Treat this as a continuation handoff, not a rollback point.
