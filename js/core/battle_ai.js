@@ -113,7 +113,9 @@ function pickBestTarget(unit, targets, battleState, options = {}) {
 }
 
 function shouldUseSupportSkill(unit, allies) {
-  return unit.aiType === "support" && allies.some((ally) => ally.buffTurns <= 0 || ally.buffAttackBonus <= 0);
+  return unit.aiType === "support"
+    && allies.length > 0
+    && allies.some((ally) => ally.buffTurns <= 0 || ally.buffAttackBonus <= 0);
 }
 
 function pickBestSupportSkillTarget(allies) {
@@ -195,7 +197,23 @@ function getBestOpponent(unit, battleState) {
   return pickBestTarget(unit, getOpposingUnits(battleState, unit), battleState);
 }
 
-function buildSkillAction(battleState, unit) {
+function hasNearbySecondaryTarget(primaryTarget, targets, skill) {
+  return targets.some((candidate) => (
+    candidate.id !== primaryTarget.id
+    && getDistance(candidate, primaryTarget) <= (skill.secondaryTargetRange ?? 0)
+  ));
+}
+
+function pickBestCollisionSkillTarget(unit, skillTargets, battleState, skill) {
+  return pickBestTarget(
+    unit,
+    skillTargets.filter((target) => hasNearbySecondaryTarget(target, skillTargets, skill)),
+    battleState,
+    { skill },
+  );
+}
+
+function buildHighValueSkillAction(battleState, unit) {
   const skill = getSkillById(battleState.skills ?? [], unit.skillId);
 
   if (!skill || !canUseSkill(unit, skill)) {
@@ -231,15 +249,69 @@ function buildSkillAction(battleState, unit) {
     };
   }
 
+  if (skill.effectType === "enemy_collision_confuse") {
+    const targetWithSecondary = pickBestCollisionSkillTarget(unit, skillTargets, battleState, skill);
+
+    if (targetWithSecondary) {
+      return {
+        type: "skill",
+        actorUnitId: unit.id,
+        skillId: skill.id,
+        targetUnitId: targetWithSecondary.id,
+        movePosition: null,
+        facingDirection: getDirectionFromPositions(unit, targetWithSecondary) ?? unit.facing,
+      };
+    }
+
+    return null;
+  }
+
   if (skill.effectType === "cannon_aoe") {
     return {
       type: "skill",
       actorUnitId: unit.id,
       skillId: skill.id,
-      targetUnitId: null,
+      targetUnitId: skillTargets[0].id,
       movePosition: null,
       facingDirection: getDirectionFromPositions(unit, skillTargets[0]) ?? unit.facing,
     };
+  }
+
+  if (unit.role === "support" || unit.aiType === "support") {
+    return null;
+  }
+
+  const target = pickBestTarget(unit, skillTargets, battleState, { skill });
+
+  if (!target) {
+    return null;
+  }
+
+  return {
+    type: "skill",
+    actorUnitId: unit.id,
+    skillId: skill.id,
+    targetUnitId: target.id,
+    movePosition: null,
+    facingDirection: getDirectionFromPositions(unit, target) ?? unit.facing,
+  };
+}
+
+function buildFallbackSkillAction(battleState, unit) {
+  const skill = getSkillById(battleState.skills ?? [], unit.skillId);
+
+  if (!skill || !canUseSkill(unit, skill)) {
+    return null;
+  }
+
+  const skillTargets = getSkillTargets(battleState, unit, skill);
+
+  if (skillTargets.length === 0) {
+    return null;
+  }
+
+  if (skill.effectType !== "enemy_collision_confuse") {
+    return null;
   }
 
   const target = pickBestTarget(unit, skillTargets, battleState, { skill });
@@ -307,22 +379,16 @@ export function getAiTurnAction(battleState, unit) {
     };
   }
 
-  const skillAction = buildSkillAction(battleState, unit);
+  const highValueSkillAction = buildHighValueSkillAction(battleState, unit);
 
-  if (skillAction) {
-    return skillAction;
+  if (highValueSkillAction) {
+    return highValueSkillAction;
   }
 
   const attackAction = buildAttackAction(battleState, unit);
 
   if (attackAction) {
     return attackAction;
-  }
-
-  const strategyAction = buildStrategyAction(battleState, unit);
-
-  if (strategyAction) {
-    return strategyAction;
   }
 
   const bestTarget = getBestOpponent(unit, battleState);
@@ -338,6 +404,12 @@ export function getAiTurnAction(battleState, unit) {
   }
 
   if (unit.hasMoved) {
+    const postMoveAttackAction = buildAttackAction(battleState, unit);
+
+    if (postMoveAttackAction) {
+      return postMoveAttackAction;
+    }
+
     return {
       type: "wait",
       actorUnitId: unit.id,
@@ -357,6 +429,24 @@ export function getAiTurnAction(battleState, unit) {
       movePosition: bestMove,
       facingDirection: getDirectionFromPositions(bestMove, bestTarget) ?? unit.facing,
     };
+  }
+
+  const fallbackSkillAction = buildFallbackSkillAction(battleState, unit);
+
+  if (fallbackSkillAction) {
+    return fallbackSkillAction;
+  }
+
+  const strategyAction = buildStrategyAction(battleState, unit);
+
+  if (strategyAction) {
+    return strategyAction;
+  }
+
+  const finalAttackAction = buildAttackAction(battleState, unit);
+
+  if (finalAttackAction) {
+    return finalAttackAction;
   }
 
   return {

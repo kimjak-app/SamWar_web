@@ -199,6 +199,8 @@ export const heroes = [
     uniqueSkillId: "yeongnak_grand_legacy",
     skillId: "yeongnak_grand_legacy",
     skillCooldown: 4,
+    portraitImage: "assets/portraits/gwanggaeto_portrait.png",
+    battlefieldPortraitImage: "assets/portraits_battlefield/gwanggaeto_battlefield.png",
   },
   {
     id: "dorim",
@@ -226,5 +228,7 @@ export const heroes = [
     uniqueSkillId: "black_white_scheming",
     skillId: "black_white_scheming",
     skillCooldown: 4,
+    portraitImage: "assets/portraits/dorim_portrait.png",
+    battlefieldPortraitImage: "assets/portraits_battlefield/dorim_battlefield.png",
   },
 ];

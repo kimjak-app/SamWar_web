@@ -434,6 +434,11 @@ function resolveActiveSkillCutin(cutinState) {
     return;
   }
 
+  if (cutinState.source === "player_auto_resolved") {
+    finalizeBattleTempo(cutinState.nextBattleState);
+    return;
+  }
+
   const casterUnit = battleState.units.find((unit) => unit.id === cutinState.casterUnitId) ?? null;
   const selectedSkill = getSelectedBattleSkill(battleState);
   const targetUnit = cutinState.targetUnitId
@@ -506,6 +511,39 @@ function startEnemySkillCutinSequence(plannedAction, selectedSkill) {
     targetUnitId: plannedAction.targetUnitId ?? null,
     skillId: plannedAction.skillId,
     plannedAction,
+    image: selectedSkill.cutinImage,
+    durationMs: selectedSkill.cutinDurationMs ?? 1400,
+    style: selectedSkill.cutinStyle ?? "default",
+  };
+  const scheduledCutinState = activeSkillCutin;
+  rerender();
+
+  scheduleBattleTempoTimer(
+    () => resolveActiveSkillCutin(scheduledCutinState),
+    scheduledCutinState.durationMs,
+    scheduledCutinState.battleId,
+  );
+
+  return true;
+}
+
+function startResolvedAutoSkillCutinSequence(nextBattleState, selectedSkill) {
+  const lastAction = nextBattleState?.lastAction;
+
+  if (!appState.battle || !lastAction?.actorUnitId || !selectedSkill?.cutinImage) {
+    return false;
+  }
+
+  clearAutoBattleTimer();
+  clearBattleTempoTimers({ unlock: false });
+  battleTempoLocked = true;
+  activeSkillCutin = {
+    source: "player_auto_resolved",
+    battleId: appState.battle.id,
+    casterUnitId: lastAction.actorUnitId,
+    targetUnitId: lastAction.targetUnitIds?.[0] ?? null,
+    skillId: selectedSkill.id,
+    nextBattleState,
     image: selectedSkill.cutinImage,
     durationMs: selectedSkill.cutinDurationMs ?? 1400,
     style: selectedSkill.cutinStyle ?? "default",
@@ -622,6 +660,19 @@ function scheduleAutoBattleStep() {
     }
 
     const nextBattleState = performAutoBattleStep(appState.battle);
+    const resolvedSkill = nextBattleState?.lastAction?.skillId
+      ? getSkillById(nextBattleState.skills, nextBattleState.lastAction.skillId)
+      : null;
+
+    if (
+      nextBattleState?.lastAction?.actorUnitId
+      && ["skill", "buff"].includes(nextBattleState.lastAction.type)
+      && resolvedSkill?.cutinImage
+      && startResolvedAutoSkillCutinSequence(nextBattleState, resolvedSkill)
+    ) {
+      return;
+    }
+
     finishPlayerFlow(nextBattleState);
   }, BATTLE_TEMPO.autoBattleDelayMs);
 }
