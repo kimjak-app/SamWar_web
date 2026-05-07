@@ -379,6 +379,42 @@ export function getAiTurnAction(battleState, unit) {
     };
   }
 
+  if (unit.hasMoved) {
+    const postMoveHighValueSkillAction = buildHighValueSkillAction(battleState, unit);
+
+    if (postMoveHighValueSkillAction) {
+      return postMoveHighValueSkillAction;
+    }
+
+    const postMoveAttackAction = buildAttackAction(battleState, unit);
+
+    if (postMoveAttackAction) {
+      return postMoveAttackAction;
+    }
+
+    const postMoveFallbackSkillAction = buildFallbackSkillAction(battleState, unit);
+
+    if (postMoveFallbackSkillAction) {
+      return postMoveFallbackSkillAction;
+    }
+
+    const postMoveStrategyAction = buildStrategyAction(battleState, unit);
+
+    if (postMoveStrategyAction) {
+      return postMoveStrategyAction;
+    }
+
+    const bestTarget = getBestOpponent(unit, battleState);
+
+    return {
+      type: "wait",
+      actorUnitId: unit.id,
+      targetUnitId: null,
+      movePosition: null,
+      facingDirection: bestTarget ? getDirectionFromPositions(unit, bestTarget) ?? unit.facing : unit.facing,
+    };
+  }
+
   const highValueSkillAction = buildHighValueSkillAction(battleState, unit);
 
   if (highValueSkillAction) {
@@ -400,22 +436,6 @@ export function getAiTurnAction(battleState, unit) {
       targetUnitId: null,
       movePosition: null,
       facingDirection: unit.facing,
-    };
-  }
-
-  if (unit.hasMoved) {
-    const postMoveAttackAction = buildAttackAction(battleState, unit);
-
-    if (postMoveAttackAction) {
-      return postMoveAttackAction;
-    }
-
-    return {
-      type: "wait",
-      actorUnitId: unit.id,
-      targetUnitId: null,
-      movePosition: null,
-      facingDirection: getDirectionFromPositions(unit, bestTarget) ?? unit.facing,
     };
   }
 

@@ -1189,16 +1189,17 @@ export function executePlannedEnemyAction(battleState, plannedAction) {
   }
 
   if (plannedAction.type === "move" && plannedAction.movePosition) {
-    return ensureAutoActorHasActed(
-      applyAiMove(
-        battleState,
-        actingUnit.id,
-        plannedAction.movePosition,
-        plannedAction.facingDirection,
-      ),
+    // Enemy move is movement-only; same unit may still act afterward if hasActed is false.
+    const nextState = applyAiMove(
+      battleState,
       actingUnit.id,
+      plannedAction.movePosition,
       plannedAction.facingDirection,
     );
+
+    return nextState === battleState
+      ? applyAiWait(battleState, actingUnit.id, plannedAction.facingDirection)
+      : nextState;
   }
 
   return ensureAutoActorHasActed(
