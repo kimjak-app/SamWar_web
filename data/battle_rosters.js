@@ -4,6 +4,7 @@ export const battleRosters = {
   cityDefenderRosters: {
     hanseong: ["yi_sun_sin", "jeong_do_jeon"],
     luoyang: ["guan_yu", "zhang_fei"],
+    pyeongyang: ["gwanggaeto", "dorim"],
     kyoto: ["nobunaga", "kenshin"],
   },
 };
@@ -15,4 +16,6 @@ export const battleSpawnPositions = {
   kenshin: { x: 11, y: 4 },
   guan_yu: { x: 11, y: 3 },
   zhang_fei: { x: 11, y: 4 },
+  gwanggaeto: { x: 11, y: 3 },
+  dorim: { x: 11, y: 4 },
 };
