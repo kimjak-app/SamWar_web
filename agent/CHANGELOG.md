@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.4-0b Enemy Move-Then-Act AI Fix
+- Fixed enemy move actions incorrectly consuming the unit action.
+- Enemy movement now sets `hasMoved=true` while preserving `hasActed=false`.
+- Enemy AI can now move and then attack/use skill/use strategy in the same enemy turn.
+- Added post-move AI action branch: high-value skill, attack, fallback skill, strategy, wait.
+- Prevented repeated movement after `hasMoved=true`.
+- Added safety fallback for failed move actions.
+- No movement range, pathfinding, damage, skills, balance, terrain, deployment, presentation, hit knockback, cut-ins, assets, or render config changes.
+- `node --check` passed for `js/core/battle_ai.js` and `js/core/battle_rules.js`.
+- Manual browser QA passed.
+
+## v0.4-0a Hero Deployment Center Modal Layout
+- Moved hero deployment UI out of the right HUD stack into a centered modal overlay.
+- Added modal/backdrop layout for hero deployment.
+- Right HUD no longer gets pushed down by deployment content.
+- Preserved `selectedHeroIds`/`startBattle` flow.
+- No battle logic, AI, balance, skills, terrain rules, hit knockback, cut-ins, result overlays, assets, troop allocation, recruitment, relocation, or render config changes.
+- `node --check js/ui/world_map_ui.js` passed.
+- Manual browser QA passed.
+
+## v0.4-0 Hero Deployment Flow MVP
+- Added hero deployment screen before invasion battles.
+- World-map attack now opens deployment instead of entering battle immediately.
+- Player attacker candidates are derived from Hanseong roster.
+- Player can select `이순신`, `정도전`, or both.
+- `selectedHeroIds` are passed into battle initialization.
+- Attack battle player units now use selected attacker heroes.
+- Defender roster behavior remains unchanged.
+- Existing battle presentation, hit knockback, cut-ins, result flow, and city ownership transfer remain intact.
+- No troop allocation, recruitment, relocation, terrain rules, AI, damage, assets, render config, or balance changes.
+- `node --check` passed for modified JS files.
+- Manual browser QA passed.
+
 ## v0.3-7f Hit Knockback Reaction
 - Added subtle render-only hit knockback for damage effects.
 - Added/used unit render group lookup for presentation-only target reactions.

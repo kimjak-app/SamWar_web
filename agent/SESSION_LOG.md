@@ -142,6 +142,29 @@
 - Confirmed `node --check js/phaser/battle_scene.js` passed.
 - User manual browser QA passed and confirmed the effect feels good.
 
+### v0.4-0 Hero Deployment Flow MVP
+- Added hero deployment flow before invasion battles.
+- World-map attack now opens deployment before battle.
+- Current player candidates are `이순신` and `정도전` from Hanseong roster.
+- `selectedHeroIds` are passed into battle initialization.
+- Selecting one or both heroes correctly changes the player-side attacker roster.
+- Defender roster behavior remains target-city based.
+- User manual browser QA passed.
+
+### v0.4-0a Hero Deployment Center Modal Layout
+- Moved deployment UI from right HUD stack to centered modal overlay.
+- Right HUD no longer gets pushed down.
+- Start/cancel/select behavior remains intact.
+- User manual browser QA passed.
+
+### v0.4-0b Enemy Move-Then-Act AI Fix
+- Fixed enemy movement incorrectly consuming the unit action.
+- Root cause: `executePlannedEnemyAction()` wrapped enemy move actions with `ensureAutoActorHasActed()`.
+- Enemy movement now leaves `hasActed=false` so the same unit can perform a valid follow-up action.
+- `getAiTurnAction()` now supports post-move high-value skill, attack, fallback skill, strategy, then wait.
+- Enemy units cannot move twice in the same turn.
+- User manual browser QA passed.
+
 ### Current Unique Skill Cut-in Text
 - `hakikjin_barrage` / `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `reform_order` / `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
@@ -159,8 +182,9 @@
 - User may overwrite PNGs manually later.
 
 ### Next TODO
-1. v0.3-8a Visual Sharpness Pass Prep.
-2. Visual Sharpness Safe Polish only after review.
-3. Terrain Rule Design Only later.
-4. SFX/audio, camera shake, projectile effects, and real animation queue later as dedicated patches.
-5. 10-city / 20-hero expansion only after the 4-city / 8-hero MVP baseline stays stable.
+1. v0.4-1 Troop Allocation MVP.
+2. v0.4-2 Victory Hero Recruitment MVP.
+3. v0.4-3 Hero Location / Garrison Management MVP.
+4. Terrain Rule Design Only later.
+5. SFX/audio, camera shake, projectile effects, and real animation queue later as dedicated patches.
+6. 10-city / 20-hero expansion only after the 4-city / 8-hero MVP baseline stays stable.

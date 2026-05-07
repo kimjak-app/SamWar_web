@@ -1,8 +1,8 @@
 # Current State
 
 ## Status
-- Current Version: `v0.3-7f Hit Knockback Reaction`
-- Status: `Stable 4-city / 8-hero PC web MVP baseline with coordinate adapter prep, render layer prep, inactive terrain data scaffold, action presentation helper flow, presentation effects polish, and hit knockback reaction completed. Manual browser QA passed.`
+- Current Version: `v0.4-0b Enemy Move-Then-Act AI Fix`
+- Status: `Stable 4-city / 8-hero PC web MVP baseline with hero deployment flow, centered deployment modal, and enemy move-then-act AI fix completed. Manual browser QA passed.`
 - Main loop: world map -> battle -> victory/defeat result -> world map return
 
 ## Current 4-City MVP
@@ -34,6 +34,10 @@
 - Presentation effects mini pass for clearer floating battle feedback.
 - Subtle hit knockback reaction for damage effects.
 - Hit knockback is render-only and does not change unit grid position.
+- Hero deployment flow before invasion battles.
+- Centered hero deployment modal separate from the right HUD.
+- `selectedHeroIds`-based attacker roster for attack battles.
+- Enemy AI move-then-act flow.
 
 ## Pyongyang System
 - `광개토대왕` uses `영락대업`.
@@ -122,6 +126,20 @@ Current skill text:
 - Only damage-like effects trigger knockback.
 - `unit.x` / `unit.y` and battle logic remain unchanged.
 
+## Hero Deployment
+- World-map attack now opens the hero deployment modal before battle.
+- Current player candidates are derived from Hanseong roster: `이순신` and `정도전`.
+- Player can select one or both heroes.
+- Selected heroes are passed into battle initialization.
+- Defender roster behavior remains target-city based.
+- Troop allocation, hero recruitment, relocation, and garrison management are not implemented yet.
+
+## Enemy AI Fix
+- Enemy movement now sets `hasMoved=true` while preserving `hasActed=false`.
+- Enemy units can move and then attack/use skill/use strategy in the same enemy turn.
+- Enemy units cannot move twice in the same turn.
+- Wait only consumes the action when no valid follow-up exists.
+
 ## Visual Decisions To Preserve
 - Cut-in/result image assets are not edited for text.
 - Text overlays remain removable DOM UI.
@@ -133,12 +151,13 @@ Current skill text:
 - Do not casually change Phaser render config, texture filtering, `pixelArt`, `roundPixels`, or mipmap settings.
 
 ## Known Future Work
-- Next recommended step: `v0.3-8a Visual Sharpness Pass Prep`.
+- Next recommended step: `v0.4-1 Troop Allocation MVP`.
+- Victory hero recruitment and hero relocation should remain future patches.
 - Future animation queue/SFX/camera/projectile work should build on the action presentation helper flow.
 - Do not change battle logic or timing until a dedicated presentation-queue patch.
 - Future SFX, camera shake, projectile effects, and real animation queue should remain separate dedicated patches.
 - Keep knockback presentation-only unless a future gameplay displacement feature is explicitly designed.
-- Terrain effects must remain inactive until a dedicated terrain rules patch.
+- Terrain rules remain inactive until a dedicated terrain rules patch.
 - Future large battlefield / 2.5D work should continue through the coordinate adapter and render layers.
 - Later audio pass: skill SFX, voice AI from `cutinQuote`, possible `cutinVoice` / `sfx` fields.
 - Later visual sharpness pass after MVP stabilizes.

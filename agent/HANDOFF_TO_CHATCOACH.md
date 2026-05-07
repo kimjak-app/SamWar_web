@@ -1,6 +1,6 @@
-# SamWar_web Handoff - After v0.3-7f
+# SamWar_web Handoff - After v0.4-0b
 
-Current stable baseline: `v0.3-7f Hit Knockback Reaction`.
+Current stable baseline: `v0.4-0b Enemy Move-Then-Act AI Fix`.
 
 The 4-city / 8-hero PC web MVP loop is stable at the data and presentation level:
 world map -> battle -> victory/defeat result -> world map return.
@@ -40,6 +40,12 @@ world map -> battle -> victory/defeat result -> world map return.
 - Damage effects now trigger subtle render-only knockback.
 - Hit knockback does not change `unit.x` / `unit.y`.
 - Knockback returns units to original rendered position.
+- v0.4-0 Hero Deployment Flow MVP completed and manual QA passed.
+- v0.4-0a Hero Deployment Center Modal Layout completed and manual QA passed.
+- v0.4-0b Enemy Move-Then-Act AI Fix completed and manual QA passed.
+- Attack flow now uses centered hero deployment before battle.
+- Player attacker roster is `selectedHeroIds`-based.
+- Enemy AI can now move then act in the same enemy turn.
 
 ## Presentation Rules To Preserve
 - Do not bake text into cut-in/result image assets.
@@ -58,9 +64,9 @@ world map -> battle -> victory/defeat result -> world map return.
 - `skill.cutinDurationMs`: currently `2200` for all 8 unique skills
 
 ## Next Recommended Start
-1. v0.3-8a Visual Sharpness Pass Prep.
-2. Keep future visual polish low-risk and review-first.
-3. Keep future SFX/camera/projectile/real queue work in dedicated patches.
-4. Keep future large battlefield / 2.5D work routed through coordinate adapter and render layers.
+1. v0.4-1 Troop Allocation MVP.
+2. Keep troop allocation simple with percentage presets first.
+3. Do not implement persistent troop losses unless explicitly requested.
+4. Keep hero recruitment/relocation/garrison management as later patches.
 5. Keep terrain rules inactive until a dedicated terrain rules patch.
 6. Do not begin 10-city / 20-hero expansion yet.

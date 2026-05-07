@@ -1,30 +1,33 @@
 # Next Tasks
 
-Current baseline: `v0.3-7f Hit Knockback Reaction`.
+Current baseline: `v0.4-0b Enemy Move-Then-Act AI Fix`.
 
 ## Recommended Next Order
-1. v0.3-8a Visual Sharpness Pass Prep.
-   - Review battlefield portrait sharpness, unit token sharpness, floating text readability, status icon clarity, bottom legend readability, battlefield background scaling, and cut-in text/image balance.
-   - Start with review/prep only; do not change Phaser render config or assets without a dedicated follow-up patch.
+1. v0.4-1 Troop Allocation MVP.
+   - Add simple troop allocation controls to the hero deployment modal.
+   - Use safe preset buttons first, such as 50%, 75%, 100%.
+   - Do not implement persistent troop losses yet unless explicitly requested.
+   - Do not implement unit type selection yet.
 
-2. v0.3-8b Visual Readability Safe Polish.
-   - Use `agent/VISUAL_SHARPNESS_REVIEW.md` as scope control.
-   - Apply only low-risk readability tweaks.
-   - No assets/render config/game logic changes.
+2. v0.4-2 Victory Hero Recruitment MVP.
+   - Keep recruitment separate from deployment and battle result flow changes.
 
-3. Terrain Rule Design Only.
+3. v0.4-3 Hero Location / Garrison Management MVP.
+   - Add location/garrison management only after recruitment rules are accepted.
+
+4. Terrain Rule Design Only.
    - Design terrain movement/defense rules without applying gameplay changes yet.
 
-4. SFX/audio pass later.
+5. SFX/audio pass later.
    - Add SFX per unique skill after presentation behavior is accepted.
 
-5. Camera shake/projectile effects later.
+6. Camera shake/projectile effects later.
    - Keep camera and projectile work in dedicated presentation patches.
 
-6. Real animation queue later.
+7. Real animation queue later.
    - Build sequencing only after presentation helper flow remains stable.
 
-7. Later content expansion.
+8. Later content expansion.
    - Expand to 10 cities / 20 heroes only after the 4-city / 8-hero rules, assets, and presentation conventions are accepted.
 
 ## Completed
@@ -34,6 +37,9 @@ Current baseline: `v0.3-7f Hit Knockback Reaction`.
 - v0.3-7d Action Presentation Queue Review.
 - v0.3-7e Presentation Effects Mini Pass.
 - v0.3-7f Hit Knockback Reaction.
+- v0.4-0 Hero Deployment Flow MVP.
+- v0.4-0a Hero Deployment Center Modal Layout.
+- v0.4-0b Enemy Move-Then-Act AI Fix.
 - Latest cut-in layout manual QA passed.
 
 ## Later Audio Pass Notes

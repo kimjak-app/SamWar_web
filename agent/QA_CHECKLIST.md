@@ -109,6 +109,48 @@
 - [x] Manual browser QA passed.
 - Future regression reminder: hit knockback is presentation-only and must never modify `unit.x`/`unit.y` or battle movement state.
 
+## v0.4-0 Hero Deployment Flow QA
+- [x] From world map, choosing an enemy city/invasion opens deployment screen instead of entering battle immediately.
+- [x] Deployment screen shows target city name.
+- [x] Deployment screen shows `이순신` and `정도전`.
+- [x] Hero portrait/name/stats/skill/troop info appear if available.
+- [x] Selecting both heroes starts battle with both.
+- [x] Selecting only `이순신` starts battle with only `이순신`.
+- [x] Selecting only `정도전` starts battle with only `정도전`.
+- [x] Start battle is blocked when no hero is selected.
+- [x] Cancel returns to world map.
+- [x] Enemy defenders still match target city roster.
+- [x] Battle starts normally after deployment.
+- [x] City ownership transfer still works as before.
+- [x] No defeated enemy heroes are recruited yet.
+- [x] Manual browser QA passed.
+
+## v0.4-0a Deployment Modal Layout QA
+- [x] Deployment UI appears as a centered modal overlay.
+- [x] Right HUD no longer gets pushed down.
+- [x] Modal shows player hero candidates.
+- [x] Hero cards are selectable/deselectable.
+- [x] Start Battle and Cancel buttons work.
+- [x] Battle starts with selected heroes.
+- [x] Manual browser QA passed.
+
+## v0.4-0b Enemy Move-Then-Act AI QA
+- [x] Enemy unit can move toward a player unit and then attack in the same enemy turn if target is in range.
+- [x] Enemy unit can move and then use a valid unique skill in the same enemy turn if conditions are met.
+- [x] Enemy unit can move and then use a valid strategy in the same enemy turn if conditions are met.
+- [x] Enemy unit does not move twice in the same turn.
+- [x] Enemy unit waits only when no valid follow-up action exists.
+- [x] Enemy turn does not get stuck.
+- [x] Auto battle still progresses.
+- [x] Enemy skill cut-ins still appear when enemy uses unique skills.
+- [x] Floating damage/effect text still appears.
+- [x] Hit knockback still works.
+- [x] Victory/defeat result flow still returns to world map.
+- [x] Hero deployment flow still works.
+- [x] Manual browser QA passed.
+- Future regression reminder: enemy movement must not set `hasActed=true` by itself.
+- Future regression reminder: movement uses `hasMoved=true`; attack/skill/strategy/wait consumes `hasActed=true`.
+
 ## Skill Text Checks
 - `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
