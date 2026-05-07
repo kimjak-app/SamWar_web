@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.3-7f Hit Knockback Reaction
+- Added subtle render-only hit knockback for damage effects.
+- Added/used unit render group lookup for presentation-only target reactions.
+- Knockback direction is based on attacker-to-target grid direction.
+- Damaged targets briefly move backward and return to original rendered position.
+- `unit.x` / `unit.y` and all battle logic remain unchanged.
+- Knockback does not apply to buff-only effects.
+- Duplicate replay prevention remains intact.
+- No AI, damage, movement, skill data, cut-ins, result overlays, assets, SFX, camera shake, projectile effects, Phaser render config, or balance changes.
+- `node --check js/phaser/battle_scene.js` passed.
+- Manual browser QA passed.
+
+## v0.3-7e Presentation Effects Mini Pass
+- Polished floating effect readability.
+- Improved small battle presentation feedback using existing `effectLayer` and action presentation helper flow.
+- Preserved immediate rendering behavior and duplicate-prevention.
+- No real animation queue, SFX, camera shake, projectile effects, delayed HP update, battle logic, AI, skill data, cut-in data, result overlay, asset, Phaser render config, or balance changes.
+- `node --check js/phaser/battle_scene.js` passed.
+- Manual browser QA passed.
+
 ## v0.3-7d Action Presentation Queue Review
 - Added presentation-facing action helper methods in `js/phaser/battle_scene.js`.
 - Added `getLastActionPresentation()`, `getActionPresentationSignature()`, `hasNewActionPresentation()`, `markActionPresentationRendered()`, `getActionPresentationEffects()`, `getActionPresentationTargets()`, and `getActionPresentationKind()`.

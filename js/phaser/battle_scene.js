@@ -4,7 +4,7 @@ import { hasStatus } from "../core/battle_strategy.js";
 
 function getEffectStyle(kind) {
   if (kind === "damage") {
-    return { color: "#ff9f9f", stroke: "#3f0d0d", size: "26px" };
+    return { color: "#ff9f9f", stroke: "#3f0d0d", size: "28px" };
   }
 
   if (kind === "buff") {
@@ -170,6 +170,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.headerTitleText = null;
       this.headerStatusText = null;
       this.lastRenderedActionSignature = null;
+      this.unitRenderMap = new Map();
       this.missingTokenWarnings = new Set();
       this.missingBackgroundWarningShown = false;
     }
@@ -358,6 +359,88 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       return action?.type ?? "unknown";
     }
 
+    getFloatingEffectYOffset(_effect, index) {
+      return -30 - index * 6;
+    }
+
+    getFloatingEffectDuration(_effect) {
+      return 820;
+    }
+
+    getFloatingEffectRiseDistance(_effect) {
+      return 34;
+    }
+
+    getFloatingEffectStrokeThickness(effect) {
+      if (["damage", "counter", "strategy", "failure", "fail", "status"].includes(effect?.kind)) {
+        return 5;
+      }
+
+      return 4;
+    }
+
+    getUnitRenderGroup(unitId) {
+      return this.unitRenderMap?.get(unitId) ?? null;
+    }
+
+    getActionActorUnit(action) {
+      return this.battleState.units.find((unit) => unit.id === action?.actorUnitId) ?? null;
+    }
+
+    getActionTargetUnit(unitId) {
+      return this.battleState.units.find((unit) => unit.id === unitId) ?? null;
+    }
+
+    getHitKnockbackVector(action, targetUnit) {
+      const actorUnit = this.getActionActorUnit(action);
+
+      if (!actorUnit || !targetUnit) {
+        return { x: 0, y: -8 };
+      }
+
+      const dx = targetUnit.x - actorUnit.x;
+      const dy = targetUnit.y - actorUnit.y;
+      const length = Math.max(1, Math.hypot(dx, dy));
+
+      return {
+        x: (dx / length) * 10,
+        y: (dy / length) * 10,
+      };
+    }
+
+    shouldApplyHitKnockback(effect) {
+      return effect?.kind === "damage";
+    }
+
+    playHitKnockback(action, effect) {
+      if (!this.shouldApplyHitKnockback(effect)) {
+        return;
+      }
+
+      const targetUnit = this.getActionTargetUnit(effect.unitId);
+      const targetGroup = this.getUnitRenderGroup(effect.unitId);
+
+      if (!targetUnit || !targetGroup) {
+        return;
+      }
+
+      const vector = this.getHitKnockbackVector(action, targetUnit);
+      const originalX = targetGroup.x;
+      const originalY = targetGroup.y;
+
+      this.tweens.add({
+        targets: targetGroup,
+        x: originalX + vector.x,
+        y: originalY + vector.y,
+        duration: 80,
+        yoyo: true,
+        ease: "Quad.easeOut",
+        onComplete: () => {
+          targetGroup.setPosition(originalX, originalY);
+        },
+      });
+    }
+
     create() {
       const width = this.scale.width;
       const height = this.scale.height;
@@ -423,6 +506,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       }
 
       this.clearRenderLayers();
+      this.unitRenderMap = new Map();
       this.headerStatusText?.setText(`${this.battleState.defenderCityName} 전장`);
       this.renderBattlefieldBackdrop();
       this.renderGrid();
@@ -646,6 +730,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
         unitGroup.setDepth(200 + this.getDepthForGridPosition(unit.x, unit.y));
+        this.unitRenderMap.set(unit.id, unitGroup);
         const selectionRing = this.add.ellipse(0, 26, 86, 26, 0xf8d798, unit.id === selectedUnitId ? 0.24 : 0)
           .setStrokeStyle(unit.id === selectedUnitId ? 3 : 2, 0xf8d798, unit.id === selectedUnitId ? 0.85 : 0.28);
         const facingText = this.add.text(0, -70, getDirectionLabel(unit.facing), {
@@ -658,10 +743,13 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           strokeThickness: 3,
         }).setOrigin(0.5, 0.5);
         const hpText = this.add.text(0, 54, `${unit.troops} / ${unit.maxTroops}`, {
-          color: "#dbe6f3",
+          color: "#eef5ff",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "15px",
+          fontStyle: "bold",
           align: "center",
+          stroke: "#05090f",
+          strokeThickness: 3,
         }).setOrigin(0.5, 0.5);
         const hpBarTrack = this.add.rectangle(0, 40, 90, 5, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
         const hpRatio = unit.maxTroops > 0 ? Math.max(0, unit.troops) / unit.maxTroops : 0;
@@ -811,8 +899,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
     createUnitPortraitBadge(unit) {
       const badge = this.add.container(-28, -18);
-      const badgeFrame = this.add.rectangle(0, 0, 36, 36, 0x101010, 0.05)
-        .setStrokeStyle(1, 0x000000, 0.10);
+      const badgeFrame = this.add.rectangle(0, 0, 36, 36, 0x05090f, 0.18)
+        .setStrokeStyle(1, 0xf8d798, 0.22);
       badge.add(badgeFrame);
 
       const portraitTextureKey = this.getPortraitTextureKey(unit);
@@ -851,9 +939,9 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       const backgroundWidth = totalWidth + 8;
       const backgroundHeight = 24;
       const background = this.add.graphics();
-      background.fillStyle(0x05090f, 0.28);
+      background.fillStyle(0x05090f, 0.38);
       background.fillRoundedRect(-backgroundWidth / 2, -backgroundHeight / 2, backgroundWidth, backgroundHeight, 4);
-      background.lineStyle(1, 0xf8d798, 0.16);
+      background.lineStyle(1, 0xf8d798, 0.26);
       background.strokeRoundedRect(-backgroundWidth / 2, -backgroundHeight / 2, backgroundWidth, backgroundHeight, 4);
       iconGroup.add(background);
 
@@ -865,7 +953,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           fontSize: "14px",
           fontStyle: "bold",
           stroke: "#05090f",
-          strokeThickness: 3,
+          strokeThickness: 4,
           align: "center",
         }).setOrigin(0.5, 0.5);
         iconText.setName(`battle-status-icon:${statusIcon.title}`);
@@ -939,13 +1027,23 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           fontSize: "12px",
           fixedWidth: this.scale.width - 160,
           align: "center",
+          stroke: "#05090f",
+          strokeThickness: 2,
         },
       ).setOrigin(0.5, 0.5);
 
       const backgroundWidth = Math.min(this.scale.width - 140, legendText.width + 28);
       const background = this.add.graphics();
-      background.fillStyle(0x05090f, 0.18);
+      background.fillStyle(0x05090f, 0.28);
       background.fillRoundedRect(
+        this.scale.width / 2 - backgroundWidth / 2,
+        this.scale.height - 68,
+        backgroundWidth,
+        28,
+        5,
+      );
+      background.lineStyle(1, 0xf8d798, 0.16);
+      background.strokeRoundedRect(
         this.scale.width / 2 - backgroundWidth / 2,
         this.scale.height - 68,
         backgroundWidth,
@@ -993,25 +1091,26 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const unit = this.battleState.units.find((entry) => entry.id === effect.unitId);
         const point = unit ? this.getUnitPoint(unit) : { x: this.scale.width / 2, y: 110 };
         const style = getEffectStyle(effect.kind);
-        const floatingText = this.add.text(point.x, point.y - 30 - index * 6, effect.text, {
+        const floatingText = this.add.text(point.x, point.y + this.getFloatingEffectYOffset(effect, index), effect.text, {
           color: style.color,
           fontFamily: "Segoe UI, sans-serif",
           fontSize: style.size,
           fontStyle: "bold",
           stroke: style.stroke,
-          strokeThickness: 4,
+          strokeThickness: this.getFloatingEffectStrokeThickness(effect),
           align: "center",
         }).setOrigin(0.5, 0.5);
 
         this.effectLayer.add(floatingText);
         this.tweens.add({
           targets: floatingText,
-          y: floatingText.y - 34,
+          y: floatingText.y - this.getFloatingEffectRiseDistance(effect),
           alpha: 0,
-          duration: 820,
+          duration: this.getFloatingEffectDuration(effect),
           ease: "Sine.easeOut",
           onComplete: () => floatingText.destroy(),
         });
+        this.playHitKnockback(lastAction, effect);
       });
 
       this.markActionPresentationRendered(lastAction);

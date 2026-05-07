@@ -1,6 +1,6 @@
-# SamWar_web Handoff - After v0.3-7d
+# SamWar_web Handoff - After v0.3-7f
 
-Current stable baseline: `v0.3-7d Action Presentation Queue Review`.
+Current stable baseline: `v0.3-7f Hit Knockback Reaction`.
 
 The 4-city / 8-hero PC web MVP loop is stable at the data and presentation level:
 world map -> battle -> victory/defeat result -> world map return.
@@ -34,6 +34,12 @@ world map -> battle -> victory/defeat result -> world map return.
 - Action presentation helper review completed and manual QA passed.
 - `renderFloatingEffects()` now uses presentation-facing helper methods.
 - Current immediate floating effect behavior and duplicate-prevention were preserved.
+- v0.3-7e Presentation Effects Mini Pass completed and manual QA passed.
+- v0.3-7f Hit Knockback Reaction completed and manual QA passed.
+- Floating battle feedback is clearer.
+- Damage effects now trigger subtle render-only knockback.
+- Hit knockback does not change `unit.x` / `unit.y`.
+- Knockback returns units to original rendered position.
 
 ## Presentation Rules To Preserve
 - Do not bake text into cut-in/result image assets.
@@ -52,11 +58,9 @@ world map -> battle -> victory/defeat result -> world map return.
 - `skill.cutinDurationMs`: currently `2200` for all 8 unique skills
 
 ## Next Recommended Start
-1. Choose between:
-   - v0.3-7e Presentation Effects Mini Pass
-   - v0.3-8a Visual Sharpness Pass Prep
-   - v0.3-8b Terrain Rule Design Only
-2. Keep future presentation work routed through action presentation helpers.
-3. Keep future large battlefield / 2.5D work routed through coordinate adapter and render layers.
-4. Keep terrain rules inactive until a dedicated terrain rules patch.
-5. Do not begin 10-city / 20-hero expansion yet.
+1. v0.3-8a Visual Sharpness Pass Prep.
+2. Keep future visual polish low-risk and review-first.
+3. Keep future SFX/camera/projectile/real queue work in dedicated patches.
+4. Keep future large battlefield / 2.5D work routed through coordinate adapter and render layers.
+5. Keep terrain rules inactive until a dedicated terrain rules patch.
+6. Do not begin 10-city / 20-hero expansion yet.

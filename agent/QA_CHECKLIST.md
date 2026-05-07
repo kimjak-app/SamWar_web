@@ -80,6 +80,35 @@
 - [x] Manual browser QA passed.
 - Future regression reminder: future presentation work should use action presentation helpers and must not directly scatter `lastAction` parsing across render code.
 
+## v0.3-7e Presentation Effects QA
+- [x] Hanseong/Luoyang/Pyongyang/Kyoto battles enter normally.
+- [x] Normal attack floating damage text appears and is clearer.
+- [x] Skill floating damage/effect text appears.
+- [x] Buff/status/failure text appears if applicable.
+- [x] Duplicate floating text does not replay unexpectedly on redraw.
+- [x] Target flash/shake still works.
+- [x] Unique skill cut-ins still work.
+- [x] Auto battle still progresses.
+- [x] Victory/defeat result flow still returns to world map.
+- [x] No SFX/camera/projectile/timing system was added.
+- [x] Manual browser QA passed.
+
+## v0.3-7f Hit Knockback QA
+- [x] Hanseong/Luoyang/Pyongyang/Kyoto battles enter normally.
+- [x] Normal attack damage text still appears.
+- [x] Damaged target briefly moves backward and returns to original rendered position.
+- [x] Knockback direction roughly follows attacker-to-target direction.
+- [x] Skill damage also triggers subtle knockback when damage effect exists.
+- [x] Buff-only effects do not knock back units.
+- [x] Duplicate knockback does not replay unexpectedly on redraw.
+- [x] Unit positions and click hit zones remain normal after knockback.
+- [x] Auto battle still progresses.
+- [x] Unique skill cut-ins still work.
+- [x] Victory/defeat result flow still returns to world map.
+- [x] No actual unit grid position changes occur.
+- [x] Manual browser QA passed.
+- Future regression reminder: hit knockback is presentation-only and must never modify `unit.x`/`unit.y` or battle movement state.
+
 ## Skill Text Checks
 - `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`

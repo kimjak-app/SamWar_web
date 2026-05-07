@@ -123,6 +123,25 @@
 - Confirmed `node --check js/phaser/battle_scene.js` passed.
 - User manual browser QA passed with no visible regressions.
 
+### v0.3-7e Presentation Effects Mini Pass
+- Polished floating battle effect readability.
+- Preserved current action presentation helper flow.
+- Preserved immediate floating effect rendering and duplicate-prevention behavior.
+- Confirmed no gameplay, AI, damage, skill, cut-in, asset, SFX, camera, projectile, or balance changes.
+- Confirmed `node --check js/phaser/battle_scene.js` passed.
+- User manual browser QA passed.
+
+### v0.3-7f Hit Knockback Reaction
+- Added subtle hit knockback reaction for damage effects.
+- Added/used render-only unit group lookup for target presentation feedback.
+- Knockback direction follows attacker-to-target grid direction.
+- Damaged unit briefly moves backward and returns to original rendered position.
+- `unit.x` / `unit.y` remain unchanged.
+- Buff-only effects do not trigger knockback.
+- Duplicate replay prevention remains intact.
+- Confirmed `node --check js/phaser/battle_scene.js` passed.
+- User manual browser QA passed and confirmed the effect feels good.
+
 ### Current Unique Skill Cut-in Text
 - `hakikjin_barrage` / `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `reform_order` / `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
@@ -140,10 +159,8 @@
 - User may overwrite PNGs manually later.
 
 ### Next TODO
-1. Decide next branch:
-   - Presentation Effects Mini Pass
-   - Visual Sharpness Pass Prep
-   - Terrain Rule Design Only
-2. Real animation queue/SFX/camera/projectile effects later.
-3. Terrain rules integration later only after dedicated design.
-4. 10-city / 20-hero expansion only after the 4-city / 8-hero MVP baseline stays stable.
+1. v0.3-8a Visual Sharpness Pass Prep.
+2. Visual Sharpness Safe Polish only after review.
+3. Terrain Rule Design Only later.
+4. SFX/audio, camera shake, projectile effects, and real animation queue later as dedicated patches.
+5. 10-city / 20-hero expansion only after the 4-city / 8-hero MVP baseline stays stable.

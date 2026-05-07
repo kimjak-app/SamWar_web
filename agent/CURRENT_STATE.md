@@ -1,8 +1,8 @@
 # Current State
 
 ## Status
-- Current Version: `v0.3-7d Action Presentation Queue Review`
-- Status: `Stable 4-city / 8-hero PC web MVP baseline with coordinate adapter prep, render layer prep, inactive terrain data scaffold, and action presentation helper review completed. Manual browser QA passed.`
+- Current Version: `v0.3-7f Hit Knockback Reaction`
+- Status: `Stable 4-city / 8-hero PC web MVP baseline with coordinate adapter prep, render layer prep, inactive terrain data scaffold, action presentation helper flow, presentation effects polish, and hit knockback reaction completed. Manual browser QA passed.`
 - Main loop: world map -> battle -> victory/defeat result -> world map return
 
 ## Current 4-City MVP
@@ -31,6 +31,9 @@
 - Action presentation helper scaffold for future animation/SFX/camera/effect sequencing.
 - Floating effect rendering now reads through presentation-facing helper methods.
 - Duplicate floating text prevention remains preserved.
+- Presentation effects mini pass for clearer floating battle feedback.
+- Subtle hit knockback reaction for damage effects.
+- Hit knockback is render-only and does not change unit grid position.
 
 ## Pyongyang System
 - `광개토대왕` uses `영락대업`.
@@ -111,6 +114,14 @@ Current skill text:
 - Current rendering behavior remains immediate; no real animation queue exists yet.
 - Unique skill cut-ins are triggered outside `battle_scene.js` through the main/UI flow.
 
+## Presentation Effects
+- Floating effect readability was polished in v0.3-7e.
+- Damage feedback now includes subtle visual hit response.
+- v0.3-7f adds render-only knockback through unit render groups.
+- Knockback is based on attacker-to-target direction and returns the unit to its original rendered position.
+- Only damage-like effects trigger knockback.
+- `unit.x` / `unit.y` and battle logic remain unchanged.
+
 ## Visual Decisions To Preserve
 - Cut-in/result image assets are not edited for text.
 - Text overlays remain removable DOM UI.
@@ -122,8 +133,11 @@ Current skill text:
 - Do not casually change Phaser render config, texture filtering, `pixelArt`, `roundPixels`, or mipmap settings.
 
 ## Known Future Work
+- Next recommended step: `v0.3-8a Visual Sharpness Pass Prep`.
 - Future animation queue/SFX/camera/projectile work should build on the action presentation helper flow.
 - Do not change battle logic or timing until a dedicated presentation-queue patch.
+- Future SFX, camera shake, projectile effects, and real animation queue should remain separate dedicated patches.
+- Keep knockback presentation-only unless a future gameplay displacement feature is explicitly designed.
 - Terrain effects must remain inactive until a dedicated terrain rules patch.
 - Future large battlefield / 2.5D work should continue through the coordinate adapter and render layers.
 - Later audio pass: skill SFX, voice AI from `cutinQuote`, possible `cutinVoice` / `sfx` fields.
