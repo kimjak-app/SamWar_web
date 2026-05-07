@@ -1,42 +1,43 @@
-# Next Task Priority
+# Next Tasks
 
-Current recorded build state before the next task: `v0.3-2e Unit Sprite Facing Flip`.
+Current baseline: `v0.3-6i Skill Cut-in Quote Layout + Duration Polish`.
 
-1. `v0.3-3 Status Effect Icons`
-   - Start with confusion icon only.
-   - Show small icon near battlefield unit HUD.
-   - Keep existing status text in right `UNIT` panel.
-   - Do not redesign HUD yet.
+## Recommended Next Order
+1. Manual QA latest cut-in layout.
+   - Confirm quote position at visual center, slightly below center.
+   - Confirm skill title/effect remain lower center.
+   - Confirm player and enemy cut-ins both show title, quote, and effect text.
+   - Confirm `2200ms` duration is readable but not too slow.
 
-2. World-map city / garrison hero portrait UI
-   - Show who is stationed or associated with a city.
-   - Keep MVP simple.
+2. Minor timing / typography polish if needed.
+   - If too short or too long, tune unique cut-in duration within `2000-2400ms`.
+   - If quote overlaps important face/weapon areas, adjust quote Y-position slightly.
+   - Do not modify image assets for text.
 
-3. Defense battle UX polish
-   - Improve invasion/defense choice messaging.
-   - Clarify city loss/defense victory results.
+3. Decide the next feature after 4-city / 8-hero MVP QA.
+   - Option A: Audio pass with unique skill SFX and later voice.
+   - Option B: Visual sharpness pass.
+   - Option C: Next gameplay/content feature.
 
-4. SFX / battle sound effects
-   - Add later after core UI flow stabilizes.
+4. Later visual sharpness pass before 10-city / 20-hero expansion.
+   - Phaser canvas text sharpness.
+   - Battlefield portrait sharpness.
+   - Canvas/CSS scaling rules.
+   - Integer text coordinates.
+   - Possible DOM split for text-heavy UI.
 
-5. Battlefield portrait polish backlog
-   - Improve hero badge clarity later.
-   - Do not block MVP progress.
+5. Later content expansion.
+   - Expand to 10 cities / 20 heroes only after the 4-city / 8-hero rules, assets, and presentation conventions are accepted.
+
+## Later Audio Pass Notes
+- Add SFX per unique skill.
+- Use `cutinQuote` lines for voice AI prompts.
+- Consider fields such as `cutinVoice` or `sfx`.
 
 ## Constraints To Preserve
-- Direct Codex Paste Mode remains the working method.
-- `agent/CODEX_INBOX.md` is not the main task source.
-- Do not merge Phaser rendering logic into `js/core` battle rules.
+- Do not change game logic during documentation or visual-only polish tasks.
 - Keep heroes, skills, rosters, and strategies data-driven.
-- Preserve the fixed MVP roster for now.
-- Keep the current compact battlefield HUD.
-- Preserve battlefield portrait source priority:
-  - `battlefieldPortraitImage` first
-  - `portraitImage` fallback
-- Preserve dedicated 256px battlefield unit token assets.
-- Preserve unit token flip rule:
-  - assets face left by default
-  - flip only when `unit.facing === "right"`
-- Do not casually touch Phaser render/filter/sharpness settings.
-- Do not tune combat balance yet.
-- Balance will be handled after more core systems are in place.
+- Keep unique skill cut-ins DOM-overlay driven.
+- Do not bake text into PNG assets.
+- Do not casually touch Phaser render config, filters, mipmaps, `pixelArt`, or `roundPixels`.
+- Do not tune battle balance until the 4-city / 8-hero MVP is QA-stable.

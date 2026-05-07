@@ -1,137 +1,110 @@
 # Current State
 
 ## Status
-- Current Version: `v0.3-4d Add Luoyang-Pyongyang Land Route`
-- Status: `Stable browser-confirmed MVP visual state`
+- Current Version: `v0.3-6i Skill Cut-in Quote Layout + Duration Polish`
+- Status: `Stable 4-city / 8-hero PC web MVP baseline, latest cut-in layout pending manual browser QA`
+- Main loop: world map -> battle -> victory/defeat result -> world map return
 
-## Working Method
-- Direct Codex Paste Mode is the working method.
-- `agent/CODEX_INBOX.md` is not the main task source.
-- GitHub is used for backup and version control.
-- ChatCoach handoff docs are maintained at the end of meaningful Codex task sessions.
+## Current 4-City MVP
+- Hanseong: player-owned, defenders `이순신`, `정도전`
+- Luoyang: enemy-owned, defenders `관우`, `장비`
+- Pyongyang: enemy-owned, defenders `광개토대왕`, `도림`
+- Kyoto: enemy-owned, defenders `노부나가`, `겐신`
 
-## Current Milestone
-Current recorded build state:
+## Implemented Systems
+- 14x8 Phaser battlefield.
+- Manual battle and auto battle.
+- World-map attack and defense battle choices.
+- City ownership transfer after battle results.
+- Explicit city defender rosters.
+- Hero roster portraits and battlefield portrait badges.
+- Unique skill cut-ins for all 8 MVP heroes.
+- Victory/defeat result cut-in images and result music.
+- Victory/defeat result text overlays.
+- Pyongyang hero data, skills, roster, and visual asset wiring.
+- Status icon overlay on battlefield units.
+- One-line status legend at bottom of battle screen.
 
-- `v0.1` Fullscreen World Map 4-City MVP
-- `v0.2` Battle Scene MVP with Phaser
-- `v0.2-1` Godot Grid/Unit Battle Core Port
-- `v0.2-2` Hero Skill Core MVP
-- `v0.2-2a` Godot Balance & Unique Skill Fidelity Patch
-- `v0.2-3` Facing / Counter / Defend / Wait
-- `v0.2-4` Strategy / Status Effect Core
-- `v0.2-4a` Strategy Random Outcome Fidelity
-- `v0.2-5` AI / Auto Battle / Balance Stabilization
-- `v0.2-5a` Auto Battle Flicker Fix / Persistent Phaser Mount
-- `v0.2-6` Battle Unit Token Visual Patch
-- `v0.2-6a` Battle Background Visual Patch
-- `v0.2-6b` Battle Command Bar + Side Info Layout Patch
-- `v0.2-7` Battle UI/UX Polish + Simple BGM Integration
-- `v0.2-7o` Battle Tempo Slowdown for Cut-in Prep
-- `v0.2-8` Unique Skill Cut-in Overlay System
-- `v0.2-8a` Cut-in Bounds Fix
-- `v0.2-8b` Yi Sun-sin Cut-in Size Tuning
-- `v0.2-8c` Cut-in Background Slash Bounds Tuning
-- `v0.2-8d` Cut-in Slash Subtle Tuning
-- `v0.2-9` Sequential Unique Skill Cut-ins for All MVP Heroes
-- `v0.2-9a` 14x8 Battlefield Expansion
-- `v0.2-9b` Unit Token Tone-down Patch
-- `v0.2-9c` Unit Roster Selection + Skill Name Polish
-- `v0.2-9d` Battle Mode Choice: Manual vs Auto
-- `v0.2-9d-hotfix2` Auto Battle Continuation Fix
-- `v0.2-9d-hotfix3` Auto Battle Status Skip Continuation Fix
-- `v0.2-9d-hotfix4` Confusion Skip Deadlock Fix
-- `v0.2-9d-hotfix5` Auto Battle Sequencer Deadlock Guard
-- `v0.2-9d-hotfix6` Resume Player Auto Battle After Enemy Turn
-- `v0.2-9d-hotfix7` Auto Battle hasActed Fallback Root Fix
-- `v0.2-10` World Turn + Enemy Invasion MVP
-- `v0.3.0` Hero Portrait UI
-- `v0.3-1` Battlefield Unit Portrait Badge
-- `v0.3-2` Battlefield Unit HUD Cleanup
-- `v0.3-2a` Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch
-- `v0.3-2b` Safe Battlefield Asset Source Switch
-- `v0.3-2c` Battlefield Hero Portrait HQ Asset Activation
-- `v0.3-2e` Unit Sprite Facing Flip
-- `v0.3-3a` Battle Result Cutin
-- `v0.3-3b` Battle Result Music
-- `v0.3-3c` Mobile Shortcut Icon
-- `v0.3-4a` China Hero Data & Skills
-- `v0.3-4b` Guan Yu / Zhang Fei Visual Assets
-- `v0.3-4c` City Hero Roster Assignment + Enemy City Ownership
-- `v0.3-4d` Add Luoyang-Pyongyang Land Route
+## Pyongyang System
+- `광개토대왕` uses `영락대업`.
+- `도림` uses `흑백이간`.
+- `영락대업`: allied attack buff.
+- `흑백이간`: enemy collision plus confusion/shake logic.
+- Pyongyang battle starts with `gwanggaeto` and `dorim`.
+- Existing Hanseong, Luoyang, and Kyoto battles still initialize.
 
-Stable visual-state chain:
+## Auto Battle State
+Current AI priority:
+1. High-value unique skill.
+2. Normal attack.
+3. Move toward enemy.
+4. Low-value fallback skill.
+5. Strategy.
+6. Wait.
 
-- `v0.3.0` Hero Portrait UI
-- `v0.3-1` Battlefield Unit Portrait Badge
-- `v0.3-2` Battlefield Unit HUD Cleanup
-- `v0.3-2a` Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch
-- `v0.3-2b` Safe Battlefield Asset Source Switch
-- `v0.3-2c` Battlefield Hero Portrait HQ Asset Activation
-- `v0.3-2e` Unit Sprite Facing Flip
-- `v0.3-3a` Battle Result Cutin
-- `v0.3-3b` Battle Result Music
-- `v0.3-3c` Mobile Shortcut Icon
-- `v0.3-4a` China Hero Data & Skills
-- `v0.3-4b` Guan Yu / Zhang Fei Visual Assets
-- `v0.3-4c` City Hero Roster Assignment + Enemy City Ownership
-- `v0.3-4d` Add Luoyang-Pyongyang Land Route
+High-value rules:
+- `ally_attack_buff`: high-value if at least one living ally lacks active attack buff.
+- `enemy_collision_confuse`: high-value if a primary target has a nearby secondary enemy.
 
-## Current Working Features
-- `14x8` battlefield works.
-- Battlefield background works.
-- Manual battle works.
-- Auto battle works after `v0.2-9d-hotfix7`.
-- Unique skill cut-ins work.
-- Right `UNIT` roster selection works.
-- Hero portraits appear in the right `UNIT` roster and selected-unit summary.
-- Battlefield unit portrait badges appear.
-- Battlefield unit names are hidden for the compact HUD.
-- Troop text is compact `current / max` format.
-- Dedicated 256px battlefield unit token assets are used:
-  - `assets/unit_tokens_battlefield/unit_blue_battlefield.png`
-  - `assets/unit_tokens_battlefield/unit_red_battlefield.png`
-- Blue/red unit sprites now flip horizontally when facing right.
-- World map turn loop works.
-- Enemy invasion MVP works.
-- Manual/auto defense battle choice works.
-- City ownership changes after attack/defense results.
-- GitHub Pages mobile shortcut icon / PWA manifest is connected.
-- Luoyang can now field Guan Yu and Zhang Fei as enemy heroes.
-- Guan Yu and Zhang Fei portraits, battlefield badges, and unique skill cutins are wired.
-- Hanseong is now the only player-owned starting city.
-- Luoyang, Pyongyang, and Kyoto are enemy-owned.
-- Luoyang uses Guan Yu/Zhang Fei as its defender roster.
-- Kyoto uses Nobunaga/Kenshin as its defender roster.
-- Hanseong uses Yi Sun-sin/Jeong Do-jeon as its defender roster.
-- Luoyang and Pyongyang are now directly connected by land route.
+Known fixes:
+- Support/strategy units no longer stall at range.
+- Dorim uses `흑백이간` when collision target exists.
+- Gwanggaeto uses `영락대업` meaningfully.
+- Yi Sun-sin `학익진 포격` returns a valid target in auto battle.
+- Wait fallback is guarded by final attack/move checks.
 
-## Current Stable Visual Notes
-- Battlefield hero badges use `battlefieldPortraitImage` first and `portraitImage` as fallback.
-- Battlefield hero badge clarity is acceptable for MVP.
-- Visual polish/detail edits for Guan Yu and Zhang Fei assets are deferred to a later asset polish pass.
-- Unit token assets face left by default.
-- Unit token sprites flip only when `unit.facing === "right"`.
-- Battlefield unit names remain hidden.
-- Right `UNIT` roster carries the detailed identity/status context.
-- Do not casually touch Phaser render/filter/sharpness settings.
+## Status Icons
+Active battlefield icons:
+- 혼란: `🌀`
+- 동요: `⚠`
+- 공격력 상승: `▲`
+- 방어 태세: `◆`
 
-## Known MVP Limitations
-- Battlefield hero portrait badge clarity is acceptable but not final polish.
-- Status effect icons are not implemented yet.
-- SFX is not implemented yet.
-- World-map garrison/hero portrait UI is not implemented yet.
-- Balance is not tuned yet.
-- Mobile gameplay layout is runnable but not fully optimized for phone screen yet.
-- Pyongyang hero roster is still pending and uses fallback defender roster.
-- Balance tuning is deferred.
-## Design Decisions To Preserve
-1. Direct Codex Paste Mode is the working method.
-2. Battle rules must stay separated from Phaser renderer.
-3. Heroes, skills, rosters, and strategies remain data-driven.
-4. MVP roster is still fixed for now.
-5. Unique skill cut-ins remain DOM-overlay driven.
-6. Do not reintroduce mipmap/pixel/filter/sharpness experiments into the MVP baseline.
+Documented future icon convention:
+- 공격력 상승 `▲`
+- 공격력 감소 `▼`
+- 방어 / 방어력 상승 `◆`
+- 방어력 감소 `◇`
+- 혼란 `🌀`
+- 동요 `⚠`
+- 기절 `✖`
+- 화상 `🔥`
+- 중독 `☠`
+- 도발 `!`
+- 속박 `⛓`
 
-## Suggested Next Direction
-Suggested next task: `v0.3-4e Pyongyang Hero Roster`.
+## Cut-in Text Data
+Unique skill cut-ins display:
+- `skill.name`
+- `skill.cutinQuote`
+- `skill.cutinEffectText`
+
+Current cut-in duration:
+- All 8 unique skills: `cutinDurationMs: 2200`
+
+Current skill text:
+- `hakikjin_barrage` / `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
+- `reform_order` / `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
+- `matchlock_volley` / `삼단격`: `화승총 사격의 매운 맛을 보여주마!`, `(사정범위 내 적 공격)`
+- `cavalry_charge` / `차륜전`: `돌격! 적진을 때려부숴라!`, `(적진 돌파 공격)`
+- `crescent_blade_slash` / `언월참`: `내 앞을 가로막는 자! 목을 내놓아라!`, `(강력한 단일 공격)`
+- `changban_shatter` / `장판파열`: `음하하~ 내 고함 한 방에 쩔쩔들 매는군!`, `(주변 적 동요)`
+- `yeongnak_grand_legacy` / `영락대업`: `전군이여! 나를 믿고 따르라!`, `(아군 공격력 상승)`
+- `black_white_scheming` / `흑백이간`: `내 비책! 서로를 죽일 것이다!`, `(적 충돌 · 혼란/동요)`
+
+## Visual Decisions To Preserve
+- Cut-in/result image assets are not edited for text.
+- Text overlays remain removable DOM UI.
+- Skill title font: Gothic/sans-serif.
+- Skill quote font: `궁서`, `Gungsuh`, `Batang`, serif.
+- Skill effect font: smaller Gothic/sans-serif.
+- Quote position: visual center, slightly below center.
+- Skill title/effect position: lower center.
+- Do not casually change Phaser render config, texture filtering, `pixelArt`, `roundPixels`, or mipmap settings.
+
+## Known Future Work
+- Manual browser QA for v0.3-6i quote layout and `2200ms` duration.
+- Tune cut-in duration if needed within `2000-2400ms`.
+- Later audio pass: skill SFX, voice AI from `cutinQuote`, possible `cutinVoice` / `sfx` fields.
+- Later visual sharpness pass after MVP stabilizes.
+- 10-city / 20-hero expansion only after 4-city / 8-hero systems are accepted.

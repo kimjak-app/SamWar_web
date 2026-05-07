@@ -1,511 +1,118 @@
 # Session Log
 
-## 2026-05-05
+## 2026-05-07
 
-## v0.3-3a Battle Result Cutin
-- Reused the existing DOM-based battle board cutin overlay flow for terminal battle results.
-- Added a `2` second battle-end result cutin delay before the existing `returnFromBattle(...)` post-processing runs.
-- Victory result cutin path: `assets/skill_cutins/battle_result_victory.png`
-- Defeat result cutin path: `assets/skill_cutins/battle_result_defeat.png`
-- Battle result judgment logic was not changed.
-- Existing unique skill cutin image paths and flow were preserved.
-- Duplicate battle-end execution is now guarded by a dedicated active battle-result state.
-- Manual world-map return is suppressed while the battle result cutin is visible so the end flow cannot fire twice.
-- No SFX, BGM, Phaser render config, or asset files were changed.
+### v0.3-5a Pyongyang Hero Data & Skills
+- Added Pyongyang defenders `광개토대왕` and `도림`.
+- Added and connected Pyongyang roster.
+- Added and implemented `영락대업` and `흑백이간`.
+- Confirmed Pyongyang battle starts.
+- Existing Hanseong, Luoyang, and Kyoto battles still initialize.
 
-## v0.3-2e Unit Sprite Facing Flip
-- Confirmed both blue and red battlefield unit-token assets face left by default.
-- Added `sprite.setFlipX(unit.facing === "right")` only to battlefield unit token sprites.
-- Facing right now visually flips the unit sprite.
-- Facing left/up/down keeps the original left-facing sprite.
-- Hero portrait badges, HP bars, troop text, facing arrows, cut-ins, and DOM overlays were not flipped.
-- Browser verification confirmed units now face left/right correctly.
-- No Phaser render config, texture filters, mipmap settings, pixelArt, antialias, or roundPixels settings were changed.
-- No battle rules, auto battle, cut-ins, world turn, invasion, or ownership logic were changed.
+### v0.3-5b Pyongyang Visual Assets Wiring
+- Connected hero portraits and battlefield portraits for `gwanggaeto` and `dorim`.
+- Connected skill cut-ins:
+  - `assets/skill_cutins/gwanggaeto_yeongnak_grand_legacy.png`
+  - `assets/skill_cutins/dorim_black_white_scheming.png`
+- Confirmed asset paths and data wiring.
 
-## Rejected Experiment: v0.3-2c-mipmap-test
-- Tested `mipmapFilter: 'LINEAR_MIPMAP_LINEAR'` in Phaser render config.
-- It slightly improved battlefield hero badge clarity, but caused unacceptable visual/cut-in regression.
-- The change was rolled back.
-- Do not reintroduce mipmap/pixel/filter/sharpness experiments during MVP unless isolated safely.
-- Completed `v0.3-2e Unit Sprite Facing Flip`.
-- Updated only `js/phaser/battle_scene.js` so battlefield unit token sprites now apply `sprite.setFlipX(unit.facing === "right")`.
-- Both blue/red battlefield unit token assets are treated as left-facing by default.
-- The flip rule is shared for both sides:
-  - `right` flips the token sprite
-  - `left` / `up` / `down` keep the original left-facing sprite
-- FlipX was applied only to the battlefield unit token sprite.
-- Hero portrait badges, HP bar, troop number, facing arrow text, selection highlight, and cut-ins were not modified.
-- Cut-ins remain DOM overlay rendering and were not modified.
-- No Phaser config, render filters, asset files, or battle logic were changed.
-- Ran `node --check js/phaser/battle_scene.js`.
-- Completed `v0.3-2d Remove Facing Flip Regression Only`.
-- Re-checked `js/phaser/battle_scene.js` and `js/phaser/phaser_battle_mount.js` for battlefield facing-flip regression sources.
-- Confirmed the battlefield portrait helper still preserves `unit.battlefieldPortraitImage ?? unit.portraitImage ?? null`.
-- Confirmed battlefield unit token loading still preserves:
-  - `assets/unit_tokens_battlefield/unit_blue_battlefield.png`
-  - `assets/unit_tokens_battlefield/unit_red_battlefield.png`
-- Confirmed Phaser mount render config remains simple with only `render.antialias: true` and no added filter/scale mutations.
-- Updated `js/phaser/battle_scene.js` only to make the intended behavior explicit:
-  - battlefield unit token sprites remain non-mirrored
-  - facing arrow UI remains the sole direction indicator
-  - no flipX / negative-scale battlefield sprite transform was introduced
-- Preserved HQ battlefield hero portrait activation, 256px battlefield unit token sources, compact HUD layout, battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic.
-- Ran `node --check js/phaser/battle_scene.js`.
-- Ran `node --check js/phaser/phaser_battle_mount.js`.
-- Completed `v0.3-2c Battlefield Hero Portrait HQ Asset Activation`.
-- Updated `js/phaser/battle_scene.js` so battlefield hero badges now use `unit.battlefieldPortraitImage` first and `unit.portraitImage` as fallback again.
-- Confirmed all four MVP heroes in `data/heroes.js` already had the correct `battlefieldPortraitImage` paths:
-  - `assets/portraits_battlefield/yi_sunsin_battlefield.png`
-  - `assets/portraits_battlefield/jeong_dojeon_battlefield.png`
-  - `assets/portraits_battlefield/nobunaga_battlefield.png`
-  - `assets/portraits_battlefield/kenshin_battlefield.png`
-- Activated the newly replaced high-quality Lanczos-processed 128px battlefield portrait assets for battlefield badge rendering without changing badge size, border, position, or HUD offsets.
-- Preserved the existing 256px battlefield unit token sources from `v0.3-2b`.
-- Intentionally did not touch Phaser rendering filters, `pixelArt`, `NEAREST`, texture filtering, scale logic, or HUD layout.
-- Preserved battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic.
-- Ran `node --check js/phaser/battle_scene.js`.
-- Ran `node --check data/heroes.js`.
-- Completed `v0.3-2b Safe Battlefield Asset Source Switch`.
-- Updated only `js/phaser/battle_scene.js` for source switching:
-  - battlefield unit sprites now use dedicated 256x256 battlefield token assets from `assets/unit_tokens_battlefield/`
-  - battlefield portrait badges now use the existing higher-quality `unit.portraitImage` source
-  - lower-quality `unit.battlefieldPortraitImage` data is preserved but not used for battlefield badge rendering in this patch
-- Intentionally kept the old unit assets in `assets/units/` untouched and did not delete or rename them.
-- Intentionally did not touch Phaser rendering filters, `pixelArt`, `NEAREST`, texture filtering, or global sharpness settings.
-- Preserved battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic.
-- Ran `node --check js/phaser/battle_scene.js`.
-- Completed `v0.3-2b Safe Battlefield HUD Micro Tuning` starting from the restored stable `v0.3-2a` baseline.
-- Updated only `js/phaser/battle_scene.js` for safe coordinate/style tuning:
-  - reduced the battlefield portrait border to an almost invisible dark outline
-  - moved the direction arrow closer to the unit
-  - moved the HP bar and troop number closer to the unit
-- Preserved `unit.battlefieldPortraitImage` as the primary battlefield portrait source with `unit.portraitImage` fallback unchanged.
-- Intentionally did not touch Phaser rendering filters, `pixelArt`, `NEAREST`, texture filtering, or global sharpness settings.
-- Preserved battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic.
-- Ran `node --check js/phaser/battle_scene.js`.
-- Added `battlefieldPortraitImage` to all four MVP heroes in `data/heroes.js` while keeping the existing `portraitImage` field unchanged for roster and selected-summary UI.
-- Extended `js/core/battle_state.js` so battle units now copy `battlefieldPortraitImage` separately from the normal portrait source.
-- Updated `js/phaser/battle_scene.js` so battlefield portrait badges now prefer dedicated battlefield portrait assets and only fall back to `portraitImage` when needed.
-- Reduced the battlefield portrait frame to a near-invisible dark border, moved the facing arrow above the unit, and pulled the HP bar plus troop number closer to the sprite for a tighter HUD.
-- Kept battlefield names hidden and status/cooldown icon redesign deferred while preserving battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic in `v0.3-2a Battlefield HUD Micro Tuning + Battlefield Portrait Source Switch`.
-- Ran `node --check data/heroes.js`.
-- Ran `node --check js/core/battle_state.js`.
-- Ran `node --check js/phaser/battle_scene.js`.
-- Cleaned up the battlefield unit HUD in `js/phaser/battle_scene.js` by removing battlefield unit name labels and hiding direct battlefield cooldown text.
-- Simplified battlefield troop text from `병력 current / max` to `current / max` and moved the facing arrow inline with that text.
-- Made battlefield HP bars thinner and positioned the HP bar plus troop text closer to the unit sprite for a more compact HUD.
-- Increased battlefield portrait badges from 28px to 32px and changed the badge frame from gold-accented styling to a thin dark/black border.
-- Kept status icon redesign deferred while preserving battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic in `v0.3-2 Battlefield Unit HUD Cleanup`.
-- Ran `node --check js/phaser/battle_scene.js`.
-- Updated `js/phaser/battle_scene.js` so battle scenes now preload hero portrait textures from existing `unit.portraitImage` data when available.
-- Added a small 28px battlefield portrait badge to each rendered unit, positioned near the upper-left of the unit sprite with a simple gold-framed backing.
-- Added safe battlefield portrait fallback rendering so missing portrait textures do not break unit rendering or battlefield interaction.
-- Intentionally deferred status icons and broader unit HUD cleanup while preserving battle logic, auto battle, cut-ins, world turn, invasion, and ownership logic in `v0.3-1 Battlefield Unit Portrait Badge`.
-- Ran `node --check js/phaser/battle_scene.js`.
-- Added `portraitImage` fields for all four MVP heroes in `data/heroes.js` using the existing portrait PNG assets already present in the repository.
-- Extended `js/core/battle_state.js` so battle units now carry portrait image paths copied from hero data.
-- Updated `js/ui/battle_ui.js` so right-side roster cards show portrait thumbnails for both player and enemy units, and the selected-unit summary now shows the selected hero portrait.
-- Added safe portrait fallback rendering so missing portrait data does not break battle UI rendering.
-- Styled roster and selected-unit portraits in `css/main.css` with scaled CSS thumbnails rather than modifying the original image assets.
-- Preserved battle rules, AI, auto battle, cut-ins, world turn, invasion, and city ownership logic in `v0.3.0 Hero Portrait UI`.
-- Ran `node --check data/heroes.js`.
-- Ran `node --check js/ui/battle_ui.js`.
-- Ran `node --check js/core/battle_state.js`.
-- Added the first world-turn loop with `턴 종료`, `world.turnOwner`, and player/enemy world-turn presentation on the world map.
-- Added MVP enemy invasion rules in `js/core/world_rules.js` with connected-city candidate selection and one invasion attempt per enemy turn at `ENEMY_INVASION_CHANCE = 0.45`.
-- Extended `js/core/app_state.js` so enemy turns can either open a defense battle choice or show a no-invasion result panel, and the next player world turn increments after enemy resolution finishes.
-- Added battle context tracking to `js/core/battle_state.js` so attack and defense battles are distinguished without changing the existing MVP roster system.
-- Reused and extended the existing battle choice UI so attack battles still support `직접 지휘` / `자동 위임`, while enemy invasions now support `직접 방어` / `자동 방어`.
-- Added defense battle ownership rules so defense victories keep the city, defense defeats transfer the city to the enemy, and defense retreat is treated as city loss for this MVP.
-- Preserved existing battle rules, hero stats, cut-ins, auto-battle stability, board size, and BGM while adding the world turn + invasion loop in `v0.2-10 World Turn + Enemy Invasion MVP`.
-- Ran `node --check js/core/app_state.js`.
-- Ran `node --check js/core/world_rules.js`.
-- Ran `node --check js/core/battle_state.js`.
-- Ran `node --check js/ui/world_map_ui.js`.
-- Ran `node --check js/main.js`.
-- Root-fixed the remaining auto-battle deadlock in `js/core/battle_rules.js` by replacing player auto-battle reference-comparison fallback with actual actor `hasActed` verification.
-- Added a shared automatic-action guard so if an acting unit is still alive but still has `hasActed: false` after an automatic action result, that same unit is forced into a safe wait.
-- Applied the same actor-consumption guard to enemy planned actions, including skill, strategy, attack, move, status-skip, and wait-result paths.
-- Preserved manual battle behavior, cut-ins, battle rules, board size, unit stats, and world-map flow in `v0.2-9d-hotfix7 Auto Battle hasActed Fallback Root Fix`.
-- Ran `node --check js/core/battle_rules.js`.
-- Traced the remaining auto-battle freeze around `continueEnemyTurnSequence(...)`, `finishEnemyTurn(...)`, `applyBattleState(...)`, `rerender(...)`, and `scheduleAutoBattleStep(...)`.
-- Confirmed the freeze was a controller-side resume gap after enemy turn end rather than a JavaScript exception or battle-rule failure.
-- Added a dedicated `ensurePlayerAutoBattleProgress()` guard in `js/main.js` so player-side auto battle is re-scheduled when battle state returns to `turnOwner: "player"` with auto battle still enabled.
-- Updated `ensureBattleProgress()` so enemy-turn completion now immediately re-checks player auto-battle continuation after `finishEnemyTurn(...)`.
-- Updated the rerender tail auto-battle hook to use the shared player auto-progress guard instead of directly scheduling a timer.
-- Preserved manual battle controls, battle rules, AI scoring, cut-ins, status-skip handling, damage formulas, board size, stats, and world-map flow in `v0.2-9d-hotfix6 Resume Player Auto Battle After Enemy Turn`.
-- Ran `node --check js/main.js`.
-- Ran `node --check js/core/battle_rules.js`.
+### v0.3-5c / v0.3-5d Auto Battle AI Skill Priority Fixes
+- Fixed support/strategy units stalling at range.
+- Fixed overcorrection where units only used basic attacks.
+- Current auto-battle priority:
+  1. High-value unique skill
+  2. Normal attack
+  3. Move toward enemy
+  4. Low-value fallback skill
+  5. Strategy
+  6. Wait
+- `ally_attack_buff` is high-value if at least one living ally lacks active attack buff.
+- `enemy_collision_confuse` is high-value if primary target has nearby secondary enemy.
+- Confirmed Dorim uses `흑백이간` when collision target exists.
+- Confirmed Gwanggaeto uses `영락대업` meaningfully.
+- Existing Luoyang/Kyoto unique skill usage still works.
 
-## 2026-04-30
+### v0.3-5e Auto Battle Regression Fix
+- Fixed ally-side unique skill cut-ins not appearing.
+- Fixed Yi Sun-sin waiting/no-op issue caused by `cannon_aoe` returning `targetUnitId: null`.
+- Yi Sun-sin now provides a valid target for `학익진 포격`.
+- Added normal attack re-check guards before wait.
+- Confirmed player and enemy cut-ins use the same activation path.
 
-- Created GitHub repository: kimjak-app/SamWar_web.
-- Changed repository visibility to private.
-- Limited ChatGPT Codex Connector access to SamWar_web only.
-- Cloned SamWar_web locally to C:\dev\SamWar_web.
-- Created initial agent folder and document structure.
-- Decided final workflow: Local Codex main, GitHub backup, ChatCoach planning and QA.
-- Created the initial HTML MVP scaffold with modular `css/`, `js/core/`, `js/ui/`, and `data/` separation.
-- Added a browser title screen placeholder and placeholder data modules for cities, heroes, factions, and skills.
-- Verified JavaScript module syntax for the scaffold files.
-- Added a reusable ChatCoach handoff workflow so each future Codex task ends with a short handoff report.
-- Replaced the placeholder screen with a 4-city world map MVP using 한성, 평양, 낙양, 교토.
-- Verified the v0.1 world map scope and split rendering/rules into `js/ui/world_map_ui.js` and `js/core/world_rules.js`.
-- Added immutable city occupation test flow, attack eligibility rules, and the 천하통일 victory message.
-- Re-ran module import verification for the updated app state and UI modules.
-- Integrated `assets/maps/world_map_mvp.png` as the main map board background and removed the abstract land-shape treatment.
-- Repositioned the 4 city coordinates to percentage-based placements matching the uploaded real map geography.
-- Preserved attack test, occupation, and victory behavior while updating map layering and city label readability.
-- Refactored the world screen into a fullscreen map stage with a top-left title panel and top-right floating HUD stack.
-- Re-anchored 낙양, 평양, 한성, 교토 to visible castle-like landmarks painted in the temporary background image.
-- Replaced large floating city cards with smaller per-castle labels while keeping connection lines and selection behavior intact.
-- Polished the four temporary city anchor coordinates so 평양 moves slightly up, 한성 moves right, and 교토 better matches the central Japan castle landmark.
-- Rolled back 낙양, 평양, 한성 to the previous fullscreen castle-anchor positions and adjusted only 교토 slightly left/down for a narrower polish pass.
-- Applied a final micro polish by moving 평양 slightly upward and 교토 slightly downward while keeping 낙양 and 한성 unchanged.
-- Applied a Y-axis-only final polish by moving 평양 upward again and 교토 downward again while keeping all X coordinates fixed.
-- Applied one final Kyoto-only downward micro nudge on the Y-axis while keeping 낙양, 평양, 한성 unchanged.
+### v0.3-6a / v0.3-6b Status Effect Icon Overlay
+- Added battlefield unit status icons in `js/phaser/battle_scene.js`.
+- Active icons:
+  - 혼란 `🌀`
+  - 동요 `⚠`
+  - 공격력 상승 `▲`
+- Polished visual style:
+  - lighter background
+  - smaller font
+  - rounded/subtle overlay
+  - emoji-capable font
+- Documented future icon convention:
+  - 공격력 상승 `▲`
+  - 공격력 감소 `▼`
+  - 방어 / 방어력 상승 `◆`
+  - 방어력 감소 `◇`
+  - 혼란 `🌀`
+  - 동요 `⚠`
+  - 기절 `✖`
+  - 화상 `🔥`
+  - 중독 `☠`
+  - 도발 `!`
+  - 속박 `⛓`
 
-## 2026-05-01
+### v0.3-6c Defense Status Icon
+- Added `◆` icon when `unit.isDefending === true`.
+- Preserved existing defense behavior:
+  - `isDefending` reduces incoming basic attack damage.
+  - `isDefending` clears on next side turn start.
+- No defense logic or balance changed.
 
-- Updated `index.html` to load Phaser 3.86.0 from the jsDelivr CDN before `./js/main.js` for the v0.2 battle-scene bootstrap check.
-- Preserved the existing world map, city data, world rules, and gameplay behavior without additional implementation changes.
-- Updated agent state, session log, and ChatCoach handoff documents for the Phaser CDN bootstrap task.
-- Added a laptop-width compact HUD mode for the fullscreen world map so the right-side panel stack occupies less of the Japan/Kyoto region.
-- Reduced laptop HUD width, panel padding, card gaps, title panel footprint, and several HUD text sizes while keeping the fullscreen map layout intact.
-- Added `mvp-goal-panel` markup targeting in `js/ui/world_map_ui.js` and compacted the MVP goal card styling instead of removing the panel.
-- Added a capped laptop HUD stack height with subtle scrolling support to reduce middle-right map obstruction on shorter screens.
-- Preserved city coordinates, attack test flow, occupation flow, selected-city sync, victory message logic, and Phaser CDN boot order.
-- Added `js/core/battle_state.js` with a small immutable battle-state shape for a 10x6 Phaser-rendered battle MVP.
-- Added `js/core/battle_rules.js` with pure player attack, enemy counterattack, outcome, and log helpers separate from Phaser rendering.
-- Added `js/ui/battle_ui.js`, `js/phaser/phaser_battle_mount.js`, and `js/phaser/battle_scene.js` to render a contained Phaser battle screen with status panels and safe instance teardown.
-- Reworked `js/core/app_state.js`, `js/main.js`, and `js/ui/layout_ui.js` so attackable enemy cities now enter battle mode and return battle results back to the world map.
-- Replaced direct occupation-on-attack in the world map flow with battle entry, retreat, victory return, occupied-city selection sync, and loss-safe return logic.
-- Extended `css/main.css` with battle-screen styling while preserving the fullscreen world map layout and existing laptop-safe HUD behavior.
-- Ran `node --check` on all touched JavaScript modules and a module-level runtime sanity check for battle entry, victory return, and retreat return.
-- Upgraded `js/core/battle_state.js` to a tactical state shape with selection, phase, move/attack highlights, and richer unit stats inspired by the Godot grid flow.
-- Added `js/core/battle_grid.js` and `js/core/battle_ai.js` for Manhattan grid helpers and a simple enemy chase/attack turn.
-- Replaced the old direct battle click-damage rules with tactical `selectBattleUnit`, `moveSelectedUnit`, `attackUnit`, `endPlayerTurn`, and `runEnemyTurn` logic in `js/core/battle_rules.js`.
-- Reworked `js/ui/battle_ui.js` and `js/phaser/battle_scene.js` so grid clicks now drive unit selection, movement, and attacks while Phaser remains a renderer/input relay only.
-- Updated `js/main.js` to wire the tactical handlers and auto-run the simple enemy turn after the lone player unit acts.
-- Extended battle HUD styling in `css/main.css` for selected-unit and turn-state feedback without changing the fullscreen world map layout.
-- Ran `node --check` on the updated tactical modules and a second runtime sanity script covering selection, movement highlights, enemy advance, tactical attacks, and world-map victory return.
-- Replaced placeholder `data/heroes.js` and `data/skills.js` with fixed MVP hero and skill definitions for 이순신, 정도전, 노부나가, and 겐신.
-- Added `data/battle_rosters.js` so the battle scene now builds a fixed 2v2 roster from data modules instead of generic inline units.
-- Added `js/core/battle_skills.js` and upgraded `js/core/battle_state.js` so battle units now track hero IDs, skill IDs, cooldowns, buff bonuses, buff turns, and last-action markers.
-- Reworked `js/core/battle_rules.js` and `js/core/battle_ai.js` so player and enemy turns can use basic attacks or hero skills with cooldowns and immutable logs/state updates.
-- Updated `js/ui/battle_ui.js`, `js/phaser/battle_scene.js`, and `js/main.js` so the UI now supports skill entry, skill targeting, selected-skill info, enemy AI skill use, and simple Phaser skill feedback.
-- Extended `css/main.css` with selected-skill card, skill button, cooldown text, and skill-mode styling while preserving the fullscreen world map and laptop-safe HUD.
-- Ran `node --check` across the new hero/skill modules and a runtime sanity script covering 2v2 roster creation, 이순신 skill damage, 정도전 buff application, enemy AI action/skill flow, and world-map victory return.
-- Rebased the four MVP heroes on Godot-origin balance fields in `data/heroes.js`, including `power`, `intelligence`, `skillRange`, `aiType`, `skillEffectType`, and crit-related fields for future fidelity work.
-- Replaced the simplified generic skill definitions in `data/skills.js` with owner-locked unique-skill definitions so each hero now carries a Godot-direction unique ability baseline.
-- Upgraded `js/core/battle_state.js`, `js/core/battle_skills.js`, and `js/core/battle_rules.js` so battle units mirror HP/troops together, use Godot-inspired attack/defense scaling, respect unique-skill owner locks, and keep `lastAction.effects` for battlefield popups.
-- Corrected 이순신의 `학익진 포격` to hit all alive enemies within range instead of a single target, with per-target damage logs and floating effect payloads.
-- Corrected 정도전의 `개혁령` to apply a visible allied `+15%` attack buff for 2 turns rather than a flat-feeling MVP bonus, and made later damage calculations consume that buff state.
-- Updated `js/core/battle_ai.js` so 노부나가 and 겐신 only use their own unique skills when cooldown, ownership, and range checks all pass.
-- Reworked `js/ui/battle_ui.js` and `js/phaser/battle_scene.js` so the selected-unit panel shows effective stats/buff state, skill buttons display unique skill names, and Phaser now renders floating skill/damage/buff text over affected units.
-- Updated `js/main.js` so immediate-use skills like `학익진 포격` and `개혁령` fire correctly from the skill button without the older generic single-target flow.
-- Re-ran `node --check` on the touched battle modules and a runtime sanity script covering Yi AoE hits, Jeong percentage buff application, owner-lock rejection logging, enemy skill usage, and preserved battle/world-map return behavior.
-- Added `js/core/battle_direction.js` for facing vectors, direction labels, and front/side/back attack-angle classification using the Godot `1.0 / 1.15 / 1.30` baseline.
-- Upgraded `js/core/battle_state.js` so all battle units now track facing direction and temporary defend posture, and battle highlights now support facing-choice tiles.
-- Reworked `js/core/battle_rules.js` so movement now enters a facing phase, basic attacks apply angle bonuses, basic counterattacks can occur once, and player units now support defend/wait commands with visible logs/feedback.
-- Updated turn-start handling so cooldowns/buff durations remain side-specific while action flags reset in a way that still allows counters during the opposing side's turn.
-- Updated `js/core/battle_ai.js` so enemy turns preserve the simple skill priority but now also face toward movement/attack targets and can fall back to a real wait action.
-- Reworked `js/ui/battle_ui.js` so the battle HUD now shows current facing, defend status, angle hints, facing-direction buttons, and defend/wait controls alongside the existing unique-skill UI.
-- Reworked `js/phaser/battle_scene.js` so each unit now displays a facing arrow, defending marker, clickable facing-choice tiles, and floating text for angle attacks, counters, defend, and wait.
-- Updated `js/main.js` to wire `onBattleSetFacing`, `onBattleDefend`, and `onBattleWait` into the existing world-map → battle → world-map loop.
-- Extended `css/main.css` with facing-panel and direction-button styling while keeping the fullscreen world map and laptop HUD layout intact.
-- Re-ran `node --check` on the new/updated battle modules and a runtime sanity script covering move→facing flow, side/back damage ordering, counterattack, defend clear timing, wait behavior, and preserved Yi/Jeong skill fidelity.
-- Added `data/strategies.js` with the first MVP `혼란` and `동요` strategy definitions separate from unique hero skills.
-- Added `js/core/battle_strategy.js` so strategy usability now depends on intelligence, strategy range follows Godot-style intelligence thresholds, strategy resolution is probability-based, and confusion/shake status effects are applied immutably.
-- Updated `js/core/battle_state.js` so battle state now tracks general strategy data, selected strategy mode, strategy highlights, and per-unit status effect counters.
-- Updated `js/core/battle_skills.js` so `동요` lowers effective attack/defense by 30% through the shared effective-stat helpers instead of using a separate damage path.
-- Reworked `js/core/battle_rules.js` so battle phases now include `strategy`, player units can enter strategy mode and resolve target clicks, turn-start handling now ticks confusion/shake alongside cooldowns/buffs, and confused units lose their action on their side turn.
-- Updated `js/core/battle_ai.js` so future high-intelligence enemies can use strategy generically without making strategy a cooldown/count action.
-- Reworked `js/ui/battle_ui.js` so selected-unit panels now show intelligence, strategy range, active status effects, and the `혼란` / `동요` strategy controls.
-- Reworked `js/phaser/battle_scene.js` so strategy target highlights, visible status labels, and floating text for strategy success/failure, confusion, shake, and action lockouts appear directly on the battlefield.
-- Updated `js/main.js` to wire `onBattleEnterStrategyMode` and `onBattleUseStrategy` into the existing battle loop without changing the world-map return flow.
-- Re-ran `node --check` on the new/updated strategy modules and a deterministic runtime sanity script covering strategy mode entry, target highlights, confusion success/skip, shake stat reduction, failure handling, and preserved Yi skill behavior.
-- Reworked `data/strategies.js` so the player-facing strategy system now exposes one generic `책략` action while keeping the actual `혼란` / `동요` outcomes internal to the core logic.
-- Replaced the old manual-pick strategy logic in `js/core/battle_strategy.js` with intelligence-tier outcome pools, random outcome rolling, and duration rules tied to caster intelligence rather than UI button choice.
-- Updated `js/core/battle_rules.js` so strategy mode is now generic, target highlights no longer depend on selecting `혼란` or `동요`, and strategy resolution rolls the actual status result only after a target is chosen.
-- Updated `js/core/battle_ai.js` so future AI strategy use stays generic and does not manually pick a specific status outcome.
-- Reworked `js/ui/battle_ui.js` so 정도전 now shows a single `책략` button plus tier-based possible-outcome info instead of separate `혼란` / `동요` buttons.
-- Updated `js/phaser/battle_scene.js` to keep the same battlefield strategy feedback while accepting the new generic strategy flow and `실패` result text.
-- Re-ran `node --check` on the updated strategy/UI modules and a deterministic runtime sanity script covering master-tier confusion/shake durations, generic strategy mode entry, failure-without-status, preserved action consumption, and preserved Yi AoE behavior.
-- Added `js/core/battle_balance.js` to centralize damage scale, angle bonuses, defend reduction, shake penalty, minimum damage floors, and counter scaling.
-- Reworked `js/core/battle_ai.js` so both enemy turns and player auto battle use the same role-based AI target scoring, move scoring, skill priority, and future generic strategy hooks.
-- Updated `js/core/battle_rules.js` to consume centralized balance constants, add side-turn helpers, add player auto-battle stepping, and replace the older enemy-only action flow with a shared AI action executor.
-- Updated `js/core/battle_state.js` so battle state now tracks `autoBattleEnabled` directly.
-- Updated `js/main.js` to add auto-battle toggling, timed player auto steps, safer rerender/timer cleanup, and manual-control locking while auto battle is active.
-- Reworked `js/ui/battle_ui.js` so the battle HUD now shows compact balance/debug values, a dedicated auto-battle toggle, and disabled manual buttons while auto battle is running.
-- Extended `css/main.css` with auto-battle button styling and a third battle action row while preserving the fullscreen world map and laptop-safe HUD layout.
-- Re-ran `node --check` on the updated AI/rules/UI modules and a deterministic runtime sanity script covering `개혁령` effective-attack increase, `동요` effective stat reduction, enemy turn return flow, and player auto-battle step advancement.
-- Reworked `js/phaser/phaser_battle_mount.js` so the Phaser game now persists for the same `battle.id`, syncs scene state on battle updates, and only destroys the canvas when leaving battle mode or starting a different battle.
-- Rebuilt `js/phaser/battle_scene.js` around an in-place `syncBattleState` redraw flow so highlights, units, HP/status markers, and floating text update without recreating the Phaser game.
-- Reworked `js/ui/battle_ui.js` so same-battle rerenders preserve the existing `.battle-phaser-host` DOM node and only refresh the stage header and HUD/log sections.
-- Preserved `js/ui/layout_ui.js` world-map cleanup behavior so Phaser still gets destroyed correctly on victory return, retreat, defeat return, or any other exit from battle mode.
-- Re-ran `node --check` on the updated Phaser/UI modules and a mocked mount-lifecycle sanity script covering same-battle reuse, new-battle remount, container swap remount, and explicit destroy cleanup.
-- Updated `js/phaser/battle_scene.js` to preload and use `assets/units/unit_player_mvp.png` and `assets/units/unit_enemy_mvp.png` as the new battlefield unit tokens.
-- Replaced the old circle body marker with side-specific image sprites anchored near the tile base while keeping a separate hit zone for stable selection/attack/skill/strategy clicks.
-- Preserved fallback circle markers and added a safe console warning path if the token images are unavailable so the battle remains playable without crashing.
-- Repositioned unit labels, facing arrows, HP bars, and status/buff badges around the new image tokens so readability survives the larger visual footprint.
-- Re-ran `node --check` on the touched Phaser/UI modules and a static asset presence check for both required token PNGs.
-- Updated `js/phaser/battle_scene.js` to preload and render `assets/battle/battlefield_mvp.png` behind the tactical board area with a subtle dark readability overlay.
-- Adjusted Phaser draw order so the battlefield image sits below the grid, highlights, unit tokens, labels, and floating text instead of competing with tactical information.
-- Slightly strengthened grid-line and highlight visibility in the renderer so the new background image does not wash out move/attack/skill/strategy/facing cues.
-- Preserved the dark board fallback path and added a safe console warning if the battlefield background texture is unavailable.
-- Re-ran `node --check` on `js/phaser/battle_scene.js` and a static asset presence check for `assets/battle/battlefield_mvp.png`.
-- Reworked `js/ui/battle_ui.js` so the battle screen now uses a dedicated top bar, left battle-log panel, center Phaser board panel, right unit/status info panel, and a bottom command bar that stays visible.
-- Moved battle-log rendering into a dedicated left-side scroll container and separated command controls from the right-side info stack so logs and unit cards no longer push commands below the viewport.
-- Updated `js/main.js` with a lightweight `onBattleEnterAttackMode` handler so the new `기본 공격` command bar button has a stable UI entry point without changing battle rules.
-- Replaced the old stacked battle HUD CSS in `css/main.css` with a viewport-safe grid layout, fixed internal scroll zones, and a persistent footer command bar tuned for 100% zoom playability.
-- Re-ran `node --check` on `js/ui/battle_ui.js` and `js/main.js` after the layout restructure.
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` for a documentation-only session close handoff after `v0.2-6b`.
-- Recorded the latest completed milestone, preserved design decisions, current battle/world-map state, known issues, and the proposed `v0.2-7` agenda for the next ChatGPT session.
-- Kept that task documentation-only and did not modify game code, CSS, assets, battle logic, or world map logic.
+### v0.3-6d Status Legend Bar
+- Added one-line centered status legend at the bottom of the battle screen.
+- Legend text:
+  - `상태: 🌀 혼란 · ⚠ 동요 · ◆ 방어 · ▲ 공↑ · ▼ 공↓ · ✖ 기절 · 🔥 화상 · ☠ 중독 · ! 도발 · ⛓ 속박`
+- Legend is explanatory only.
+- No new statuses were implemented.
 
-## 2026-05-02
+### v0.3-6e / v0.3-6f / v0.3-6g / v0.3-6h / v0.3-6i Battle Presentation Polish
+- Added victory/defeat result text overlays.
+- Increased victory/defeat result text size.
+- Added unique skill cut-in text overlay:
+  - `skill.name`
+  - `skill.cutinQuote`
+  - `skill.cutinEffectText`
+- Added `cutinQuote` and `cutinEffectText` to all 8 unique skills.
+- Skill title uses Gothic/sans-serif.
+- Quote uses `궁서` / brush-style.
+- Effect text uses smaller Gothic/sans-serif.
+- Quote layout changed:
+  - quote appears at image center, very slightly below center
+  - skill name/effect text remain lower center
+- Increased unique skill cut-in duration to `2200ms`.
+- Images are not modified; text is overlay only.
 
-- Completed `v0.2-7a` battle command bar center alignment patch so bottom command buttons are centered, grouped cleanly, and remain visible at `100%` zoom.
-- Completed `v0.2-7b` facing tile input priority patch by removing the bottom HTML facing panel and keeping facing selection inside the battlefield only.
-- Fixed facing tile input priority so facing tiles remain clickable even when overlapping unit hit zones.
-- Completed `v0.2-7c` selected-unit summary relocation and command button scale patch.
-- Moved selected-unit summary out of the bottom command area and into the battle board header area.
-- Completed `v0.2-7c-hotfix` so the selected-unit summary appears in the battle board header right area rather than the global top-right HUD.
-- Completed `v0.2-7d` panel role cleanup by moving `STATUS / 전황 보고` above `BATTLE LOG / 전투 기록` on the left.
-- Kept battle log internally scrollable so it no longer pushes the command bar downward.
-- Simplified the right panel structure toward unit-focused information only.
-- Completed `v0.2-7e` right-click move rollback before facing confirm.
-- Added pending-move rollback so right-click during facing phase returns the unit to its original position and original facing without consuming action or turn.
-- Completed `v0.2-7f` right-click action-mode cancel for `attack`, `skill`, and `strategy` phases.
-- Preserved movement after facing confirmation while allowing mistaken command-mode entry to be cancelled without consuming cooldown, action, or turn.
-- Completed `v0.2-7g` action range highlight + skill trigger target patch.
-- Changed unique skills to click-to-trigger instead of immediate activation.
-- Added full-range and valid-target distinction for attack, skill, and strategy targeting UX.
-- Completed `v0.2-7h` hold-position facing + full action range display patch.
-- Added hold-position facing by allowing the selected unit's current tile to enter facing selection.
-- Ensured full attack, skill, and strategy ranges display even when no valid target exists.
-- Completed `v0.2-7i` data-driven skill targeting + strategy full range hotfix.
-- Moved skill targeting behavior to metadata-driven handling using skill-side/area metadata rather than hero-name hardcoding.
-- Ensured strategy displays full range even when no enemy target exists.
-- Completed `v0.2-7j` ally-area skill range display fix for `개혁령`.
-- Preserved `개혁령` as an ally area buff with full range display, valid allied target highlighting, clicked-ally trigger behavior, and area buff application.
-- Completed `v0.2-7k` right UNIT panel simplification.
-- Removed duplicate selected-unit / skill / strategy detail cards from the right panel.
-- Simplified the right panel to roster cards only and highlighted the currently selected unit card.
-- Renamed visible `HP` UI label to `전열` while preserving internal `hp/maxHp` data and logic.
-- Completed `v0.2-7l` battle action tempo delay patch.
-- Added delayed counter timing after player attack and staged enemy-turn pacing with controller-level timing locks.
-- Completed `v0.2-7m` battle tempo slowdown tuning by increasing counter, enemy-action, and auto-battle delays.
-- Completed `v0.2-7n` simple BGM integration.
-- Added `js/audio/bgm_manager.js` singleton BGM manager for world map and battle tracks.
-- Integrated:
-  - `assets/audio/world_map_bgm.mp3`
-  - `assets/audio/battle_bgm.mp3`
-- Added first-user-interaction autoplay unlock handling for browser audio.
-- Ensured only one BGM track plays at a time and mode switching does not overlap or recreate tracks.
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` for the `v0.2-7` session-close handoff.
-- Kept this final task documentation-only and did not modify game code, CSS, assets, audio files, battle logic, or world map logic.
+### Current Unique Skill Cut-in Text
+- `hakikjin_barrage` / `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
+- `reform_order` / `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
+- `matchlock_volley` / `삼단격`: `화승총 사격의 매운 맛을 보여주마!`, `(사정범위 내 적 공격)`
+- `cavalry_charge` / `차륜전`: `돌격! 적진을 때려부숴라!`, `(적진 돌파 공격)`
+- `crescent_blade_slash` / `언월참`: `내 앞을 가로막는 자! 목을 내놓아라!`, `(강력한 단일 공격)`
+- `changban_shatter` / `장판파열`: `음하하~ 내 고함 한 방에 쩔쩔들 매는군!`, `(주변 적 동요)`
+- `yeongnak_grand_legacy` / `영락대업`: `전군이여! 나를 믿고 따르라!`, `(아군 공격력 상승)`
+- `black_white_scheming` / `흑백이간`: `내 비책! 서로를 죽일 것이다!`, `(적 충돌 · 혼란/동요)`
 
-## 2026-05-03
+### Manual Asset Cleanup Note
+- Several cut-in images were manually cleaned so brushstroke edges no longer look rectangular/cropped.
+- White/dirty background residue was removed from assets.
+- Existing asset paths should remain unchanged.
+- User may overwrite PNGs manually later.
 
-- Completed `v0.2-7o` Battle Tempo Slowdown for Cut-in Prep.
-- Updated only the `BATTLE_TEMPO` values in `js/main.js`.
-- Increased:
-  - `counterDelayMs` from `800` to `1100`
-  - `enemyActionLeadMs` from `750` to `1000`
-  - `enemyActionDelayMs` from `900` to `1250`
-  - `autoBattleDelayMs` from `800` to `1050`
-- Preserved battle rules, AI logic, Phaser rendering, battle UI layout, BGM logic, and SFX logic.
-- Kept the slowdown scoped as timing prep for the future unique-skill cut-in overlay system.
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-7o` complete.
-- Reordered next task priorities to:
-  1. unique-skill cut-in overlay system
-  2. first implementation for Yi Sun-sin's `학익진 포격` cut-in
-  3. SFX / battle sound effects
-  4. `14x8` battlefield size test
-  5. BGM fade / volume / mute options
-- Completed `v0.2-8` Unique Skill Cut-in Overlay System.
-- Added cut-in metadata only to Yi Sun-sin's `학익진 포격` in `data/skills.js`:
-  - `cutinImage`
-  - `cutinDurationMs`
-  - `cutinStyle`
-- Added a controller-level active cut-in flow in `js/main.js`.
-- Skill cut-in flow is now:
-  - target click
-  - control lock
-  - image-only cut-in overlay
-  - cut-in delay
-  - actual skill resolution
-  - normal battle continuation
-- Preserved battle rules in `js/core` and kept the cut-in system metadata-driven rather than hero-hardcoded.
-- Updated `js/ui/battle_ui.js` and `css/main.css` to render a text-free diagonal brush-style overlay without using Phaser for the effect.
-- No SFX was added in this milestone.
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8` complete.
-- Completed `v0.2-8a` Cut-in Bounds Fix.
-- Moved the cut-in overlay mount from the full battle screen scope into the central battlefield board container in `js/ui/battle_ui.js`.
-- Added a bounded board wrapper in `css/main.css` so the cut-in overlay now uses board-local absolute positioning with hidden overflow.
-- Changed cut-in image sizing from viewport-driven scaling to board-relative sizing so the image stays inside the central battlefield area.
-- Preserved the text-free, metadata-driven cut-in flow and kept skill resolution after the cut-in ends.
-- No battle rules, AI, Phaser rendering, BGM, or SFX logic were changed.
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8a` complete.
-- Completed `v0.2-8b` Yi Sun-sin Cut-in Size Tuning.
-- Updated only the `.skill-cutin-image` rule in `css/main.css` to reduce the cut-in image footprint inside the battlefield board.
-- Replaced oversized near-full-board image sizing with board-relative percentage sizing:
-  - `width: 52%`
-  - `max-width: 52%`
-  - `max-height: 58%`
-- Increased the cut-in image drop shadow slightly to preserve visual punch after the size reduction.
-- Yi Sun-sin's cut-in now feels less like a full-board poster and more like a battlefield insert while remaining clearly visible.
-- The cut-in remains bounded inside the central battlefield board and remains image-only.
-- No battle rules, AI, Phaser rendering, BGM, or SFX logic were changed.
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8b` complete.
-- Completed `v0.2-8c` Cut-in Background Slash Bounds Tuning.
-- Updated only the `.skill-cutin-overlay::before` and `.skill-cutin-overlay::after` rules in `css/main.css`.
-- Reduced the decorative diagonal background slash effect and constrained it with board-relative percentage sizing and positions.
-- Preserved Yi Sun-sin's approved `v0.2-8b` cut-in image size without changing the `.skill-cutin-image` sizing values.
-- The slash effect now stays within the central battlefield board area and acts as a supporting impact effect behind the image.
-- The cut-in remains image-only.
-- No battle rules, AI, Phaser rendering, BGM, or SFX logic were changed.
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8c` complete.
-- Completed `v0.2-8d` Cut-in Slash Subtle Tuning.
-- Updated only the `.skill-cutin-overlay::before` and `.skill-cutin-overlay::after` rules in `css/main.css`.
-- Made the decorative diagonal slash effect smaller and subtler by reducing:
-  - width
-  - height
-  - gradient intensity
-  - overall opacity
-- Adjusted the slash positions slightly inward so the effect remains a restrained supporting layer behind the cut-in image.
-- Preserved Yi Sun-sin's approved cut-in image size without changing the `.skill-cutin-image` sizing values.
-- The slash effect remains bounded inside the central battlefield board.
-- The cut-in remains image-only.
-- No battle rules, AI, Phaser rendering, BGM, or SFX logic were changed.
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-8d` complete.
-- Completed `v0.2-9` Sequential Unique Skill Cut-ins for All MVP Heroes.
-- Added cut-in metadata in `data/skills.js` for:
-  - Jeong Do-jeon / `개혁령`
-  - Nobunaga / `화승총 사격`
-  - Kenshin / `돌격`
-- Preserved Yi Sun-sin's approved cut-in image size and slash tuning.
-- Split enemy AI turn handling into planned-action and execute-action phases so cut-ins can pause the exact stored enemy skill action before resolution.
-- Updated `js/main.js` so enemy skill actions with cut-in metadata now show the cut-in first, then resolve the skill effect, then continue the enemy sequence.
-- Preserved the existing player-side cut-in flow and extended it to Jeong Do-jeon's `개혁령` through metadata only.
-- Enemy actions now remain sequential during skill cut-ins: cut-in -> skill effect -> next enemy action.
-- No SFX was added yet.
-- No battle damage, AI scoring, movement, facing, strategy, Phaser rendering, or BGM logic was intentionally changed.
-- Ran syntax checks:
-  - `node --check data/skills.js`
-  - `node --check js/main.js`
-  - `node --check js/core/battle_ai.js`
-  - `node --check js/core/battle_rules.js`
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9` complete.
-- Completed `v0.2-9a` 14x8 Battlefield Expansion.
-- Expanded the centralized tactical grid from `10x6` to `14x8` in `js/core/battle_grid.js`.
-- Updated fixed MVP spawn positions in `data/battle_rosters.js`:
-  - Yi Sun-sin -> `{ x: 2, y: 5 }`
-  - Jeong Do-jeon -> `{ x: 2, y: 4 }`
-  - Nobunaga -> `{ x: 11, y: 3 }`
-  - Kenshin -> `{ x: 11, y: 4 }`
-- Updated `js/phaser/battle_scene.js` to load `assets/battle/battlefield_14x8_mvp.png` as the primary battlefield background.
-- Preserved rollback/failure behavior by also loading the old `assets/battle/battlefield_mvp.png` as a fallback texture path.
-- Removed the old heavy battlefield dimming pass and reduced the readability overlay to a near-transparent alpha so the new background stays visible.
-- Preserved existing battle rules, skill logic, cut-ins, AI sequencing, BGM, SFX state, persistent Phaser mount behavior, and world-map flow.
-- No stat balance changes were made in this patch.
-- Ran syntax checks:
-  - `node --check js/core/battle_state.js`
-  - `node --check js/phaser/battle_scene.js`
-  - `node --check js/core/battle_grid.js`
-  - `node --check data/battle_rosters.js`
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9a` complete.
-- Completed `v0.2-9b` Unit Token Tone-down Patch.
-- Updated only `js/phaser/battle_scene.js` token image rendering to apply a subtle `0.92` alpha to unit token sprites.
-- Kept the scope limited to the rendered unit token image sprite so HP bars, labels, highlights, cut-ins, battle rules, AI, and battlefield background remained unchanged.
-- The goal of the patch was to make unit sprites feel less bright and less sticker-like against the softer `14x8` battlefield art.
-- Ran syntax checks:
-  - `node --check js/phaser/battle_scene.js`
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9b` complete.
-- Completed `v0.2-9c` Unit Roster Selection + Skill Name Polish.
-- Updated `js/ui/battle_ui.js` so friendly player unit cards in the right `UNIT / 부대 목록` panel can now select units through the existing `onBattleSelectUnit` path during manual player control only.
-- Kept enemy roster cards display-only for now and preserved the existing main-controller manual-control gating for enemy turn, tempo lock, cut-in, and auto-battle states.
-- Added minimal clickable hover/cursor polish for selectable player roster cards in `css/main.css`.
-- Updated `data/skills.js` display text only:
-  - Nobunaga unique skill name -> `삼단격`
-  - Kenshin unique skill name -> `차륜전`
-- Preserved skill IDs, effects, cooldowns, cut-ins, AI logic, board size, and battle rules.
-- Ran syntax checks:
-  - `node --check js/ui/battle_ui.js`
-  - `node --check data/skills.js`
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9c` complete.
-- Completed `v0.2-9d` Battle Mode Choice: Manual vs Auto.
-- Updated `js/core/app_state.js` to add a lightweight `pendingBattleChoice` world-state flow and safe open/cancel/start helpers for player-initiated attacks.
-- Extended `js/core/battle_state.js` and `js/main.js` so battle creation can start with `autoBattleEnabled: true` from the initial battle state instead of toggling after entry.
-- Updated `js/ui/world_map_ui.js` and `css/main.css` to render a simple world-map battle-choice panel with `직접 지휘`, `자동 위임`, and `취소`.
-- Manual battle now preserves the previous normal attack flow while auto battle enters the same battle screen with the existing auto-battle system already enabled.
-- Cancel now closes the choice UI without starting battle and keeps the world map usable.
-- Preserved battle rules, AI logic, cut-ins, battlefield size, stats, SFX state, portrait state, and the existing in-battle auto-battle button.
-- Ran syntax checks:
-  - `node --check js/core/app_state.js`
-  - `node --check js/core/battle_state.js`
-  - `node --check js/ui/world_map_ui.js`
-  - `node --check js/main.js`
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d` complete.
-- Completed `v0.2-9d-hotfix2` Auto Battle Continuation Fix.
-- Updated `js/core/battle_ai.js` so support-skill auto actions now pass a valid allied target instead of returning a no-op state.
-- Updated `js/core/battle_rules.js` so automatic player actions fall back to a safe wait action if an AI-selected action fails to change battle state.
-- Auto battle now continues across all available player units and then properly reaches player-turn auto-advance into the enemy turn.
-- Manual battle behavior, cut-ins, enemy sequential cut-in flow, board size, and stats were preserved.
-- Ran syntax checks:
-  - `node --check js/main.js`
-  - `node --check js/core/battle_rules.js`
-  - `node --check js/core/battle_ai.js`
-- Ran a module-level runtime sanity check confirming:
-  - Yi Sun-sin acts first
-  - Jeong Do-jeon acts second
-  - player-turn auto-advance becomes true after both player units act
-  - enemy turn can begin normally after auto-battle player actions
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d-hotfix2` complete.
-- Completed `v0.2-9d-hotfix3` Auto Battle Status Skip Continuation Fix.
-- Updated `js/core/battle_rules.js` so confusion-blocked units can resolve as an explicit `status_skip` action that consumes the unit's turn.
-- Added safe fallback handling so enemy sequencing and player auto battle do not deadlock when a pending unit has no executable normal action.
-- Auto battle and enemy turn sequencing now continue properly after status-blocked units instead of freezing later in the battle loop.
-- Manual battle behavior, battle rules, cut-ins, board size, stats, and world-map flow were preserved.
-- Ran syntax checks:
-  - `node --check js/core/battle_rules.js`
-  - `node --check js/core/battle_ai.js`
-  - `node --check js/main.js`
-- Ran a module-level runtime sanity check confirming:
-  - confused auto-battle player units consume their action and the next player unit still acts
-  - confused enemy units consume their action through `status_skip`
-  - enemy turn can finish and return to the player turn normally after a skipped/status-blocked enemy unit
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d-hotfix3` complete.
-- Completed `v0.2-9d-hotfix4` Confusion Skip Deadlock Fix.
-- Updated `js/core/battle_state.js` to track a per-unit pending action-block reason for queued skip handling.
-- Updated `js/core/battle_strategy.js` so confusion at turn start can queue a real skip action for enemy turns and player auto turns instead of always consuming the turn immediately.
-- Updated `js/core/battle_rules.js` so queued blocked units resolve through a real `status_skip` action that consumes the unit's action and clears the pending block.
-- Auto battle no longer freezes when Kenshin or another unit is confused, and enemy sequencing continues after the status skip resolves.
-- Manual battle behavior, cut-ins, battle rules, board size, stats, and world-map flow were preserved.
-- Ran syntax checks:
-  - `node --check js/core/battle_rules.js`
-  - `node --check js/core/battle_ai.js`
-  - `node --check js/main.js`
-  - `node --check js/core/battle_strategy.js`
-  - `node --check js/core/battle_state.js`
-- Ran module-level runtime sanity checks confirming:
-  - player auto turn queues and resolves a confused unit as a real skip action
-  - enemy turn queues and resolves Kenshin confusion as `status_skip`
-  - both sides can finish their turn normally after the skip action
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d-hotfix4` complete.
-- Completed `v0.2-9d-hotfix5` Auto Battle Sequencer Deadlock Guard.
-- Updated `js/main.js` with a stronger auto-battle/enemy-sequence progression guard so automatic actions always lead to the next scheduled step, enemy turn end, player auto continuation, or battle outcome.
-- Added guarded scheduling helpers for enemy sequence timers and post-action progression recovery so the controller can recover from stale locked/no-timer states.
-- Enemy skill cut-in resolution now reliably continues into the next enemy action or enemy turn finish, and normal wait/move/strategy actions are also covered by the same progression guard.
-- Status-skip handling from `v0.2-9d-hotfix4` was preserved.
-- Manual battle behavior, cut-ins, battle rules, board size, stats, and world-map flow were preserved.
-- Ran syntax checks:
-  - `node --check js/main.js`
-  - `node --check js/core/battle_rules.js`
-  - `node --check js/core/battle_ai.js`
-  - `node --check js/core/battle_strategy.js`
-  - `node --check js/core/battle_state.js`
-- Updated `agent/CURRENT_STATE.md`, `agent/SESSION_LOG.md`, `agent/HANDOFF_TO_CHATCOACH.md`, and `agent/NEXT_TASKS.md` to mark `v0.2-9d-hotfix5` complete.
+### Next TODO
+1. Final browser QA for latest v0.3-6i cut-in quote layout and `2200ms` duration.
+2. Tune duration to `2000-2400ms` if needed.
+3. Later audio pass for unique SFX and possible voice generation from `cutinQuote`.
+4. Later visual sharpness pass before 10-city / 20-hero expansion.
+5. Expand to 10 cities / 20 heroes only after 4-city / 8-hero MVP function set stabilizes.
