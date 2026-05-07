@@ -141,6 +141,10 @@ function areUnitsAdjacent(leftUnit, rightUnit) {
   return getDistance(leftUnit, rightUnit) === 1;
 }
 
+function getLivingAllies(battleState, casterUnit) {
+  return battleState.units.filter((unit) => unit.isAlive && unit.side === casterUnit.side);
+}
+
 export function applyHakikjinBarrage(battleState, casterUnit, skill) {
   const targets = getSkillTargets(battleState, casterUnit, skill);
 
@@ -200,15 +204,28 @@ export function applyHakikjinBarrage(battleState, casterUnit, skill) {
 }
 
 export function applyReformOrder(battleState, casterUnit, skill) {
-  const targets = getSkillTargets(battleState, casterUnit, skill);
+  return applyAllyAttackBuffSkill(battleState, casterUnit, skill);
+}
+
+function getAllyAttackBuffOpeningLog(casterUnit, skill) {
+  if (skill.id === "yeongnak_grand_legacy") {
+    return `${casterUnit.name}의 ${skill.name}! 아군의 공격력이 상승했다.`;
+  }
+
+  return "정도전이 개혁령을 선포했습니다.";
+}
+
+function applyAllyAttackBuffSkill(battleState, casterUnit, skill) {
+  const affectedAllies = getLivingAllies(battleState, casterUnit);
+  const affectedAllyIds = new Set(affectedAllies.map((unit) => unit.id));
   const effects = [
-    { unitId: casterUnit.id, kind: "skill_name", text: "개혁령!" },
+    { unitId: casterUnit.id, kind: "skill_name", text: `${skill.name}!` },
   ];
-  const logs = ["정도전이 개혁령을 선포했습니다."];
+  const logs = [getAllyAttackBuffOpeningLog(casterUnit, skill)];
 
   const nextUnits = battleState.units.map((unit) => {
     if (unit.id === casterUnit.id) {
-      effects.push({ unitId: unit.id, kind: "buff", text: "공격 상승" });
+      effects.push({ unitId: unit.id, kind: "buff", text: `공격 +${Math.round((skill.buffAttackBonus ?? 0) * 100)}%` });
       logs.push(`${unit.name} 공격력 상승!`);
 
       return {
@@ -220,8 +237,8 @@ export function applyReformOrder(battleState, casterUnit, skill) {
       };
     }
 
-    if (targets.some((target) => target.id === unit.id)) {
-      effects.push({ unitId: unit.id, kind: "buff", text: "공격 상승" });
+    if (affectedAllyIds.has(unit.id)) {
+      effects.push({ unitId: unit.id, kind: "buff", text: `공격 +${Math.round((skill.buffAttackBonus ?? 0) * 100)}%` });
       logs.push(`${unit.name} 공격력 상승!`);
 
       return {
@@ -242,7 +259,127 @@ export function applyReformOrder(battleState, casterUnit, skill) {
       type: "buff",
       skillId: skill.id,
       actorUnitId: casterUnit.id,
-      targetUnitIds: targets.map((target) => target.id),
+      targetUnitIds: affectedAllies.map((target) => target.id),
+      effects,
+    },
+  };
+}
+
+function getEnemyCollisionSecondaryTarget(battleState, casterUnit, primaryTarget, skill) {
+  return battleState.units
+    .filter((unit) => (
+      unit.isAlive
+      && unit.side !== casterUnit.side
+      && unit.id !== primaryTarget.id
+      && getDistance(primaryTarget, unit) <= (skill.secondaryTargetRange ?? 0)
+    ))
+    .sort((leftUnit, rightUnit) => (
+      getDistance(primaryTarget, leftUnit) - getDistance(primaryTarget, rightUnit)
+      || leftUnit.hp - rightUnit.hp
+      || leftUnit.id.localeCompare(rightUnit.id)
+    ))[0] ?? null;
+}
+
+function buildWeakCollisionDamage(casterUnit, skill) {
+  return Math.max(1, Math.floor((casterUnit.attack ?? 0) * (skill.collisionDamageMultiplier ?? 0.35)));
+}
+
+function rollCollisionStatus(skill) {
+  if (Math.random() <= (skill.confusionChance ?? 0)) {
+    return {
+      statusId: "confusion",
+      turns: skill.confusionTurns ?? 1,
+      label: "혼란",
+    };
+  }
+
+  if (Math.random() <= (skill.shakeChanceOnConfusionFail ?? 0)) {
+    return {
+      statusId: "shake",
+      turns: skill.shakeTurns ?? 1,
+      label: "동요",
+    };
+  }
+
+  return null;
+}
+
+function applyEnemyCollisionConfuseSkill(battleState, casterUnit, skill, targetUnit) {
+  const secondaryTarget = getEnemyCollisionSecondaryTarget(battleState, casterUnit, targetUnit, skill);
+  const collisionTargetIds = secondaryTarget ? [targetUnit.id, secondaryTarget.id] : [];
+  const fallbackShakeTargetId = secondaryTarget ? null : targetUnit.id;
+  const collisionDamage = buildWeakCollisionDamage(casterUnit, skill);
+  const statusByUnitId = new Map();
+  const effects = [
+    { unitId: casterUnit.id, kind: "skill_name", text: `${skill.name}!` },
+  ];
+  const logs = secondaryTarget
+    ? [`${casterUnit.name}의 ${skill.name}! 적들이 서로 충돌했다.`]
+    : [`${casterUnit.name}의 ${skill.name}! 적의 판단이 흔들렸다.`];
+
+  if (secondaryTarget) {
+    collisionTargetIds.forEach((unitId) => {
+      const status = rollCollisionStatus(skill);
+
+      if (status) {
+        statusByUnitId.set(unitId, status);
+      }
+    });
+  } else {
+    statusByUnitId.set(targetUnit.id, {
+      statusId: "shake",
+      turns: skill.shakeTurns ?? 1,
+      label: "동요",
+    });
+  }
+
+  const nextUnits = battleState.units.map((unit) => {
+    if (unit.id === casterUnit.id) {
+      return {
+        ...unit,
+        currentSkillCooldown: skill.cooldown,
+        hasActed: true,
+      };
+    }
+
+    const takesCollisionDamage = collisionTargetIds.includes(unit.id);
+    const status = statusByUnitId.get(unit.id);
+
+    if (!takesCollisionDamage && !status) {
+      return unit;
+    }
+
+    const nextHp = takesCollisionDamage ? Math.max(0, unit.hp - collisionDamage) : unit.hp;
+    let nextUnit = {
+      ...unit,
+      hp: nextHp,
+      troops: nextHp,
+      isAlive: nextHp > 0,
+    };
+
+    if (takesCollisionDamage) {
+      effects.push({ unitId: unit.id, kind: "damage", text: `-${collisionDamage}` });
+      logs.push(`${unit.name}에게 ${collisionDamage} 충돌 피해!`);
+    }
+
+    if (status && nextUnit.isAlive) {
+      nextUnit = applyStatusToUnit(nextUnit, status.statusId, status.turns);
+      effects.push({ unitId: unit.id, kind: "status", text: `${status.label} ${status.turns}턴` });
+      logs.push(`${unit.name} ${status.label}!`);
+    }
+
+    return nextUnit;
+  });
+
+  return {
+    ...buildClearedSelectionState(battleState),
+    units: nextUnits,
+    log: [...battleState.log, ...logs],
+    lastAction: {
+      type: "skill",
+      skillId: skill.id,
+      actorUnitId: casterUnit.id,
+      targetUnitIds: secondaryTarget ? collisionTargetIds : [fallbackShakeTargetId],
       effects,
     },
   };
@@ -454,6 +591,10 @@ export function applySkill(battleState, casterUnitId, targetUnitId = null) {
 
   if (skill.effectType === "single_damage_adjacent_shake") {
     return applySingleDamageAdjacentShakeSkill(battleState, casterUnit, skill, targetUnit);
+  }
+
+  if (skill.effectType === "enemy_collision_confuse") {
+    return applyEnemyCollisionConfuseSkill(battleState, casterUnit, skill, targetUnit);
   }
 
   return applySingleTargetSkill(battleState, casterUnit, skill, targetUnit);
