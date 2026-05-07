@@ -418,6 +418,74 @@ button {
   outline: none;
 }
 
+.hero-deployment-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.hero-deployment-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 8, 14, 0.58);
+  backdrop-filter: blur(2px);
+}
+
+.hero-deployment-modal {
+  position: relative;
+  z-index: 1;
+  width: min(860px, calc(100vw - 48px));
+  max-height: calc(100vh - 64px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid rgba(248, 215, 152, 0.36);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+}
+
+.hero-deployment-header {
+  display: grid;
+  gap: 10px;
+}
+
+.hero-deployment-route {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.hero-deployment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.hero-deployment-card {
+  width: 100%;
+  color: var(--text-main);
+  cursor: pointer;
+  text-align: left;
+}
+
+.hero-deployment-card:hover,
+.hero-deployment-card:focus-visible {
+  border-color: rgba(248, 215, 152, 0.65);
+  outline: none;
+}
+
+.hero-deployment-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+
 .detail-heading {
   font-size: 1.35rem;
 }
@@ -1329,6 +1397,23 @@ button {
     position: static;
     width: auto;
     margin: 14px 14px 0;
+  }
+
+  .hero-deployment-overlay {
+    position: fixed;
+    padding: 14px;
+  }
+
+  .hero-deployment-modal {
+    width: min(100%, calc(100vw - 28px));
+    max-height: calc(100dvh - 28px);
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .hero-deployment-grid,
+  .hero-deployment-actions {
+    grid-template-columns: 1fr;
   }
 
   .city-label {
