@@ -73,6 +73,60 @@ function formatStatusList(unit) {
   return statuses.length > 0 ? statuses.join(" · ") : "상태 이상 없음";
 }
 
+const STATUS_ICON_CONVENTION = {
+  attackBuff: "▲",
+  attackDebuff: "▼",
+  defense: "◆",
+  defenseBuff: "◆",
+  defenseDebuff: "◇",
+  // Confusion icon rule:
+  // Keep confusion as "🌀" even if an environment renders it imperfectly.
+  // Do not revert to "혼" automatically.
+  // If 🌀 rendering fails, report it and decide a separate fallback later.
+  confusion: "🌀",
+  shake: "⚠",
+  stun: "✖",
+  burn: "🔥",
+  poison: "☠",
+  taunt: "!",
+  bind: "⛓",
+};
+const STATUS_ICON_LEGEND_TEXT = `상태: ${STATUS_ICON_CONVENTION.confusion} 혼란 · ${STATUS_ICON_CONVENTION.shake} 동요 · ${STATUS_ICON_CONVENTION.defense} 방어 · ${STATUS_ICON_CONVENTION.attackBuff} 공↑ · ${STATUS_ICON_CONVENTION.attackDebuff} 공↓ · ${STATUS_ICON_CONVENTION.stun} 기절 · ${STATUS_ICON_CONVENTION.burn} 화상 · ${STATUS_ICON_CONVENTION.poison} 중독 · ${STATUS_ICON_CONVENTION.taunt} 도발 · ${STATUS_ICON_CONVENTION.bind} 속박`;
+
+function getUnitStatusIcons(unit) {
+  const icons = [];
+
+  if (hasStatus(unit, "confusion")) {
+    icons.push({
+      icon: STATUS_ICON_CONVENTION.confusion,
+      title: "혼란",
+    });
+  }
+
+  if (hasStatus(unit, "shake")) {
+    icons.push({
+      icon: STATUS_ICON_CONVENTION.shake,
+      title: "동요",
+    });
+  }
+
+  if ((unit?.buffAttackBonus ?? 0) > 0 && (unit?.buffTurns ?? 0) > 0) {
+    icons.push({
+      icon: STATUS_ICON_CONVENTION.attackBuff,
+      title: "공격력 상승",
+    });
+  }
+
+  if (unit?.isDefending === true) {
+    icons.push({
+      icon: STATUS_ICON_CONVENTION.defense,
+      title: "방어 태세",
+    });
+  }
+
+  return icons;
+}
+
 function getSkillHelpCopy(skill) {
   if (!skill) {
     return "이동 · 공격 · 특기 · 책략 · 방어 · 대기";
@@ -240,6 +294,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.renderUnits();
       this.renderFacingHighlights();
       this.renderInstructionText();
+      this.renderStatusIconLegend();
       this.renderFloatingEffects();
     }
 
@@ -474,43 +529,14 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const tokenKey = unit.side === "player" ? PLAYER_TOKEN_KEY : ENEMY_TOKEN_KEY;
         const tokenSprite = this.createUnitTokenSprite(unit, tokenKey, fillColor);
         const portraitBadge = this.createUnitPortraitBadge(unit);
+        const statusIcons = this.createUnitStatusIcons(unit);
         const hitZone = this.add.zone(0, 8, 90, 110).setOrigin(0.5, 0.5);
 
-        unitGroup.add([selectionRing, tokenSprite, portraitBadge, facingText, hpBarTrack, hpBarFill, hpText, hitZone]);
+        unitGroup.add([selectionRing, tokenSprite, portraitBadge, statusIcons, facingText, hpBarTrack, hpBarFill, hpText, hitZone]);
 
         if (unit.isDefending) {
           unitGroup.add(this.add.text(0, -52, "방어", {
             color: "#c7d2fe",
-            fontFamily: "Segoe UI, sans-serif",
-            fontSize: "13px",
-            fontStyle: "bold",
-            align: "center",
-          }).setOrigin(0.5, 0.5));
-        }
-
-        if (hasStatus(unit, "confusion")) {
-          unitGroup.add(this.add.text(0, -148, `혼란 ${unit.statusEffects.confusion}`, {
-            color: "#f9e27d",
-            fontFamily: "Segoe UI, sans-serif",
-            fontSize: "13px",
-            fontStyle: "bold",
-            align: "center",
-          }).setOrigin(0.5, 0.5));
-        }
-
-        if (hasStatus(unit, "shake")) {
-          unitGroup.add(this.add.text(0, -166, `동요 ${unit.statusEffects.shake}`, {
-            color: "#9dd6ff",
-            fontFamily: "Segoe UI, sans-serif",
-            fontSize: "13px",
-            fontStyle: "bold",
-            align: "center",
-          }).setOrigin(0.5, 0.5));
-        }
-
-        if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
-          unitGroup.add(this.add.text(0, -130, `공격 +${Math.round(unit.buffAttackBonus * 100)}%`, {
-            color: "#9ef3b0",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
             fontStyle: "bold",
@@ -662,6 +688,46 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       return badge;
     }
 
+    createUnitStatusIcons(unit) {
+      const icons = getUnitStatusIcons(unit);
+      const iconGroup = this.add.container(20, -42);
+
+      iconGroup.setName("battle-status-icons");
+
+      if (icons.length === 0) {
+        return iconGroup;
+      }
+
+      const iconSize = 22;
+      const gap = 4;
+      const totalWidth = icons.length * iconSize + (icons.length - 1) * gap;
+      const backgroundWidth = totalWidth + 8;
+      const backgroundHeight = 24;
+      const background = this.add.graphics();
+      background.fillStyle(0x05090f, 0.28);
+      background.fillRoundedRect(-backgroundWidth / 2, -backgroundHeight / 2, backgroundWidth, backgroundHeight, 4);
+      background.lineStyle(1, 0xf8d798, 0.16);
+      background.strokeRoundedRect(-backgroundWidth / 2, -backgroundHeight / 2, backgroundWidth, backgroundHeight, 4);
+      iconGroup.add(background);
+
+      icons.forEach((statusIcon, index) => {
+        const x = -totalWidth / 2 + iconSize / 2 + index * (iconSize + gap);
+        const iconText = this.add.text(x, 0, statusIcon.icon, {
+          color: statusIcon.title === "공격력 상승" ? "#9ef3b0" : statusIcon.title === "동요" ? "#f9e27d" : "#f8d798",
+          fontFamily: "\"Segoe UI Emoji\", \"Apple Color Emoji\", \"Noto Color Emoji\", sans-serif",
+          fontSize: "14px",
+          fontStyle: "bold",
+          stroke: "#05090f",
+          strokeThickness: 3,
+          align: "center",
+        }).setOrigin(0.5, 0.5);
+        iconText.setName(`battle-status-icon:${statusIcon.title}`);
+        iconGroup.add(iconText);
+      });
+
+      return iconGroup;
+    }
+
     renderInstructionText() {
       const selectedUnit = this.battleState.units.find((unit) => unit.id === this.battleState.selectedUnitId) ?? null;
       const selectedSkill = selectedUnit ? getSkillById(this.battleState.skills, selectedUnit.skillId) : null;
@@ -713,6 +779,34 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       ).setOrigin(1, 0.5);
 
       this.dynamicLayer.add([panel, summaryText, helpText]);
+    }
+
+    renderStatusIconLegend() {
+      const legendText = this.add.text(
+        this.scale.width / 2,
+        this.scale.height - 54,
+        STATUS_ICON_LEGEND_TEXT,
+        {
+          color: "#d9c9a7",
+          fontFamily: "\"Segoe UI Emoji\", \"Apple Color Emoji\", \"Noto Color Emoji\", sans-serif",
+          fontSize: "12px",
+          fixedWidth: this.scale.width - 160,
+          align: "center",
+        },
+      ).setOrigin(0.5, 0.5);
+
+      const backgroundWidth = Math.min(this.scale.width - 140, legendText.width + 28);
+      const background = this.add.graphics();
+      background.fillStyle(0x05090f, 0.18);
+      background.fillRoundedRect(
+        this.scale.width / 2 - backgroundWidth / 2,
+        this.scale.height - 68,
+        backgroundWidth,
+        28,
+        5,
+      );
+
+      this.dynamicLayer.add([background, legendText]);
     }
 
     renderFloatingEffects() {
