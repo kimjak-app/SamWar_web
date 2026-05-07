@@ -931,6 +931,93 @@ button {
   transform: rotate(-2deg);
 }
 
+.battle-result-title {
+  position: absolute;
+  z-index: 2;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Noto Serif KR", "Malgun Gothic", "Apple SD Gothic Neo", serif;
+  font-size: clamp(132px, 15vw, 216px);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.6),
+    0 0 1px rgba(255, 248, 226, 0.42);
+}
+
+.battle-result-title--victory {
+  color: #d9bd72;
+}
+
+.battle-result-title--defeat {
+  color: #6f1d1b;
+  text-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.62),
+    0 0 1px rgba(246, 214, 184, 0.28);
+}
+
+.skill-cutin-copy {
+  position: absolute;
+  z-index: 2;
+  top: 70%;
+  left: 50%;
+  max-width: min(52vw, 720px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-align: center;
+}
+
+.skill-cutin-name {
+  color: #f3ead9;
+  font-family: "Malgun Gothic", "Noto Sans KR", "Segoe UI", sans-serif;
+  font-size: clamp(28px, 3.4vw, 44px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  white-space: nowrap;
+  text-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.76),
+    0 0 1px rgba(255, 246, 222, 0.5);
+}
+
+.skill-cutin-quote {
+  position: absolute;
+  z-index: 2;
+  top: 54%;
+  left: 50%;
+  max-width: min(60vw, 820px);
+  transform: translate(-50%, -50%);
+  color: #ead7aa;
+  font-family: "궁서", "Gungsuh", "Batang", serif;
+  font-size: clamp(18px, 2vw, 28px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.78),
+    0 0 1px rgba(255, 246, 222, 0.38);
+}
+
+.skill-cutin-effect {
+  margin-top: 6px;
+  color: rgba(243, 234, 217, 0.78);
+  font-family: "Malgun Gothic", "Noto Sans KR", "Segoe UI", sans-serif;
+  font-size: clamp(14px, 1.45vw, 20px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.78),
+    0 0 1px rgba(255, 246, 222, 0.32);
+}
+
 @keyframes skillCutinSlashIn {
   from {
     opacity: 0;

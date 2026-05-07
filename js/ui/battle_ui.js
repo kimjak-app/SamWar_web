@@ -9,6 +9,17 @@ import { canUseStrategy, hasStatus } from "../core/battle_strategy.js";
 import { getEnemyUnits, getPlayerUnits, getSelectedUnit } from "../core/battle_rules.js";
 import { mountBattleScene } from "../phaser/phaser_battle_mount.js";
 
+const BATTLE_RESULT_OVERLAY_TEXT = {
+  won: {
+    text: "승리",
+    tone: "victory",
+  },
+  lost: {
+    text: "패배",
+    tone: "defeat",
+  },
+};
+
 function getBattleStatusCopy(battleState) {
   if (battleState.tempoLockActive && battleState.turnOwner === "enemy") {
     return "적군 행동을 전개 중입니다.";
@@ -166,6 +177,13 @@ function renderSkillCutinOverlay(activeSkillCutin) {
   return `
     <div class="skill-cutin-overlay skill-cutin-overlay--${activeSkillCutin.style}" aria-hidden="true">
       <img class="skill-cutin-image" src="${activeSkillCutin.image}" alt="" />
+      ${activeSkillCutin.skillQuote ? `<div class="skill-cutin-quote">${activeSkillCutin.skillQuote}</div>` : ""}
+      ${activeSkillCutin.skillName ? `
+        <div class="skill-cutin-copy">
+          <div class="skill-cutin-name">${activeSkillCutin.skillName}</div>
+          ${activeSkillCutin.skillEffectText ? `<div class="skill-cutin-effect">${activeSkillCutin.skillEffectText}</div>` : ""}
+        </div>
+      ` : ""}
     </div>
   `;
 }
@@ -175,9 +193,12 @@ function renderBattleResultCutinOverlay(activeBattleResultCutin) {
     return "";
   }
 
+  const resultText = BATTLE_RESULT_OVERLAY_TEXT[activeBattleResultCutin.result] ?? null;
+
   return `
     <div class="skill-cutin-overlay skill-cutin-overlay--result" aria-hidden="true">
       <img class="skill-cutin-image" src="${activeBattleResultCutin.image}" alt="" />
+      ${resultText ? `<div class="battle-result-title battle-result-title--${resultText.tone}">${resultText.text}</div>` : ""}
     </div>
   `;
 }

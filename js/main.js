@@ -67,6 +67,7 @@ const BATTLE_TEMPO = {
   autoBattleDelayMs: 1050,
 };
 const BATTLE_RESULT_FALLBACK_MS = 2000;
+const UNIQUE_SKILL_CUTIN_FALLBACK_MS = 2200;
 const BATTLE_RESULT_VICTORY_IMAGE = "./assets/skill_cutins/battle_result_victory.png";
 const BATTLE_RESULT_DEFEAT_IMAGE = "./assets/skill_cutins/battle_result_defeat.png";
 const BATTLE_RESULT_AUDIO = {
@@ -482,8 +483,12 @@ function startSkillCutinSequence(targetUnitId) {
     casterUnitId: selectedUnit.id,
     targetUnitId,
     skillId: selectedSkill.id,
+    skillName: selectedSkill.name,
+    skillQuote: selectedSkill.cutinQuote ?? null,
+    skillEffectText: selectedSkill.cutinEffectText ?? null,
+    skillSubtitle: selectedSkill.cutinSubtitle ?? null,
     image: selectedSkill.cutinImage,
-    durationMs: selectedSkill.cutinDurationMs ?? 1400,
+    durationMs: selectedSkill.cutinDurationMs ?? UNIQUE_SKILL_CUTIN_FALLBACK_MS,
     style: selectedSkill.cutinStyle ?? "default",
   };
   const scheduledCutinState = activeSkillCutin;
@@ -510,9 +515,13 @@ function startEnemySkillCutinSequence(plannedAction, selectedSkill) {
     casterUnitId: plannedAction.actorUnitId,
     targetUnitId: plannedAction.targetUnitId ?? null,
     skillId: plannedAction.skillId,
+    skillName: selectedSkill.name,
+    skillQuote: selectedSkill.cutinQuote ?? null,
+    skillEffectText: selectedSkill.cutinEffectText ?? null,
+    skillSubtitle: selectedSkill.cutinSubtitle ?? null,
     plannedAction,
     image: selectedSkill.cutinImage,
-    durationMs: selectedSkill.cutinDurationMs ?? 1400,
+    durationMs: selectedSkill.cutinDurationMs ?? UNIQUE_SKILL_CUTIN_FALLBACK_MS,
     style: selectedSkill.cutinStyle ?? "default",
   };
   const scheduledCutinState = activeSkillCutin;
@@ -543,9 +552,13 @@ function startResolvedAutoSkillCutinSequence(nextBattleState, selectedSkill) {
     casterUnitId: lastAction.actorUnitId,
     targetUnitId: lastAction.targetUnitIds?.[0] ?? null,
     skillId: selectedSkill.id,
+    skillName: selectedSkill.name,
+    skillQuote: selectedSkill.cutinQuote ?? null,
+    skillEffectText: selectedSkill.cutinEffectText ?? null,
+    skillSubtitle: selectedSkill.cutinSubtitle ?? null,
     nextBattleState,
     image: selectedSkill.cutinImage,
-    durationMs: selectedSkill.cutinDurationMs ?? 1400,
+    durationMs: selectedSkill.cutinDurationMs ?? UNIQUE_SKILL_CUTIN_FALLBACK_MS,
     style: selectedSkill.cutinStyle ?? "default",
   };
   const scheduledCutinState = activeSkillCutin;
