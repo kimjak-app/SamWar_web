@@ -42,7 +42,7 @@ function getStatusText(cities, selectedCity) {
   }
 
   if (canAttackCity(cities, selectedCity)) {
-    return "공격을 누르면 전투 방식 선택 후 Phaser 전투 화면으로 진입합니다.";
+    return "공격을 누르면 출전 무장 선택 후 Phaser 전투 화면으로 진입합니다.";
   }
 
   if (isPlayerCity(selectedCity)) {
@@ -107,6 +107,70 @@ function renderBattleChoicePanel(pendingBattleChoice) {
   `;
 }
 
+function renderHeroDeploymentPanel(pendingHeroDeployment) {
+  if (!pendingHeroDeployment) {
+    return "";
+  }
+
+  const selectedHeroIds = new Set(pendingHeroDeployment.selectedHeroIds);
+  const hasSelection = selectedHeroIds.size > 0;
+
+  return `
+    <section class="detail-card hud-panel battle-choice-card" aria-live="polite">
+      <p class="eyebrow">Deployment</p>
+      <h3 class="detail-heading">출전 무장 선택</h3>
+      <div class="battle-choice-summary">
+        <p class="battle-choice-line">출발 도시: ${pendingHeroDeployment.originCityName}</p>
+        <p class="battle-choice-line">공격 목표: ${pendingHeroDeployment.targetCityName}</p>
+        ${pendingHeroDeployment.candidates.length === 0 ? `
+          <p class="battle-choice-line battle-choice-copy">출전 가능한 아군 무장이 없습니다.</p>
+        ` : ""}
+      </div>
+      <div class="battle-unit-stats">
+        ${pendingHeroDeployment.candidates
+          .map((hero) => {
+            const isSelected = selectedHeroIds.has(hero.id);
+
+            return `
+              <button
+                class="battle-unit-card battle-unit-card-player ${isSelected ? "is-selected" : ""}"
+                type="button"
+                data-deployment-hero-id="${hero.id}"
+                aria-pressed="${isSelected}"
+              >
+                <div class="battle-unit-side-row">
+                  <span class="battle-unit-side">${hero.role ?? "unit"}</span>
+                  <span class="battle-unit-selected-chip">${isSelected ? "출전" : "대기"}</span>
+                </div>
+                <div class="battle-unit-side-row">
+                  ${hero.portraitImage ? `<img class="battle-unit-portrait" src="${hero.portraitImage}" alt="${hero.name} 초상화" loading="lazy" />` : ""}
+                  <span class="battle-unit-name">${hero.name}</span>
+                </div>
+                <span class="battle-unit-hp">병력 ${hero.troops}/${hero.maxTroops}</span>
+                <span class="battle-unit-cooldown">공격 ${hero.attack} · 방어 ${hero.defense} · 지력 ${hero.intelligence}</span>
+                ${hero.skillName ? `<span class="battle-unit-buff">특기 ${hero.skillName}</span>` : ""}
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+      <div class="battle-choice-actions">
+        <button
+          class="attack-button battle-choice-button"
+          type="button"
+          data-deployment-start-city-id="${pendingHeroDeployment.targetCityId}"
+          ${hasSelection ? "" : "disabled"}
+        >
+          전투 시작
+        </button>
+        <button class="battle-choice-cancel" type="button" data-deployment-cancel="true">
+          월드맵으로
+        </button>
+      </div>
+    </section>
+  `;
+}
+
 function renderEnemyTurnResultPanel(pendingEnemyTurnResult) {
   if (!pendingEnemyTurnResult) {
     return "";
@@ -135,6 +199,9 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onAttackCity,
     onBattleChoiceConfirm,
     onBattleChoiceCancel,
+    onHeroDeploymentToggle,
+    onHeroDeploymentStart,
+    onHeroDeploymentCancel,
     onEndWorldTurn,
     onConfirmEnemyTurnResult,
   } = handlers;
@@ -144,8 +211,8 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   const selectedFaction = getFactionById(world.factions, selectedCity.ownerFactionId);
   const attackable = canAttackCity(world.cities, selectedCity);
   const unified = isWorldUnified(world.cities);
-  const { pendingBattleChoice } = appState;
-  const canEndTurn = world.turnOwner === "player" && !pendingBattleChoice && !world.pendingEnemyTurnResult;
+  const { pendingBattleChoice, pendingHeroDeployment } = appState;
+  const canEndTurn = world.turnOwner === "player" && !pendingBattleChoice && !pendingHeroDeployment && !world.pendingEnemyTurnResult;
   const canOpenAttackChoice = canEndTurn && attackable;
 
   rootElement.innerHTML = `
@@ -236,7 +303,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
                   <button class="attack-button" type="button" data-attack-city-id="${selectedCity.id}">
                     공격
                   </button>
-                  <p class="attack-note">공격을 누르면 전투 방식 선택 후 전투 화면으로 진입합니다.</p>
+                  <p class="attack-note">공격을 누르면 출전 무장을 선택한 뒤 전투를 시작합니다.</p>
                 `
                 : `
                   <p class="attack-note">${
@@ -249,6 +316,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
           </section>
 
           ${renderBattleChoicePanel(pendingBattleChoice)}
+          ${renderHeroDeploymentPanel(pendingHeroDeployment)}
           ${renderEnemyTurnResultPanel(world.pendingEnemyTurnResult)}
 
           <section class="detail-card hud-panel">
@@ -329,6 +397,35 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   if (onBattleChoiceCancel) {
     rootElement.querySelector('[data-battle-choice="cancel"]')?.addEventListener("click", () => {
       onBattleChoiceCancel();
+    });
+  }
+
+  if (onHeroDeploymentToggle) {
+    rootElement.querySelectorAll("[data-deployment-hero-id]").forEach((element) => {
+      element.addEventListener("click", () => {
+        onHeroDeploymentToggle(element.getAttribute("data-deployment-hero-id"));
+      });
+    });
+  }
+
+  if (onHeroDeploymentStart) {
+    rootElement.querySelector("[data-deployment-start-city-id]")?.addEventListener("click", (event) => {
+      const cityId = event.currentTarget.getAttribute("data-deployment-start-city-id");
+
+      if (!cityId || !pendingHeroDeployment?.selectedHeroIds?.length) {
+        return;
+      }
+
+      onHeroDeploymentStart({
+        cityId,
+        selectedHeroIds: pendingHeroDeployment.selectedHeroIds,
+      });
+    });
+  }
+
+  if (onHeroDeploymentCancel) {
+    rootElement.querySelector("[data-deployment-cancel='true']")?.addEventListener("click", () => {
+      onHeroDeploymentCancel();
     });
   }
 

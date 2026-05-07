@@ -1,5 +1,6 @@
 import { cities } from "../../data/cities.js";
 import { factions } from "../../data/factions.js";
+import { battleRosters } from "../../data/battle_rosters.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
 import { createInitialBattleState } from "./battle_state.js";
@@ -28,6 +29,7 @@ export function createInitialAppState() {
     },
     battle: null,
     pendingBattleChoice: null,
+    pendingHeroDeployment: null,
     world: {
       cities,
       factions,
@@ -49,6 +51,7 @@ export function selectCity(appState, cityId) {
     pendingBattleChoice: appState.pendingBattleChoice?.type === "attack"
       ? null
       : appState.pendingBattleChoice,
+    pendingHeroDeployment: null,
   };
 }
 
@@ -65,7 +68,54 @@ function advanceWorldTurn(appState, overrides = {}) {
       pendingEnemyTurnResult: null,
     },
     pendingBattleChoice: null,
+    pendingHeroDeployment: null,
     ...overrides,
+  };
+}
+
+function getSkillName(skillId) {
+  return skills.find((skill) => skill.id === skillId)?.name ?? null;
+}
+
+function getPlayerDeploymentCandidateIds() {
+  return battleRosters.cityDefenderRosters?.[DEFAULT_SELECTED_CITY_ID]
+    ?? battleRosters.defaultPlayerAttack
+    ?? [];
+}
+
+function buildHeroDeployment(appState, cityId) {
+  const pendingBattleChoice = buildAttackBattleChoice(appState, cityId);
+
+  if (!pendingBattleChoice) {
+    return null;
+  }
+
+  const candidates = getPlayerDeploymentCandidateIds()
+    .map((heroId) => heroes.find((hero) => hero.id === heroId && hero.side === "player"))
+    .filter(Boolean)
+    .map((hero) => ({
+      id: hero.id,
+      name: hero.name,
+      role: hero.role,
+      troops: hero.troops,
+      maxTroops: hero.maxTroops,
+      attack: hero.attack,
+      defense: hero.defense,
+      intelligence: hero.intelligence,
+      portraitImage: hero.portraitImage ?? null,
+      skillName: getSkillName(hero.skillId),
+    }));
+
+  return {
+    type: "attack",
+    originCityId: pendingBattleChoice.originCityId,
+    originCityName: pendingBattleChoice.originCityName,
+    targetCityId: pendingBattleChoice.targetCityId,
+    targetCityName: pendingBattleChoice.targetCityName,
+    battleContext: pendingBattleChoice.battleContext,
+    autoBattleEnabled: false,
+    candidates,
+    selectedHeroIds: candidates.map((hero) => hero.id),
   };
 }
 
@@ -148,6 +198,28 @@ export function openBattleChoice(appState, cityId) {
   };
 }
 
+export function openHeroDeployment(appState, cityId) {
+  if (
+    appState.mode !== "world"
+    || appState.world.turnOwner !== "player"
+    || appState.world.pendingEnemyTurnResult
+  ) {
+    return appState;
+  }
+
+  const pendingHeroDeployment = buildHeroDeployment(appState, cityId);
+
+  if (!pendingHeroDeployment) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingBattleChoice: null,
+    pendingHeroDeployment,
+  };
+}
+
 export function cancelBattleChoice(appState) {
   if (!appState.pendingBattleChoice || !appState.pendingBattleChoice.showCancel) {
     return appState;
@@ -159,10 +231,49 @@ export function cancelBattleChoice(appState) {
   };
 }
 
+export function cancelHeroDeployment(appState) {
+  if (!appState.pendingHeroDeployment) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingHeroDeployment: null,
+  };
+}
+
+export function toggleDeploymentHero(appState, heroId) {
+  const pendingHeroDeployment = appState.pendingHeroDeployment;
+
+  if (!pendingHeroDeployment || !pendingHeroDeployment.candidates.some((hero) => hero.id === heroId)) {
+    return appState;
+  }
+
+  const selectedHeroSet = new Set(pendingHeroDeployment.selectedHeroIds);
+
+  if (selectedHeroSet.has(heroId)) {
+    selectedHeroSet.delete(heroId);
+  } else {
+    selectedHeroSet.add(heroId);
+  }
+
+  return {
+    ...appState,
+    pendingHeroDeployment: {
+      ...pendingHeroDeployment,
+      selectedHeroIds: [...selectedHeroSet],
+    },
+  };
+}
+
 export function startBattle(appState, cityId, options = {}) {
-  const pendingBattleChoice = appState.pendingBattleChoice?.targetCityId === cityId
-    ? appState.pendingBattleChoice
-    : buildAttackBattleChoice(appState, cityId);
+  const pendingHeroDeployment = appState.pendingHeroDeployment?.targetCityId === cityId
+    ? appState.pendingHeroDeployment
+    : null;
+  const pendingBattleChoice = pendingHeroDeployment
+    ?? (appState.pendingBattleChoice?.targetCityId === cityId
+      ? appState.pendingBattleChoice
+      : buildAttackBattleChoice(appState, cityId));
   const defenderCity = appState.world.cities.find((city) => city.id === pendingBattleChoice?.targetCityId);
   const attackerCity = appState.world.cities.find((city) => city.id === pendingBattleChoice?.originCityId);
 
@@ -172,13 +283,17 @@ export function startBattle(appState, cityId, options = {}) {
 
   const battleContext = {
     ...pendingBattleChoice.battleContext,
-    controlMode: options.autoBattleEnabled === true ? "auto" : "manual",
+    controlMode: (options.autoBattleEnabled ?? pendingHeroDeployment?.autoBattleEnabled) === true ? "auto" : "manual",
   };
+  const selectedAttackerHeroIds = Array.isArray(options.attackerHeroIds)
+    ? options.attackerHeroIds
+    : pendingHeroDeployment?.selectedHeroIds;
 
   return {
     ...appState,
     mode: "battle",
     pendingBattleChoice: null,
+    pendingHeroDeployment: null,
     selection: {
       ...appState.selection,
       cityId: defenderCity.id,
@@ -186,8 +301,9 @@ export function startBattle(appState, cityId, options = {}) {
     battle: createInitialBattleState({
       attackerCity,
       defenderCity,
-      autoBattleEnabled: options.autoBattleEnabled === true,
+      autoBattleEnabled: (options.autoBattleEnabled ?? pendingHeroDeployment?.autoBattleEnabled) === true,
       battleContext,
+      attackerHeroIds: selectedAttackerHeroIds,
     }),
   };
 }
@@ -230,6 +346,7 @@ export function retreatFromBattle(appState) {
     mode: "world",
     battle: null,
     pendingBattleChoice: null,
+    pendingHeroDeployment: null,
   };
 }
 
@@ -279,6 +396,7 @@ export function returnFromBattle(appState) {
       mode: "world",
       battle: null,
       pendingBattleChoice: null,
+      pendingHeroDeployment: null,
       selection: {
         ...appState.selection,
         cityId: battle.defenderCityId,
@@ -295,6 +413,7 @@ export function returnFromBattle(appState) {
     mode: "world",
     battle: null,
     pendingBattleChoice: null,
+    pendingHeroDeployment: null,
   };
 }
 
@@ -303,6 +422,7 @@ export function endWorldTurn(appState) {
     appState.mode !== "world"
     || appState.world.turnOwner !== "player"
     || appState.pendingBattleChoice
+    || appState.pendingHeroDeployment
     || appState.world.pendingEnemyTurnResult
   ) {
     return appState;

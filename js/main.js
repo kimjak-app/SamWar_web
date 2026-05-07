@@ -3,11 +3,13 @@ import {
   confirmEnemyTurnResult,
   createInitialAppState,
   endWorldTurn,
-  openBattleChoice,
   retreatFromBattle,
   returnFromBattle,
   selectCity,
   startBattle,
+  cancelHeroDeployment,
+  openHeroDeployment,
+  toggleDeploymentHero,
   updateBattleState,
 } from "./core/app_state.js";
 import {
@@ -715,7 +717,7 @@ function rerender() {
 
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = openBattleChoice(appState, cityId);
+      appState = openHeroDeployment(appState, cityId);
       rerender();
     },
     onBattleChoiceConfirm: ({ cityId, autoBattleEnabled }) => {
@@ -726,6 +728,34 @@ function rerender() {
       if (autoBattleEnabled) {
         ensureBattleProgress();
       }
+    },
+    onHeroDeploymentToggle: (heroId) => {
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
+      appState = toggleDeploymentHero(appState, heroId);
+      rerender();
+    },
+    onHeroDeploymentStart: ({ cityId, selectedHeroIds }) => {
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult || selectedHeroIds.length === 0) {
+        return;
+      }
+
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
+      appState = startBattle(appState, cityId, { attackerHeroIds: selectedHeroIds });
+      rerender();
+    },
+    onHeroDeploymentCancel: () => {
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
+      appState = cancelHeroDeployment(appState);
+      rerender();
     },
     onBattleChoiceCancel: () => {
       clearBattleTempoTimers();

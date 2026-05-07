@@ -73,7 +73,11 @@ function getCityDefenderRoster(city) {
   return battleRosters.cityDefenderRosters?.[city.id] ?? null;
 }
 
-function getPlayerRoster(attackerCity, defenderCity, battleContext) {
+function getPlayerRoster(attackerCity, defenderCity, battleContext, attackerHeroIds = null) {
+  if (battleContext?.type !== "defense" && Array.isArray(attackerHeroIds) && attackerHeroIds.length > 0) {
+    return attackerHeroIds;
+  }
+
   const rosterCity = battleContext?.type === "defense" ? defenderCity : attackerCity;
   return getCityDefenderRoster(rosterCity) ?? battleRosters.defaultPlayerAttack;
 }
@@ -88,6 +92,7 @@ export function createInitialBattleState({
   defenderCity,
   autoBattleEnabled = false,
   battleContext = null,
+  attackerHeroIds = null,
 }) {
   battleSequence += 1;
   const resolvedBattleContext = battleContext ?? {
@@ -97,8 +102,11 @@ export function createInitialBattleState({
     defenderCityId: defenderCity.id,
   };
 
+  const selectedAttackerHeroIds = Array.isArray(attackerHeroIds) && attackerHeroIds.length > 0
+    ? attackerHeroIds
+    : null;
   const rosterUnitIds = [
-    ...getPlayerRoster(attackerCity, defenderCity, resolvedBattleContext),
+    ...getPlayerRoster(attackerCity, defenderCity, resolvedBattleContext, selectedAttackerHeroIds),
     ...getEnemyRoster(attackerCity, defenderCity, resolvedBattleContext),
   ];
   const units = rosterUnitIds.map(buildBattleUnit).filter(Boolean);
