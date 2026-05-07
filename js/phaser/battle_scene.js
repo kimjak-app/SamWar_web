@@ -161,6 +161,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.cellWidth = 0;
       this.cellHeight = 0;
       this.dynamicLayer = null;
+      this.backgroundLayer = null;
+      this.gridLayer = null;
+      this.highlightLayer = null;
+      this.unitLayer = null;
+      this.effectLayer = null;
+      this.uiLayer = null;
       this.headerTitleText = null;
       this.headerStatusText = null;
       this.lastRenderedActionSignature = null;
@@ -277,6 +283,81 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.redrawBattle();
     }
 
+    createRenderLayers() {
+      this.dynamicLayer = this.add.container(0, 0);
+      this.backgroundLayer = this.add.container(0, 0);
+      this.gridLayer = this.add.container(0, 0);
+      this.highlightLayer = this.add.container(0, 0);
+      this.unitLayer = this.add.container(0, 0);
+      this.effectLayer = this.add.container(0, 0);
+      this.uiLayer = this.add.container(0, 0);
+
+      // Layer order prepares future larger battlefield rendering, effects, camera work, and 2.5D/isometric depth ordering.
+      this.dynamicLayer.add([
+        this.backgroundLayer,
+        this.gridLayer,
+        this.highlightLayer,
+        this.unitLayer,
+        this.effectLayer,
+        this.uiLayer,
+      ]);
+    }
+
+    clearRenderLayers() {
+      if (!this.dynamicLayer) {
+        return;
+      }
+
+      [
+        this.backgroundLayer,
+        this.gridLayer,
+        this.highlightLayer,
+        this.unitLayer,
+        this.effectLayer,
+        this.uiLayer,
+      ].forEach((layer) => {
+        layer?.removeAll(true);
+      });
+    }
+
+    getLastActionPresentation() {
+      // Presentation-facing action snapshot.
+      // Future animation/SFX/camera queue work should start here.
+      return this.battleState.lastAction ?? null;
+    }
+
+    getActionPresentationSignature(action) {
+      return buildActionSignature(action);
+    }
+
+    hasNewActionPresentation(action) {
+      if (!action) {
+        return false;
+      }
+
+      return this.getActionPresentationSignature(action) !== this.lastRenderedActionSignature;
+    }
+
+    markActionPresentationRendered(action) {
+      if (!action) {
+        return;
+      }
+
+      this.lastRenderedActionSignature = this.getActionPresentationSignature(action);
+    }
+
+    getActionPresentationEffects(action) {
+      return Array.isArray(action?.effects) ? action.effects : [];
+    }
+
+    getActionPresentationTargets(action) {
+      return Array.isArray(action?.targetUnitIds) ? action.targetUnitIds : [];
+    }
+
+    getActionPresentationKind(action) {
+      return action?.type ?? "unknown";
+    }
+
     create() {
       const width = this.scale.width;
       const height = this.scale.height;
@@ -331,7 +412,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       );
       boardBackground.setStrokeStyle(2, 0xf8d798, 0.26);
 
-      this.dynamicLayer = this.add.container(0, 0);
+      this.createRenderLayers();
       this.redrawBattle();
       onSceneReady?.(this);
     }
@@ -341,7 +422,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         return;
       }
 
-      this.dynamicLayer.removeAll(true);
+      this.clearRenderLayers();
       this.headerStatusText?.setText(`${this.battleState.defenderCityName} 전장`);
       this.renderBattlefieldBackdrop();
       this.renderGrid();
@@ -365,7 +446,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         battlefieldImage.displayWidth = this.board.width;
         battlefieldImage.displayHeight = this.board.height;
         battlefieldImage.setAlpha(0.96);
-        this.dynamicLayer.add(battlefieldImage);
+        this.backgroundLayer.add(battlefieldImage);
       } else if (this.textures.exists(BATTLEFIELD_FALLBACK_KEY)) {
         const battlefieldImage = this.add.image(
           boardCenter.x,
@@ -375,7 +456,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         battlefieldImage.displayWidth = this.board.width;
         battlefieldImage.displayHeight = this.board.height;
         battlefieldImage.setAlpha(0.96);
-        this.dynamicLayer.add(battlefieldImage);
+        this.backgroundLayer.add(battlefieldImage);
       } else if (!this.missingBackgroundWarningShown) {
         this.missingBackgroundWarningShown = true;
         console.warn("Battlefield background image missing, using dark fallback background.");
@@ -389,7 +470,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         0x081018,
         0.06,
       );
-      this.dynamicLayer.add(readabilityOverlay);
+      this.backgroundLayer.add(readabilityOverlay);
     }
 
     renderHighlights() {
@@ -407,7 +488,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         ).setStrokeStyle(2, 0x5bb8ff, 0.82);
         rect.setInteractive({ useHandCursor: true });
         rect.on("pointerdown", () => this.callbacks.onMoveUnit?.(position));
-        this.dynamicLayer.add(rect);
+        this.highlightLayer.add(rect);
       });
 
       (highlights.attack ?? []).forEach((position) => {
@@ -420,7 +501,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           0xff7b7b,
           0.14,
         ).setStrokeStyle(1.5, 0xff9f7b, 0.42);
-        this.dynamicLayer.add(rect);
+        this.highlightLayer.add(rect);
       });
 
       (highlights.attackTargets ?? []).forEach((position) => {
@@ -433,7 +514,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           0xff7b7b,
           0.22,
         ).setStrokeStyle(2.5, 0xff7b7b, 0.88);
-        this.dynamicLayer.add(rect);
+        this.highlightLayer.add(rect);
       });
 
       (highlights.skill ?? []).forEach((position) => {
@@ -446,7 +527,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           0x8b5cf6,
           0.16,
         ).setStrokeStyle(1.5, 0xd8b4fe, 0.46);
-        this.dynamicLayer.add(rect);
+        this.highlightLayer.add(rect);
       });
 
       (highlights.skillTargets ?? []).forEach((position) => {
@@ -459,7 +540,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           0x8b5cf6,
           0.28,
         ).setStrokeStyle(2.5, 0xf8d798, 0.9);
-        this.dynamicLayer.add(rect);
+        this.highlightLayer.add(rect);
       });
 
       (highlights.strategy ?? []).forEach((position) => {
@@ -472,7 +553,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           0x7dd3fc,
           0.14,
         ).setStrokeStyle(1.5, 0x6ee7b7, 0.44);
-        this.dynamicLayer.add(rect);
+        this.highlightLayer.add(rect);
       });
 
       (highlights.strategyTargets ?? []).forEach((position) => {
@@ -485,7 +566,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           0x7dd3fc,
           0.24,
         ).setStrokeStyle(2.5, 0xa5f3fc, 0.9);
-        this.dynamicLayer.add(rect);
+        this.highlightLayer.add(rect);
       });
 
     }
@@ -529,7 +610,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           event?.stopPropagation?.();
           this.callbacks.onSetFacing?.(position.direction);
         });
-        this.dynamicLayer.add([rect, label]);
+        this.highlightLayer.add([rect, label]);
       });
     }
 
@@ -539,7 +620,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const line = this.add.line(0, 0, lineX, this.board.y, lineX, this.board.y + this.board.height, 0xf8d798, 0.22)
           .setOrigin(0, 0)
           .setLineWidth(1.5);
-        this.dynamicLayer.add(line);
+        this.gridLayer.add(line);
       }
 
       for (let y = 0; y <= this.getGridHeight(); y += 1) {
@@ -547,7 +628,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const line = this.add.line(0, 0, this.board.x, lineY, this.board.x + this.board.width, lineY, 0xf8d798, 0.22)
           .setOrigin(0, 0)
           .setLineWidth(1.5);
-        this.dynamicLayer.add(line);
+        this.gridLayer.add(line);
       }
     }
 
@@ -705,7 +786,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           });
         }
 
-        this.dynamicLayer.add(unitGroup);
+        this.unitLayer.add(unitGroup);
       });
     }
 
@@ -844,7 +925,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         },
       ).setOrigin(1, 0.5);
 
-      this.dynamicLayer.add([panel, summaryText, helpText]);
+      this.uiLayer.add([panel, summaryText, helpText]);
     }
 
     renderStatusIconLegend() {
@@ -872,25 +953,31 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         5,
       );
 
-      this.dynamicLayer.add([background, legendText]);
+      this.uiLayer.add([background, legendText]);
     }
 
     renderFloatingEffects() {
-      const lastAction = this.battleState.lastAction;
-      const actionSignature = buildActionSignature(lastAction);
+      const lastAction = this.getLastActionPresentation();
 
-      if (!lastAction || !lastAction.effects?.length || actionSignature === this.lastRenderedActionSignature) {
+      if (!this.hasNewActionPresentation(lastAction)) {
         return;
       }
 
-      this.lastRenderedActionSignature = actionSignature;
-      const targetUnits = this.battleState.units.filter((unit) => lastAction.targetUnitIds?.includes(unit.id));
+      const actionEffects = this.getActionPresentationEffects(lastAction);
 
+      if (!actionEffects.length) {
+        return;
+      }
+
+      const targetUnitIds = this.getActionPresentationTargets(lastAction);
+      const targetUnits = this.battleState.units.filter((unit) => targetUnitIds.includes(unit.id));
+
+      // Current patch intentionally preserves immediate rendering behavior.
       targetUnits.forEach((unit) => {
         const point = this.getUnitPoint(unit);
-        const flashColor = lastAction.type === "buff" ? 0x86efac : 0xffd166;
+        const flashColor = this.getActionPresentationKind(lastAction) === "buff" ? 0x86efac : 0xffd166;
         const flash = this.add.circle(point.x, point.y, 42, flashColor, 0.2);
-        this.dynamicLayer.add(flash);
+        this.effectLayer.add(flash);
         this.cameras.main.shake(90, 0.0018, true);
 
         this.tweens.add({
@@ -902,7 +989,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         });
       });
 
-      lastAction.effects.forEach((effect, index) => {
+      actionEffects.forEach((effect, index) => {
         const unit = this.battleState.units.find((entry) => entry.id === effect.unitId);
         const point = unit ? this.getUnitPoint(unit) : { x: this.scale.width / 2, y: 110 };
         const style = getEffectStyle(effect.kind);
@@ -916,7 +1003,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           align: "center",
         }).setOrigin(0.5, 0.5);
 
-        this.dynamicLayer.add(floatingText);
+        this.effectLayer.add(floatingText);
         this.tweens.add({
           targets: floatingText,
           y: floatingText.y - 34,
@@ -926,6 +1013,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           onComplete: () => floatingText.destroy(),
         });
       });
+
+      this.markActionPresentationRendered(lastAction);
     }
   };
 }

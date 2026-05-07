@@ -102,6 +102,27 @@
 - Confirmed `node --check js/phaser/battle_scene.js` passed.
 - User manual browser QA passed with no visible regressions.
 
+### v0.3-7c Terrain Data Scaffold
+- Added `data/battle_terrain.js`.
+- Added `terrainTypes` for plain, forest, mountain, river, bridge, wall, and coast.
+- Added helper functions for terrain lookup, plain terrain map creation, terrain map normalization, passability, move cost, and defense bonus access.
+- Attached default plain `terrainMap` in `createInitialBattleState()`.
+- Confirmed terrain has no gameplay or visual effect yet.
+- Confirmed `node --check` passed for `data/battle_terrain.js` and `js/core/battle_state.js`.
+- User manual browser QA passed with no visible regressions.
+
+### v0.3-7d Action Presentation Queue Review
+- Reviewed current action presentation flow.
+- Confirmed `battleState.lastAction` feeds `renderFloatingEffects()`.
+- Confirmed `buildActionSignature()` plus `lastRenderedActionSignature` prevents duplicate floating text on redraw.
+- Confirmed `lastAction.effects` drives floating text content/style.
+- Confirmed `lastAction.targetUnitIds` drives brief target flash/shake lookup.
+- Confirmed unique skill cut-ins are triggered outside `battle_scene.js`, mainly through `js/main.js` and `js/ui/battle_ui.js`.
+- Added action presentation helper methods.
+- Refactored `renderFloatingEffects()` minimally to use helpers while preserving current immediate rendering behavior.
+- Confirmed `node --check js/phaser/battle_scene.js` passed.
+- User manual browser QA passed with no visible regressions.
+
 ### Current Unique Skill Cut-in Text
 - `hakikjin_barrage` / `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `reform_order` / `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
@@ -119,8 +140,10 @@
 - User may overwrite PNGs manually later.
 
 ### Next TODO
-1. v0.3-7b Battle Layer Prep.
-2. Terrain data scaffold after layer prep.
-3. Action presentation queue review.
-4. Visual sharpness/audio passes later.
-5. 10-city / 20-hero expansion only after the 4-city / 8-hero MVP baseline stays stable.
+1. Decide next branch:
+   - Presentation Effects Mini Pass
+   - Visual Sharpness Pass Prep
+   - Terrain Rule Design Only
+2. Real animation queue/SFX/camera/projectile effects later.
+3. Terrain rules integration later only after dedicated design.
+4. 10-city / 20-hero expansion only after the 4-city / 8-hero MVP baseline stays stable.

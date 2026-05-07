@@ -1,6 +1,6 @@
-# SamWar_web Handoff - After v0.3-7a
+# SamWar_web Handoff - After v0.3-7d
 
-Current stable baseline: `v0.3-7a Battle Coordinate Adapter Prep`.
+Current stable baseline: `v0.3-7d Action Presentation Queue Review`.
 
 The 4-city / 8-hero PC web MVP loop is stable at the data and presentation level:
 world map -> battle -> victory/defeat result -> world map return.
@@ -23,10 +23,17 @@ world map -> battle -> victory/defeat result -> world map return.
 - Victory/defeat result text overlays are DOM-rendered over the result images.
 - Unique skill cut-ins show title, quote, and effect text as removable UI overlay.
 - Unique skill cut-in duration is now `2200ms`.
-- Battle coordinate adapter prep completed.
+- Battle coordinate adapter prep completed and manual QA passed.
 - grid-to-screen conversion centralized.
 - Direct coordinate math reduced in battle rendering.
-- Manual browser QA passed.
+- Battle render layer prep completed and manual QA passed.
+- Terrain data scaffold completed and manual QA passed.
+- `data/battle_terrain.js` added.
+- Default plain `terrainMap` attached to battle state.
+- Terrain remains inactive with no gameplay or visual effect.
+- Action presentation helper review completed and manual QA passed.
+- `renderFloatingEffects()` now uses presentation-facing helper methods.
+- Current immediate floating effect behavior and duplicate-prevention were preserved.
 
 ## Presentation Rules To Preserve
 - Do not bake text into cut-in/result image assets.
@@ -45,6 +52,11 @@ world map -> battle -> victory/defeat result -> world map return.
 - `skill.cutinDurationMs`: currently `2200` for all 8 unique skills
 
 ## Next Recommended Start
-1. v0.3-7b Battle Layer Prep.
-2. Keep future large battlefield / 2.5D work routed through coordinate adapter.
-3. Do not begin 10-city / 20-hero expansion yet.
+1. Choose between:
+   - v0.3-7e Presentation Effects Mini Pass
+   - v0.3-8a Visual Sharpness Pass Prep
+   - v0.3-8b Terrain Rule Design Only
+2. Keep future presentation work routed through action presentation helpers.
+3. Keep future large battlefield / 2.5D work routed through coordinate adapter and render layers.
+4. Keep terrain rules inactive until a dedicated terrain rules patch.
+5. Do not begin 10-city / 20-hero expansion yet.

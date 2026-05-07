@@ -52,6 +52,34 @@
 - [x] Manual browser QA passed.
 - Future regression reminder: any future battle rendering work must use the coordinate adapter instead of hard-coded grid-to-screen math.
 
+## v0.3-7c Terrain Data Scaffold QA
+- [x] Hanseong/Luoyang/Pyongyang/Kyoto battles enter normally.
+- [x] Unit positions look unchanged.
+- [x] Move/attack/skill/strategy highlights still align with tiles.
+- [x] Movement range and pathing behave exactly as before.
+- [x] Damage and defense behavior are unchanged.
+- [x] Auto battle behaves as before.
+- [x] Status icons and bottom legend still appear.
+- [x] Unique skill cut-ins still work.
+- [x] Victory/defeat result flow still returns to world map.
+- [x] No visible terrain UI appears yet.
+- [x] Manual browser QA passed.
+- Future regression reminder: `terrainMap` is currently inactive and must not affect movement, pathing, damage, defense, AI, or targeting until a dedicated terrain rules patch.
+
+## v0.3-7d Action Presentation QA
+- [x] Hanseong/Luoyang/Pyongyang/Kyoto battles enter normally.
+- [x] Normal attack floating damage/effect text still appears.
+- [x] Skill floating damage/effect text still appears.
+- [x] Strategy/failure/status floating text still appears if applicable.
+- [x] Duplicate floating text does not replay unexpectedly on redraw.
+- [x] Target flash/shake behavior still works.
+- [x] Unique skill cut-ins still work.
+- [x] Auto battle still progresses.
+- [x] Victory/defeat result flow still returns to world map.
+- [x] No visible presentation timing change was introduced.
+- [x] Manual browser QA passed.
+- Future regression reminder: future presentation work should use action presentation helpers and must not directly scatter `lastAction` parsing across render code.
+
 ## Skill Text Checks
 - `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`

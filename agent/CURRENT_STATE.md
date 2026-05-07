@@ -1,8 +1,8 @@
 # Current State
 
 ## Status
-- Current Version: `v0.3-7a Battle Coordinate Adapter Prep`
-- Status: `Stable 4-city / 8-hero PC web MVP baseline with coordinate adapter prep completed and manual browser QA passed.`
+- Current Version: `v0.3-7d Action Presentation Queue Review`
+- Status: `Stable 4-city / 8-hero PC web MVP baseline with coordinate adapter prep, render layer prep, inactive terrain data scaffold, and action presentation helper review completed. Manual browser QA passed.`
 - Main loop: world map -> battle -> victory/defeat result -> world map return
 
 ## Current 4-City MVP
@@ -26,6 +26,11 @@
 - One-line status legend at bottom of battle screen.
 - Battle coordinate adapter prep for future larger battlefields and 2.5D/isometric projection.
 - Centralized grid-to-screen rendering conversion in battle scene.
+- Battle render layer prep with named Phaser render layers.
+- Terrain data scaffold with default plain `terrainMap` attached to battle state.
+- Action presentation helper scaffold for future animation/SFX/camera/effect sequencing.
+- Floating effect rendering now reads through presentation-facing helper methods.
+- Duplicate floating text prevention remains preserved.
 
 ## Pyongyang System
 - `광개토대왕` uses `영락대업`.
@@ -94,6 +99,18 @@ Current skill text:
 - `yeongnak_grand_legacy` / `영락대업`: `전군이여! 나를 믿고 따르라!`, `(아군 공격력 상승)`
 - `black_white_scheming` / `흑백이간`: `내 비책! 서로를 죽일 것이다!`, `(적 충돌 · 혼란/동요)`
 
+## Terrain Data
+- `terrainTypes` are defined in `data/battle_terrain.js`.
+- `terrainMap` is attached in `createInitialBattleState()`.
+- All current MVP battle tiles default to `"plain"`.
+- Terrain currently has no gameplay or visual effect.
+
+## Action Presentation
+- `battleState.lastAction` is still the current presentation snapshot.
+- `renderFloatingEffects()` now uses helper methods such as `getLastActionPresentation()`, `hasNewActionPresentation()`, and `getActionPresentationEffects()`.
+- Current rendering behavior remains immediate; no real animation queue exists yet.
+- Unique skill cut-ins are triggered outside `battle_scene.js` through the main/UI flow.
+
 ## Visual Decisions To Preserve
 - Cut-in/result image assets are not edited for text.
 - Text overlays remain removable DOM UI.
@@ -105,8 +122,10 @@ Current skill text:
 - Do not casually change Phaser render config, texture filtering, `pixelArt`, `roundPixels`, or mipmap settings.
 
 ## Known Future Work
-- Next recommended step: `v0.3-7b Battle Layer Prep`.
-- Future large battlefield / 2.5D work should continue through the coordinate adapter, not direct screen coordinate math.
+- Future animation queue/SFX/camera/projectile work should build on the action presentation helper flow.
+- Do not change battle logic or timing until a dedicated presentation-queue patch.
+- Terrain effects must remain inactive until a dedicated terrain rules patch.
+- Future large battlefield / 2.5D work should continue through the coordinate adapter and render layers.
 - Later audio pass: skill SFX, voice AI from `cutinQuote`, possible `cutinVoice` / `sfx` fields.
 - Later visual sharpness pass after MVP stabilizes.
 - 10-city / 20-hero expansion only after 4-city / 8-hero systems are accepted.

@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.3-7d Action Presentation Queue Review
+- Added presentation-facing action helper methods in `js/phaser/battle_scene.js`.
+- Added `getLastActionPresentation()`, `getActionPresentationSignature()`, `hasNewActionPresentation()`, `markActionPresentationRendered()`, `getActionPresentationEffects()`, `getActionPresentationTargets()`, and `getActionPresentationKind()`.
+- Refactored `renderFloatingEffects()` to use action presentation helpers.
+- Preserved immediate floating effect rendering behavior.
+- Preserved duplicate floating text prevention.
+- Confirmed unique skill cut-ins are triggered outside `battle_scene.js` through main/UI flow.
+- No real animation queue, SFX, projectile effects, async sequencing, timing changes, battle logic, AI, skill data, cut-in data, result overlay, asset, Phaser render config, or balance changes.
+- `node --check js/phaser/battle_scene.js` passed.
+- Manual browser QA passed.
+
+## v0.3-7c Terrain Data Scaffold
+- Added `data/battle_terrain.js`.
+- Added `terrainTypes` and terrain helper functions.
+- Attached default `terrainMap` to initial battle state in `js/core/battle_state.js`.
+- All current MVP battle tiles default to plain.
+- Terrain data is currently inactive and has no gameplay or visual effect.
+- No movement, pathing, defense, attack, AI, skill, cut-in, asset, Phaser render config, or balance changes.
+- `node --check` passed for `data/battle_terrain.js` and `js/core/battle_state.js`.
+- Manual browser QA passed.
+
 ## v0.3-7a Battle Coordinate Adapter Prep
 - Added/updated battle coordinate adapter methods in `js/phaser/battle_scene.js`.
 - Centralized grid-to-screen conversion.

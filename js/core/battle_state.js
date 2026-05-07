@@ -1,4 +1,5 @@
 import { battleRosters, battleSpawnPositions } from "../../data/battle_rosters.js";
+import { normalizeTerrainMap } from "../../data/battle_terrain.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
 import { strategies } from "../../data/strategies.js";
@@ -104,6 +105,10 @@ export function createInitialBattleState({
   const openingLog = resolvedBattleContext.type === "defense"
     ? `${attackerCity.name}의 침공을 ${defenderCity.name}에서 맞아 방어전을 개시했습니다.`
     : `${attackerCity.name}에서 ${defenderCity.name} 공격을 개시했습니다.`;
+  const grid = {
+    width: BATTLE_GRID_WIDTH,
+    height: BATTLE_GRID_HEIGHT,
+  };
 
   return {
     id: `battle-${Date.now()}-${battleSequence}`,
@@ -121,10 +126,9 @@ export function createInitialBattleState({
     phase: "select",
     log: [openingLog],
     lastAction: null,
-    grid: {
-      width: BATTLE_GRID_WIDTH,
-      height: BATTLE_GRID_HEIGHT,
-    },
+    grid,
+    // Terrain is scaffold data only for now; movement, combat, AI, and rendering do not consume it yet.
+    terrainMap: normalizeTerrainMap(null, grid.width, grid.height),
     skills,
     strategies,
     highlights: {
