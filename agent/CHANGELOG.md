@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3-7a Battle Coordinate Adapter Prep
+- Added/updated battle coordinate adapter methods in `js/phaser/battle_scene.js`.
+- Centralized grid-to-screen conversion.
+- Replaced direct coordinate math in battle backdrop, highlights, facing highlights, grid lines, and unit depth ordering.
+- Prepared battle rendering for future larger battlefields and 2.5D/isometric projection.
+- No battle logic, AI, skill data, cut-in data, assets, or balance changes.
+- `node --check js/phaser/battle_scene.js` passed.
+- Manual browser QA passed.
+
 ## v0.3-5a Pyongyang Hero Data & Skills
 - Added Pyongyang defenders `광개토대왕` and `도림`.
 - Added and connected Pyongyang battle roster.

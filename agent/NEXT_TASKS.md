@@ -1,33 +1,37 @@
 # Next Tasks
 
-Current baseline: `v0.3-6i Skill Cut-in Quote Layout + Duration Polish`.
+Current baseline: `v0.3-7a Battle Coordinate Adapter Prep`.
 
 ## Recommended Next Order
-1. Manual QA latest cut-in layout.
-   - Confirm quote position at visual center, slightly below center.
-   - Confirm skill title/effect remain lower center.
-   - Confirm player and enemy cut-ins both show title, quote, and effect text.
-   - Confirm `2200ms` duration is readable but not too slow.
+1. v0.3-7b Battle Layer Prep.
+   - Prepare battle rendering layers for future larger maps, effects, camera work, and 2.5D/isometric depth ordering.
+   - Suggested layers: background/board, highlight, unit, effect, UI.
 
-2. Minor timing / typography polish if needed.
-   - If too short or too long, tune unique cut-in duration within `2000-2400ms`.
-   - If quote overlaps important face/weapon areas, adjust quote Y-position slightly.
-   - Do not modify image assets for text.
+2. Terrain data scaffold.
+   - Add lightweight terrain data shape after layer prep.
+   - Keep current 14x8 field as the small test battlefield.
 
-3. Decide the next feature after 4-city / 8-hero MVP QA.
-   - Option A: Audio pass with unique skill SFX and later voice.
-   - Option B: Visual sharpness pass.
-   - Option C: Next gameplay/content feature.
+3. Action presentation queue review.
+   - Review sequencing for cut-ins, effects, floating text, and result flow.
+   - Preserve current battle logic and balance.
 
-4. Later visual sharpness pass before 10-city / 20-hero expansion.
+4. Visual sharpness pass.
    - Phaser canvas text sharpness.
    - Battlefield portrait sharpness.
    - Canvas/CSS scaling rules.
    - Integer text coordinates.
    - Possible DOM split for text-heavy UI.
 
-5. Later content expansion.
+5. Audio pass.
+   - Add SFX per unique skill.
+   - Use `cutinQuote` lines for voice AI prompts.
+   - Consider fields such as `cutinVoice` or `sfx`.
+
+6. Later content expansion.
    - Expand to 10 cities / 20 heroes only after the 4-city / 8-hero rules, assets, and presentation conventions are accepted.
+
+## Completed QA
+- Latest cut-in layout manual QA passed.
 
 ## Later Audio Pass Notes
 - Add SFX per unique skill.

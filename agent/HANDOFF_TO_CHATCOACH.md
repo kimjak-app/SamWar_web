@@ -1,6 +1,6 @@
-# SamWar_web Handoff - After v0.3-6i
+# SamWar_web Handoff - After v0.3-7a
 
-Current stable baseline: `v0.3-6i Skill Cut-in Quote Layout + Duration Polish`.
+Current stable baseline: `v0.3-7a Battle Coordinate Adapter Prep`.
 
 The 4-city / 8-hero PC web MVP loop is stable at the data and presentation level:
 world map -> battle -> victory/defeat result -> world map return.
@@ -23,6 +23,10 @@ world map -> battle -> victory/defeat result -> world map return.
 - Victory/defeat result text overlays are DOM-rendered over the result images.
 - Unique skill cut-ins show title, quote, and effect text as removable UI overlay.
 - Unique skill cut-in duration is now `2200ms`.
+- Battle coordinate adapter prep completed.
+- grid-to-screen conversion centralized.
+- Direct coordinate math reduced in battle rendering.
+- Manual browser QA passed.
 
 ## Presentation Rules To Preserve
 - Do not bake text into cut-in/result image assets.
@@ -41,7 +45,6 @@ world map -> battle -> victory/defeat result -> world map return.
 - `skill.cutinDurationMs`: currently `2200` for all 8 unique skills
 
 ## Next Recommended Start
-1. Manual browser QA for latest v0.3-6i cut-in layout and `2200ms` duration.
-2. If needed, tune duration within `2000-2400ms`.
-3. Decide whether next feature is audio pass, visual sharpness pass, or next content expansion.
-4. Do not start 10-city / 20-hero expansion until 4-city / 8-hero QA is accepted.
+1. v0.3-7b Battle Layer Prep.
+2. Keep future large battlefield / 2.5D work routed through coordinate adapter.
+3. Do not begin 10-city / 20-hero expansion yet.

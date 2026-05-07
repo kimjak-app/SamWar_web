@@ -38,6 +38,20 @@
 - Cut-in text disappears with the cut-in.
 - Existing cut-in images are unchanged.
 
+## v0.3-7a Coordinate Adapter QA
+- [x] Hanseong/Luoyang/Pyongyang/Kyoto battles enter normally.
+- [x] Unit positions look unchanged.
+- [x] Move highlights align with tiles.
+- [x] Attack/skill/strategy highlights align with tiles.
+- [x] Facing selection highlights align with tiles.
+- [x] Unit click, enemy click, and skill target click still work.
+- [x] Status icons still appear in the correct position.
+- [x] Bottom status legend still appears.
+- [x] Unique skill cut-ins still work.
+- [x] Victory/defeat result flow still returns to world map.
+- [x] Manual browser QA passed.
+- Future regression reminder: any future battle rendering work must use the coordinate adapter instead of hard-coded grid-to-screen math.
+
 ## Skill Text Checks
 - `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`

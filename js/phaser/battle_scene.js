@@ -168,11 +168,67 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.missingBackgroundWarningShown = false;
     }
 
-    getUnitPoint(unit) {
+    getGridWidth() {
+      const gridWidth = this.battleState?.grid?.width;
+      return Number.isFinite(gridWidth) && gridWidth > 0 ? gridWidth : 1;
+    }
+
+    getGridHeight() {
+      const gridHeight = this.battleState?.grid?.height;
+      return Number.isFinite(gridHeight) && gridHeight > 0 ? gridHeight : 1;
+    }
+
+    configureBattleView() {
+      // Current mode keeps the 2D orthogonal MVP layout.
+      // Future large battlefield / 2.5D iso projection should change this adapter, not battle logic.
+      this.cellWidth = this.board.width / this.getGridWidth();
+      this.cellHeight = this.board.height / this.getGridHeight();
+    }
+
+    gridToScreen(x, y) {
       return {
-        x: this.board.x + this.cellWidth * unit.x + this.cellWidth / 2,
-        y: this.board.y + this.cellHeight * unit.y + this.cellHeight / 2,
+        x: this.board.x + this.cellWidth * x + this.cellWidth / 2,
+        y: this.board.y + this.cellHeight * y + this.cellHeight / 2,
       };
+    }
+
+    getTileCenter(position) {
+      return this.gridToScreen(position.x, position.y);
+    }
+
+    getUnitPoint(unit) {
+      return this.gridToScreen(unit.x, unit.y);
+    }
+
+    getTileRect(position, inset = 0) {
+      const center = this.getTileCenter(position);
+
+      return {
+        x: center.x,
+        y: center.y,
+        width: this.cellWidth - inset,
+        height: this.cellHeight - inset,
+      };
+    }
+
+    getGridLineX(x) {
+      return this.board.x + this.cellWidth * x;
+    }
+
+    getGridLineY(y) {
+      return this.board.y + this.cellHeight * y;
+    }
+
+    getBoardCenter() {
+      return {
+        x: this.board.x + this.board.width / 2,
+        y: this.board.y + this.board.height / 2,
+      };
+    }
+
+    getDepthForGridPosition(x, y) {
+      // Safe for current 2D and prepares for future 2.5D depth ordering.
+      return y * 100 + x;
     }
 
     getPortraitTextureKey(unit) {
@@ -230,8 +286,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         width: width - 184,
         height: height - 210,
       };
-      this.cellWidth = this.board.width / this.battleState.grid.width;
-      this.cellHeight = this.board.height / this.battleState.grid.height;
+      this.configureBattleView();
 
       this.cameras.main.setBackgroundColor("#081018");
 
@@ -299,10 +354,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
     }
 
     renderBattlefieldBackdrop() {
+      const boardCenter = this.getBoardCenter();
+
       if (this.textures.exists(BATTLEFIELD_KEY)) {
         const battlefieldImage = this.add.image(
-          this.board.x + this.board.width / 2,
-          this.board.y + this.board.height / 2,
+          boardCenter.x,
+          boardCenter.y,
           BATTLEFIELD_KEY,
         ).setOrigin(0.5, 0.5);
         battlefieldImage.displayWidth = this.board.width;
@@ -311,8 +368,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         this.dynamicLayer.add(battlefieldImage);
       } else if (this.textures.exists(BATTLEFIELD_FALLBACK_KEY)) {
         const battlefieldImage = this.add.image(
-          this.board.x + this.board.width / 2,
-          this.board.y + this.board.height / 2,
+          boardCenter.x,
+          boardCenter.y,
           BATTLEFIELD_FALLBACK_KEY,
         ).setOrigin(0.5, 0.5);
         battlefieldImage.displayWidth = this.board.width;
@@ -325,8 +382,8 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       }
 
       const readabilityOverlay = this.add.rectangle(
-        this.board.x + this.board.width / 2,
-        this.board.y + this.board.height / 2,
+        boardCenter.x,
+        boardCenter.y,
         this.board.width,
         this.board.height,
         0x081018,
@@ -339,11 +396,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       const highlights = this.battleState.highlights ?? {};
 
       (highlights.move ?? []).forEach((position) => {
+        const tileRect = this.getTileRect(position, 8);
         const rect = this.add.rectangle(
-          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
-          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
-          this.cellWidth - 8,
-          this.cellHeight - 8,
+          tileRect.x,
+          tileRect.y,
+          tileRect.width,
+          tileRect.height,
           0x2c9fff,
           0.3,
         ).setStrokeStyle(2, 0x5bb8ff, 0.82);
@@ -353,11 +411,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       });
 
       (highlights.attack ?? []).forEach((position) => {
+        const tileRect = this.getTileRect(position, 10);
         const rect = this.add.rectangle(
-          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
-          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
-          this.cellWidth - 10,
-          this.cellHeight - 10,
+          tileRect.x,
+          tileRect.y,
+          tileRect.width,
+          tileRect.height,
           0xff7b7b,
           0.14,
         ).setStrokeStyle(1.5, 0xff9f7b, 0.42);
@@ -365,11 +424,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       });
 
       (highlights.attackTargets ?? []).forEach((position) => {
+        const tileRect = this.getTileRect(position, 10);
         const rect = this.add.rectangle(
-          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
-          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
-          this.cellWidth - 10,
-          this.cellHeight - 10,
+          tileRect.x,
+          tileRect.y,
+          tileRect.width,
+          tileRect.height,
           0xff7b7b,
           0.22,
         ).setStrokeStyle(2.5, 0xff7b7b, 0.88);
@@ -377,11 +437,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       });
 
       (highlights.skill ?? []).forEach((position) => {
+        const tileRect = this.getTileRect(position, 14);
         const rect = this.add.rectangle(
-          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
-          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
-          this.cellWidth - 14,
-          this.cellHeight - 14,
+          tileRect.x,
+          tileRect.y,
+          tileRect.width,
+          tileRect.height,
           0x8b5cf6,
           0.16,
         ).setStrokeStyle(1.5, 0xd8b4fe, 0.46);
@@ -389,11 +450,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       });
 
       (highlights.skillTargets ?? []).forEach((position) => {
+        const tileRect = this.getTileRect(position, 12);
         const rect = this.add.rectangle(
-          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
-          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
-          this.cellWidth - 12,
-          this.cellHeight - 12,
+          tileRect.x,
+          tileRect.y,
+          tileRect.width,
+          tileRect.height,
           0x8b5cf6,
           0.28,
         ).setStrokeStyle(2.5, 0xf8d798, 0.9);
@@ -401,11 +463,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       });
 
       (highlights.strategy ?? []).forEach((position) => {
+        const tileRect = this.getTileRect(position, 12);
         const rect = this.add.rectangle(
-          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
-          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
-          this.cellWidth - 12,
-          this.cellHeight - 12,
+          tileRect.x,
+          tileRect.y,
+          tileRect.width,
+          tileRect.height,
           0x7dd3fc,
           0.14,
         ).setStrokeStyle(1.5, 0x6ee7b7, 0.44);
@@ -413,11 +476,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       });
 
       (highlights.strategyTargets ?? []).forEach((position) => {
+        const tileRect = this.getTileRect(position, 12);
         const rect = this.add.rectangle(
-          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
-          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
-          this.cellWidth - 12,
-          this.cellHeight - 12,
+          tileRect.x,
+          tileRect.y,
+          tileRect.width,
+          tileRect.height,
           0x7dd3fc,
           0.24,
         ).setStrokeStyle(2.5, 0xa5f3fc, 0.9);
@@ -430,11 +494,12 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       const highlights = this.battleState.highlights ?? {};
 
       (highlights.facing ?? []).forEach((position) => {
+        const tileRect = this.getTileRect(position, 12);
         const rect = this.add.rectangle(
-          this.board.x + this.cellWidth * position.x + this.cellWidth / 2,
-          this.board.y + this.cellHeight * position.y + this.cellHeight / 2,
-          this.cellWidth - 12,
-          this.cellHeight - 12,
+          tileRect.x,
+          tileRect.y,
+          tileRect.width,
+          tileRect.height,
           0xf8d798,
           0.22,
         ).setStrokeStyle(2, 0xf8d798, 0.88);
@@ -469,16 +534,16 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
     }
 
     renderGrid() {
-      for (let x = 0; x <= this.battleState.grid.width; x += 1) {
-        const lineX = this.board.x + this.cellWidth * x;
+      for (let x = 0; x <= this.getGridWidth(); x += 1) {
+        const lineX = this.getGridLineX(x);
         const line = this.add.line(0, 0, lineX, this.board.y, lineX, this.board.y + this.board.height, 0xf8d798, 0.22)
           .setOrigin(0, 0)
           .setLineWidth(1.5);
         this.dynamicLayer.add(line);
       }
 
-      for (let y = 0; y <= this.battleState.grid.height; y += 1) {
-        const lineY = this.board.y + this.cellHeight * y;
+      for (let y = 0; y <= this.getGridHeight(); y += 1) {
+        const lineY = this.getGridLineY(y);
         const line = this.add.line(0, 0, this.board.x, lineY, this.board.x + this.board.width, lineY, 0xf8d798, 0.22)
           .setOrigin(0, 0)
           .setLineWidth(1.5);
@@ -499,6 +564,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const unitPoint = this.getUnitPoint(unit);
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
+        unitGroup.setDepth(200 + this.getDepthForGridPosition(unit.x, unit.y));
         const selectionRing = this.add.ellipse(0, 26, 86, 26, 0xf8d798, unit.id === selectedUnitId ? 0.24 : 0)
           .setStrokeStyle(unit.id === selectedUnitId ? 3 : 2, 0xf8d798, unit.id === selectedUnitId ? 0.85 : 0.28);
         const facingText = this.add.text(0, -70, getDirectionLabel(unit.facing), {

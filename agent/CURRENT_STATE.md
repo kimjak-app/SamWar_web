@@ -1,8 +1,8 @@
 # Current State
 
 ## Status
-- Current Version: `v0.3-6i Skill Cut-in Quote Layout + Duration Polish`
-- Status: `Stable 4-city / 8-hero PC web MVP baseline, latest cut-in layout pending manual browser QA`
+- Current Version: `v0.3-7a Battle Coordinate Adapter Prep`
+- Status: `Stable 4-city / 8-hero PC web MVP baseline with coordinate adapter prep completed and manual browser QA passed.`
 - Main loop: world map -> battle -> victory/defeat result -> world map return
 
 ## Current 4-City MVP
@@ -24,6 +24,8 @@
 - Pyongyang hero data, skills, roster, and visual asset wiring.
 - Status icon overlay on battlefield units.
 - One-line status legend at bottom of battle screen.
+- Battle coordinate adapter prep for future larger battlefields and 2.5D/isometric projection.
+- Centralized grid-to-screen rendering conversion in battle scene.
 
 ## Pyongyang System
 - `광개토대왕` uses `영락대업`.
@@ -103,8 +105,8 @@ Current skill text:
 - Do not casually change Phaser render config, texture filtering, `pixelArt`, `roundPixels`, or mipmap settings.
 
 ## Known Future Work
-- Manual browser QA for v0.3-6i quote layout and `2200ms` duration.
-- Tune cut-in duration if needed within `2000-2400ms`.
+- Next recommended step: `v0.3-7b Battle Layer Prep`.
+- Future large battlefield / 2.5D work should continue through the coordinate adapter, not direct screen coordinate math.
 - Later audio pass: skill SFX, voice AI from `cutinQuote`, possible `cutinVoice` / `sfx` fields.
 - Later visual sharpness pass after MVP stabilizes.
 - 10-city / 20-hero expansion only after 4-city / 8-hero systems are accepted.

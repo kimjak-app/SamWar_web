@@ -94,6 +94,14 @@
 - Increased unique skill cut-in duration to `2200ms`.
 - Images are not modified; text is overlay only.
 
+### v0.3-7a Battle Coordinate Adapter Prep
+- Added `getGridWidth`/`getGridHeight`/`configureBattleView`/`gridToScreen`/`getTileCenter`/`getTileRect`/`getGridLineX`/`getGridLineY`/`getBoardCenter`/`getDepthForGridPosition`.
+- Kept `getUnitPoint` as a wrapper around `gridToScreen`.
+- Replaced repeated direct coordinate math in battle scene rendering.
+- Added unit depth ordering preparation with `getDepthForGridPosition`.
+- Confirmed `node --check js/phaser/battle_scene.js` passed.
+- User manual browser QA passed with no visible regressions.
+
 ### Current Unique Skill Cut-in Text
 - `hakikjin_barrage` / `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `reform_order` / `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
@@ -111,8 +119,8 @@
 - User may overwrite PNGs manually later.
 
 ### Next TODO
-1. Final browser QA for latest v0.3-6i cut-in quote layout and `2200ms` duration.
-2. Tune duration to `2000-2400ms` if needed.
-3. Later audio pass for unique SFX and possible voice generation from `cutinQuote`.
-4. Later visual sharpness pass before 10-city / 20-hero expansion.
-5. Expand to 10 cities / 20 heroes only after 4-city / 8-hero MVP function set stabilizes.
+1. v0.3-7b Battle Layer Prep.
+2. Terrain data scaffold after layer prep.
+3. Action presentation queue review.
+4. Visual sharpness/audio passes later.
+5. 10-city / 20-hero expansion only after the 4-city / 8-hero MVP baseline stays stable.
