@@ -1,5 +1,125 @@
 # Changelog
 
+## v0.4-3 Stable Region-Based Hero Control + Directional Battle Spawn + Hero Transfer MVP
+- Closed the v0.4 region-based hero-control line as the current stable baseline.
+- SamWar_web is now documented as a region-based hero strategy MVP:
+  - The player controls regions, not a permanent ruler character.
+  - Heroes are stationed in regions through `hero.locationCityId`.
+  - A city owner controls heroes stationed in that city.
+- Current core loop:
+  1. Select player-owned region.
+  2. Attack adjacent enemy region.
+  3. Win battle.
+  4. Capture city.
+  5. Stationed enemy heroes switch to player side.
+  6. Heroes remain stationed in conquered city.
+  7. Player can transfer heroes between player-owned cities.
+  8. Deployment candidates come from the selected origin city's stationed heroes.
+  9. Battle spawn direction follows world-map city direction.
+- Manual QA confirmed v0.4-3 as stable.
+
+## v0.4-3a Selected City Stationed Heroes UI
+- Selected city panel now shows stationed heroes under `주둔 무장`.
+- Uses mutable runtime hero state:
+  - `hero.side`
+  - `hero.locationCityId`
+- Shows all heroes stationed in the selected city.
+- Uses portrait thumbnails when available.
+- Empty state: `주둔 무장 없음`.
+- Reinforces conquest, recruitment, and hero transfer results in the world map UI.
+- No battle, transfer, recruitment, deployment, AI, balance, render, terrain, or asset changes.
+
+## v0.4-3 Hero Transfer MVP
+- Added instant hero transfer between player-owned cities.
+- Transfer rules:
+  - Only player-side heroes can be transferred.
+  - Heroes can move only from a player-owned city.
+  - Heroes can move only to another player-owned city.
+  - Transfer is instant.
+  - No turn cost, troop transfer, food cost, travel time, fatigue, loyalty, persuasion, governor/chancellor, or domestic-affairs integration.
+- Added helpers:
+  - `getTransferableHeroesFromCity(cityId, factionId)`
+  - `getFactionOwnedDestinationCities(cities, factionId, excludeCityId)`
+  - `transferHeroToCity(heroId, targetCityId, cities, factionId)`
+- Added app state actions:
+  - `openHeroTransfer(appState, sourceCityId)`
+  - `cancelHeroTransfer(appState)`
+  - `selectHeroTransferHero(appState, heroId)`
+  - `selectHeroTransferTargetCity(appState, targetCityId)`
+  - `confirmHeroTransfer(appState, heroId, targetCityId)`
+- Added UI:
+  - `renderHeroTransferPanel()`
+  - selected city panel button: `무장 이동`
+  - centered modal for hero transfer
+  - selectable source-city heroes
+  - selectable player-owned destination cities
+- Manual QA confirmed:
+  - After conquering Luoyang, `관우` / `장비` are stationed in Luoyang.
+  - `관우` can be transferred from Luoyang to Hanseong.
+  - Hanseong deployment then shows `이순신` / `정도전` / `관우`.
+  - Luoyang deployment no longer shows `관우`.
+  - 3-hero deployment and battle entry work.
+  - Region-based battle spawn still works after transfer.
+
+## v0.4-2c Battle Spawn Direction Fix
+- Battle spawn positions are no longer determined by hero ID.
+- `buildBattleUnit(heroId, spawnPosition, facing)` now uses provided role-based spawn data.
+- Added helpers:
+  - `getBattleSpawnSides(attackerCity, defenderCity)`
+  - `getFacingForBattleSide(side)`
+  - `getSpawnSlot(side, index)`
+- Spawn direction follows world-map city x positions:
+  - attacker city right of defender city -> attacker right / defender left
+  - attacker city left of defender city -> attacker left / defender right
+  - fallback -> attacker left / defender right
+- Player is no longer assumed to always spawn left.
+- Enemy is no longer assumed to always spawn right.
+- Manual QA confirmed:
+  - Hanseong -> Pyongyang: attacker left / defender right
+  - Pyongyang -> Luoyang: attacker right / defender left
+  - units do not overlap
+  - units face each other
+
+## v0.4-2b Generic Ally Buff Battle Log Fix
+- Generalized `getAllyAttackBuffOpeningLog(casterUnit, skill)`.
+- Removed hardcoded Jeong Do-jeon, `개혁령`, `영락대업`, and `yeongnak_grand_legacy` battle-log text.
+- Final log format:
+  - `${casterUnit.name}: ${skill.name} 발동. 아군 공격력 +${buffPercent}% · ${duration}턴`
+- Uses actual actor and skill data.
+- Percent is calculated from `skill.buffAttackBonus`.
+- Duration is read from `skill.duration`.
+
+## v0.4-2a Buff Source Label + Selected Attack Origin Fix
+- Ally attack buff status labels now use source skill names.
+- Added status fields:
+  - `buffAttackSourceSkillId`
+  - `buffAttackSourceSkillName`
+- `정도전` / `개혁령` displays as `개혁령 효과 +15% · 2턴`.
+- `광개토대왕` / `영락대업` displays as `영락대업 효과 +20% · 2턴`.
+- Future `effectType: "ally_attack_buff"` skills should display their own skill name.
+- Added `selection.originCityId`.
+- Selecting a player-owned city stores it as preferred attack origin.
+- Clicking an enemy city preserves the previous selected origin.
+- If selected origin is valid and adjacent, attack starts from that city.
+- Fallback still finds a valid adjacent player-owned city if selected origin is invalid.
+
+## v0.4-2 Region-Based Hero Control MVP
+- Added runtime `hero.locationCityId` support.
+- Initial hero locations are initialized from `battleRosters.cityDefenderRosters`.
+- Deployment candidates are no longer hardcoded to Hanseong.
+- Player attack deployment candidates now come from:
+  - `hero.side === "player" && hero.locationCityId === originCityId`
+- If a city is captured, stationed heroes switch to the conquering faction and remain in that city.
+- If Hanseong is captured by enemy, `이순신` / `정도전` become enemy-side and stay in Hanseong.
+- If Pyongyang is conquered by player, `광개토대왕` / `도림` become player-side and stay in Pyongyang.
+
+## v0.4-1 Victory Hero Recruitment MVP
+- When a city is conquered, heroes stationed in that city switch to the conquering faction.
+- Added `recruitCityHeroesToFaction(cityId, factionId)`.
+- `recruitCityHeroesToFaction()` now delegates to `convertCityHeroesToFaction(cityId, factionId)`.
+- Enemy city heroes automatically become player-side after player conquest.
+- No loyalty, persuasion, chance, escape, execution, or recruitment UI yet.
+
 ## v0.4-0b Enemy Move-Then-Act AI Fix
 - Fixed enemy move actions incorrectly consuming the unit action.
 - Enemy movement now sets `hasMoved=true` while preserving `hasActed=false`.

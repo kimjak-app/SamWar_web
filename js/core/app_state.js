@@ -7,12 +7,15 @@ import {
   ENEMY_INVASION_CHANCE,
   canAttackCity,
   convertCityHeroesToFaction,
+  getFactionOwnedDestinationCities,
   getAttackSourceCity,
   getHeroIdsBySideAndLocation,
+  getTransferableHeroesFromCity,
   initializeHeroLocationsFromRosters,
   occupyCity,
   recruitCityHeroesToFaction,
   rollEnemyInvasion,
+  transferHeroToCity,
 } from "./world_rules.js";
 
 const DEFAULT_SELECTED_CITY_ID = "hanseong";
@@ -36,6 +39,7 @@ export function createInitialAppState() {
     battle: null,
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
+    pendingHeroTransfer: null,
     world: {
       cities,
       factions,
@@ -65,6 +69,7 @@ export function selectCity(appState, cityId) {
       ? null
       : appState.pendingBattleChoice,
     pendingHeroDeployment: null,
+    pendingHeroTransfer: null,
   };
 }
 
@@ -82,6 +87,7 @@ function advanceWorldTurn(appState, overrides = {}) {
     },
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
+    pendingHeroTransfer: null,
     ...overrides,
   };
 }
@@ -92,6 +98,51 @@ function getSkillName(skillId) {
 
 function getPlayerDeploymentCandidateIds(originCityId) {
   return getHeroIdsBySideAndLocation(originCityId, "player");
+}
+
+function toTransferHeroSummary(hero) {
+  return {
+    id: hero.id,
+    name: hero.name,
+    role: hero.role,
+    troops: hero.troops,
+    maxTroops: hero.maxTroops,
+    attack: hero.attack,
+    defense: hero.defense,
+    intelligence: hero.intelligence,
+    portraitImage: hero.portraitImage ?? null,
+    skillName: getSkillName(hero.skillId),
+  };
+}
+
+function toDestinationCitySummary(city) {
+  return {
+    id: city.id,
+    name: city.name,
+    region: city.region,
+  };
+}
+
+function buildHeroTransfer(appState, sourceCityId) {
+  const sourceCity = appState.world.cities.find((city) => city.id === sourceCityId) ?? null;
+
+  if (!sourceCity || sourceCity.ownerFactionId !== appState.meta.playerFactionId) {
+    return null;
+  }
+
+  return {
+    sourceCityId: sourceCity.id,
+    sourceCityName: sourceCity.name,
+    heroes: getTransferableHeroesFromCity(sourceCity.id, appState.meta.playerFactionId)
+      .map(toTransferHeroSummary),
+    destinationCities: getFactionOwnedDestinationCities(
+      appState.world.cities,
+      appState.meta.playerFactionId,
+      sourceCity.id,
+    ).map(toDestinationCitySummary),
+    selectedHeroId: null,
+    selectedTargetCityId: null,
+  };
 }
 
 function buildHeroDeployment(appState, cityId) {
@@ -219,6 +270,7 @@ export function openHeroDeployment(appState, cityId) {
     appState.mode !== "world"
     || appState.world.turnOwner !== "player"
     || appState.world.pendingEnemyTurnResult
+    || appState.pendingHeroTransfer
   ) {
     return appState;
   }
@@ -233,6 +285,29 @@ export function openHeroDeployment(appState, cityId) {
     ...appState,
     pendingBattleChoice: null,
     pendingHeroDeployment,
+  };
+}
+
+export function openHeroTransfer(appState, sourceCityId) {
+  if (
+    appState.mode !== "world"
+    || appState.world.turnOwner !== "player"
+    || appState.pendingBattleChoice
+    || appState.pendingHeroDeployment
+    || appState.world.pendingEnemyTurnResult
+  ) {
+    return appState;
+  }
+
+  const pendingHeroTransfer = buildHeroTransfer(appState, sourceCityId);
+
+  if (!pendingHeroTransfer) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingHeroTransfer,
   };
 }
 
@@ -255,6 +330,75 @@ export function cancelHeroDeployment(appState) {
   return {
     ...appState,
     pendingHeroDeployment: null,
+  };
+}
+
+export function cancelHeroTransfer(appState) {
+  if (!appState.pendingHeroTransfer) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingHeroTransfer: null,
+  };
+}
+
+export function selectHeroTransferHero(appState, heroId) {
+  const pendingHeroTransfer = appState.pendingHeroTransfer;
+
+  if (!pendingHeroTransfer || !pendingHeroTransfer.heroes.some((hero) => hero.id === heroId)) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingHeroTransfer: {
+      ...pendingHeroTransfer,
+      selectedHeroId: heroId,
+    },
+  };
+}
+
+export function selectHeroTransferTargetCity(appState, targetCityId) {
+  const pendingHeroTransfer = appState.pendingHeroTransfer;
+
+  if (!pendingHeroTransfer || !pendingHeroTransfer.destinationCities.some((city) => city.id === targetCityId)) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingHeroTransfer: {
+      ...pendingHeroTransfer,
+      selectedTargetCityId: targetCityId,
+    },
+  };
+}
+
+export function confirmHeroTransfer(appState, heroId = null, targetCityId = null) {
+  const pendingHeroTransfer = appState.pendingHeroTransfer;
+  const selectedHeroId = heroId ?? pendingHeroTransfer?.selectedHeroId;
+  const selectedTargetCityId = targetCityId ?? pendingHeroTransfer?.selectedTargetCityId;
+
+  if (!pendingHeroTransfer || !selectedHeroId || !selectedTargetCityId) {
+    return appState;
+  }
+
+  const result = transferHeroToCity(
+    selectedHeroId,
+    selectedTargetCityId,
+    appState.world.cities,
+    appState.meta.playerFactionId,
+  );
+
+  if (!result.ok) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingHeroTransfer: null,
   };
 }
 
@@ -310,6 +454,7 @@ export function startBattle(appState, cityId, options = {}) {
     mode: "battle",
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
+    pendingHeroTransfer: null,
     selection: {
       ...appState.selection,
       cityId: defenderCity.id,
@@ -365,6 +510,7 @@ export function retreatFromBattle(appState) {
     battle: null,
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
+    pendingHeroTransfer: null,
     world: {
       ...appState.world,
       lastRecruitmentResult: null,
@@ -430,6 +576,7 @@ export function returnFromBattle(appState) {
       battle: null,
       pendingBattleChoice: null,
       pendingHeroDeployment: null,
+      pendingHeroTransfer: null,
       selection: {
         ...appState.selection,
         cityId: battle.defenderCityId,
@@ -452,6 +599,7 @@ export function returnFromBattle(appState) {
     battle: null,
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
+    pendingHeroTransfer: null,
     world: {
       ...appState.world,
       lastRecruitmentResult: null,
@@ -465,6 +613,7 @@ export function endWorldTurn(appState) {
     || appState.world.turnOwner !== "player"
     || appState.pendingBattleChoice
     || appState.pendingHeroDeployment
+    || appState.pendingHeroTransfer
     || appState.world.pendingEnemyTurnResult
   ) {
     return appState;

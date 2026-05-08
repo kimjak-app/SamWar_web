@@ -165,6 +165,118 @@
 - Enemy units cannot move twice in the same turn.
 - User manual browser QA passed.
 
+## 2026-05-08
+
+### v0.4-1 Victory Hero Recruitment MVP
+- Added conquest recruitment for heroes stationed in captured cities.
+- When a city is conquered, stationed heroes switch to the conquering faction.
+- Added `recruitCityHeroesToFaction(cityId, factionId)`.
+- `recruitCityHeroesToFaction()` now delegates to `convertCityHeroesToFaction(cityId, factionId)`.
+- Enemy city heroes automatically become player-side after player conquest.
+- No loyalty, persuasion, chance, escape, execution, or recruitment UI was added.
+
+### v0.4-2 Region-Based Hero Control MVP
+- Established the current design identity:
+  - SamWar_web is a region-based strategy MVP.
+  - The player controls regions, not a permanent ruler character.
+  - Heroes are stationed in regions.
+  - A city owner controls heroes stationed in that city.
+- Added runtime `hero.locationCityId` support.
+- Initial hero locations are initialized from `battleRosters.cityDefenderRosters`.
+- Removed hardcoded Hanseong-based player deployment.
+- Player attack deployment candidates now come from `hero.side === "player" && hero.locationCityId === originCityId`.
+- Captured city heroes switch to the conquering faction and remain in that city.
+- Confirmed intended cases:
+  - Hanseong captured by enemy -> `이순신` / `정도전` become enemy-side and stay in Hanseong.
+  - Pyongyang conquered by player -> `광개토대왕` / `도림` become player-side and stay in Pyongyang.
+
+### v0.4-2a Buff Source Label + Selected Attack Origin Fix
+- Ally attack buff labels now use source skill names.
+- Added:
+  - `buffAttackSourceSkillId`
+  - `buffAttackSourceSkillName`
+- `개혁령` displays as `개혁령 효과 +15% · 2턴`.
+- `영락대업` displays as `영락대업 효과 +20% · 2턴`.
+- Future `ally_attack_buff` skills should display their own skill name.
+- Added `selection.originCityId`.
+- Selecting a player-owned city stores it as preferred attack origin.
+- Clicking an enemy city preserves previous selected origin.
+- If selected origin is valid and adjacent, attack starts from that city.
+- Fallback still finds a valid adjacent player-owned city if selected origin is invalid.
+
+### v0.4-2b Generic Ally Buff Battle Log Fix
+- Generalized `getAllyAttackBuffOpeningLog(casterUnit, skill)`.
+- Removed hardcoded Jeong Do-jeon, `개혁령`, `영락대업`, and `yeongnak_grand_legacy` log text.
+- Final format:
+  - `${casterUnit.name}: ${skill.name} 발동. 아군 공격력 +${buffPercent}% · ${duration}턴`
+
+### v0.4-2c Battle Spawn Direction Fix
+- Battle spawn positions are no longer determined by hero ID.
+- `buildBattleUnit(heroId, spawnPosition, facing)` now uses provided role-based spawn data.
+- Added helpers:
+  - `getBattleSpawnSides(attackerCity, defenderCity)`
+  - `getFacingForBattleSide(side)`
+  - `getSpawnSlot(side, index)`
+- Spawn direction follows world-map city x positions:
+  - attacker city right of defender city -> attacker right / defender left
+  - attacker city left of defender city -> attacker left / defender right
+  - fallback -> attacker left / defender right
+- Player is no longer assumed to always spawn left.
+- Enemy is no longer assumed to always spawn right.
+- Manual QA confirmed:
+  - Hanseong -> Pyongyang: attacker left / defender right
+  - Pyongyang -> Luoyang: attacker right / defender left
+  - no overlap
+  - units face each other
+
+### v0.4-3 Hero Transfer MVP
+- Added player hero transfer between player-owned cities.
+- Transfer is instant.
+- No turn cost, troop transfer, food cost, travel time, fatigue, loyalty, persuasion, or domestic affairs integration.
+- Added helpers:
+  - `getTransferableHeroesFromCity(cityId, factionId)`
+  - `getFactionOwnedDestinationCities(cities, factionId, excludeCityId)`
+  - `transferHeroToCity(heroId, targetCityId, cities, factionId)`
+- Added app state actions:
+  - `openHeroTransfer(appState, sourceCityId)`
+  - `cancelHeroTransfer(appState)`
+  - `selectHeroTransferHero(appState, heroId)`
+  - `selectHeroTransferTargetCity(appState, targetCityId)`
+  - `confirmHeroTransfer(appState, heroId, targetCityId)`
+- Added `renderHeroTransferPanel()`.
+- Added selected city panel button: `무장 이동`.
+- Manual QA confirmed:
+  - After conquering Luoyang, `관우` / `장비` are stationed in Luoyang.
+  - `관우` can be transferred from Luoyang to Hanseong.
+  - Hanseong deployment then shows `이순신` / `정도전` / `관우`.
+  - Luoyang deployment no longer shows `관우`.
+  - 3-hero deployment and battle entry work.
+  - Region-based battle spawn still works after transfer.
+
+### v0.4-3a Selected City Stationed Heroes UI
+- Selected city panel now shows stationed heroes under `주둔 무장`.
+- Uses current mutable hero state through `hero.locationCityId`.
+- Shows portrait thumbnails when available.
+- Empty state: `주둔 무장 없음`.
+- Reinforces conquest, recruitment, and hero transfer results.
+
+### v0.4-3 Stable Baseline Closed
+- Current stable baseline:
+  - `v0.4-3 Stable`
+  - `Region-Based Hero Control + Directional Battle Spawn + Hero Transfer MVP`
+- Current core loop:
+  1. Select player-owned region.
+  2. Attack adjacent enemy region.
+  3. Win battle.
+  4. Capture city.
+  5. Stationed enemy heroes switch to player side.
+  6. Heroes remain stationed in conquered city.
+  7. Player can transfer heroes between player-owned cities.
+  8. Deployment candidates come from selected origin city's stationed heroes.
+  9. Battle spawn direction follows world-map city direction.
+- Next direction documented as `v0.5-0 Domestic Affairs Scaffold`.
+- v0.5-0 should remain replaceable and should not lock final domestic formulas too early.
+
 ### Current Unique Skill Cut-in Text
 - `hakikjin_barrage` / `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `reform_order` / `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
@@ -182,9 +294,10 @@
 - User may overwrite PNGs manually later.
 
 ### Next TODO
-1. v0.4-1 Troop Allocation MVP.
-2. v0.4-2 Victory Hero Recruitment MVP.
-3. v0.4-3 Hero Location / Garrison Management MVP.
-4. Terrain Rule Design Only later.
-5. SFX/audio, camera shake, projectile effects, and real animation queue later as dedicated patches.
-6. 10-city / 20-hero expansion only after the 4-city / 8-hero MVP baseline stays stable.
+1. v0.5-0 Domestic Affairs Scaffold.
+2. v0.5-1 Domestic Role Scaffold later.
+3. v0.5-2 Resource Cycle Pass later.
+4. Troop Allocation MVP remains postponed until domestic/resource/troop-pool foundations exist.
+5. Terrain Rule Design Only later.
+6. SFX/audio, camera shake, projectile effects, and real animation queue later as dedicated patches.
+7. 10-city / 20-hero expansion only after the 4-city / 8-hero MVP baseline stays stable.

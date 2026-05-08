@@ -36,6 +36,36 @@ function getLinkedCities(cities, selectedCity) {
     .filter(Boolean);
 }
 
+function getStationedHeroes(heroes, selectedCity) {
+  return heroes.filter((hero) => hero.locationCityId === selectedCity.id);
+}
+
+function renderStationedHeroes(heroes) {
+  return `
+    <div class="stationed-heroes">
+      <p class="stationed-heroes-label">주둔 무장</p>
+      ${
+        heroes.length === 0
+          ? '<p class="stationed-heroes-empty">주둔 무장 없음</p>'
+          : `
+            <div class="stationed-hero-list">
+              ${heroes.map((hero) => `
+                <div class="stationed-hero" title="${hero.name}">
+                  ${
+                    hero.portraitImage
+                      ? `<img class="stationed-hero-portrait" src="${hero.portraitImage}" alt="${hero.name}" loading="lazy" />`
+                      : `<span class="stationed-hero-fallback">${hero.name.slice(0, 1)}</span>`
+                  }
+                  <span class="stationed-hero-name">${hero.name}</span>
+                </div>
+              `).join("")}
+            </div>
+          `
+      }
+    </div>
+  `;
+}
+
 function getStatusText(cities, selectedCity) {
   if (isWorldUnified(cities)) {
     return "천하통일! 동아시아를 통일했습니다.";
@@ -181,6 +211,100 @@ function renderHeroDeploymentPanel(pendingHeroDeployment) {
   `;
 }
 
+function renderHeroTransferPanel(pendingHeroTransfer) {
+  if (!pendingHeroTransfer) {
+    return "";
+  }
+
+  const selectedHeroId = pendingHeroTransfer.selectedHeroId;
+  const selectedTargetCityId = pendingHeroTransfer.selectedTargetCityId;
+  const canConfirm = Boolean(selectedHeroId && selectedTargetCityId);
+
+  return `
+    <div class="hero-deployment-overlay" aria-live="polite">
+      <div class="hero-deployment-backdrop" aria-hidden="true"></div>
+      <section
+        class="hero-deployment-modal battle-choice-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="hero-transfer-title"
+      >
+        <div class="hero-deployment-header">
+          <p class="eyebrow">Transfer</p>
+          <h3 class="detail-heading" id="hero-transfer-title">무장 이동</h3>
+          <div class="hero-deployment-route">
+            <span>출발 성: ${pendingHeroTransfer.sourceCityName}</span>
+          </div>
+        </div>
+        <div class="hero-deployment-grid">
+          <div class="battle-choice-summary">
+            <p class="battle-choice-line">이동할 무장</p>
+            ${pendingHeroTransfer.heroes.length === 0 ? `
+              <p class="battle-choice-line battle-choice-copy">이 성에는 이동 가능한 무장이 없습니다.</p>
+            ` : pendingHeroTransfer.heroes.map((hero) => {
+              const isSelected = hero.id === selectedHeroId;
+
+              return `
+                <button
+                  class="hero-deployment-card battle-unit-card battle-unit-card-player ${isSelected ? "is-selected" : ""}"
+                  type="button"
+                  data-transfer-hero-id="${hero.id}"
+                  aria-pressed="${isSelected}"
+                >
+                  <div class="battle-unit-side-row">
+                    <span class="battle-unit-side">${hero.role ?? "unit"}</span>
+                    <span class="battle-unit-selected-chip">${isSelected ? "선택" : "대기"}</span>
+                  </div>
+                  <div class="battle-unit-side-row">
+                    ${hero.portraitImage ? `<img class="battle-unit-portrait" src="${hero.portraitImage}" alt="${hero.name} 초상화" loading="lazy" />` : ""}
+                    <span class="battle-unit-name">${hero.name}</span>
+                  </div>
+                  <span class="battle-unit-hp">병력 ${hero.troops}/${hero.maxTroops}</span>
+                  <span class="battle-unit-cooldown">공격 ${hero.attack} · 방어 ${hero.defense} · 지력 ${hero.intelligence}</span>
+                  ${hero.skillName ? `<span class="battle-unit-buff">특기 ${hero.skillName}</span>` : ""}
+                </button>
+              `;
+            }).join("")}
+          </div>
+          <div class="battle-choice-summary">
+            <p class="battle-choice-line">목적지</p>
+            ${pendingHeroTransfer.destinationCities.length === 0 ? `
+              <p class="battle-choice-line battle-choice-copy">이동 가능한 아군 성이 없습니다.</p>
+            ` : pendingHeroTransfer.destinationCities.map((city) => {
+              const isSelected = city.id === selectedTargetCityId;
+
+              return `
+                <button
+                  class="linked-city-item ${isSelected ? "is-selected" : ""}"
+                  type="button"
+                  data-transfer-target-city-id="${city.id}"
+                  aria-pressed="${isSelected}"
+                >
+                  <span>${city.name}</span>
+                  <span>${city.region}</span>
+                </button>
+              `;
+            }).join("")}
+          </div>
+        </div>
+        <div class="hero-deployment-actions">
+          <button
+            class="attack-button battle-choice-button"
+            type="button"
+            data-transfer-confirm="true"
+            ${canConfirm ? "" : "disabled"}
+          >
+            이동 실행
+          </button>
+          <button class="battle-choice-cancel" type="button" data-transfer-cancel="true">
+            취소
+          </button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 function renderEnemyTurnResultPanel(pendingEnemyTurnResult) {
   if (!pendingEnemyTurnResult) {
     return "";
@@ -212,18 +336,31 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onHeroDeploymentToggle,
     onHeroDeploymentStart,
     onHeroDeploymentCancel,
+    onHeroTransferOpen,
+    onHeroTransferSelectHero,
+    onHeroTransferSelectTargetCity,
+    onHeroTransferConfirm,
+    onHeroTransferCancel,
     onEndWorldTurn,
     onConfirmEnemyTurnResult,
   } = handlers;
   const selectedCity = getSelectedCity(appState);
   const linkedCities = getLinkedCities(world.cities, selectedCity);
+  const stationedHeroes = getStationedHeroes(world.heroes, selectedCity);
   const cityEdges = getCityEdges(world.cities);
   const selectedFaction = getFactionById(world.factions, selectedCity.ownerFactionId);
   const attackable = canAttackCity(world.cities, selectedCity);
   const unified = isWorldUnified(world.cities);
-  const { pendingBattleChoice, pendingHeroDeployment } = appState;
-  const canEndTurn = world.turnOwner === "player" && !pendingBattleChoice && !pendingHeroDeployment && !world.pendingEnemyTurnResult;
+  const { pendingBattleChoice, pendingHeroDeployment, pendingHeroTransfer } = appState;
+  const playerOwnedCityCount = world.cities.filter((city) => isPlayerCity(city)).length;
+  const canEndTurn = world.turnOwner === "player"
+    && !pendingBattleChoice
+    && !pendingHeroDeployment
+    && !pendingHeroTransfer
+    && !world.pendingEnemyTurnResult;
   const canOpenAttackChoice = canEndTurn && attackable;
+  const canOpenHeroTransfer = canEndTurn && isPlayerCity(selectedCity);
+  const hasHeroTransferDestination = playerOwnedCityCount > 1;
 
   rootElement.innerHTML = `
     <main class="map-screen">
@@ -307,6 +444,22 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
               ${selectedCity.region} · ${selectedFaction?.name ?? "중립"}
             </p>
             <p class="city-detail-copy">${getStatusText(world.cities, selectedCity)}</p>
+            ${renderStationedHeroes(stationedHeroes)}
+            ${
+              canOpenHeroTransfer
+                ? `
+                  <button
+                    class="attack-button"
+                    type="button"
+                    data-hero-transfer-open-city-id="${selectedCity.id}"
+                    ${hasHeroTransferDestination ? "" : "disabled"}
+                  >
+                    무장 이동
+                  </button>
+                  ${hasHeroTransferDestination ? "" : '<p class="attack-note">이동 가능한 아군 성이 없습니다.</p>'}
+                `
+                : ""
+            }
             ${
               canOpenAttackChoice
                 ? `
@@ -357,6 +510,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
           </section>
         </aside>
         ${renderHeroDeploymentPanel(pendingHeroDeployment)}
+        ${renderHeroTransferPanel(pendingHeroTransfer)}
       </section>
     </main>
   `;
@@ -436,6 +590,51 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   if (onHeroDeploymentCancel) {
     rootElement.querySelector("[data-deployment-cancel='true']")?.addEventListener("click", () => {
       onHeroDeploymentCancel();
+    });
+  }
+
+  if (onHeroTransferOpen) {
+    rootElement.querySelector("[data-hero-transfer-open-city-id]")?.addEventListener("click", (event) => {
+      const cityId = event.currentTarget.getAttribute("data-hero-transfer-open-city-id");
+
+      if (cityId) {
+        onHeroTransferOpen(cityId);
+      }
+    });
+  }
+
+  if (onHeroTransferSelectHero) {
+    rootElement.querySelectorAll("[data-transfer-hero-id]").forEach((element) => {
+      element.addEventListener("click", () => {
+        onHeroTransferSelectHero(element.getAttribute("data-transfer-hero-id"));
+      });
+    });
+  }
+
+  if (onHeroTransferSelectTargetCity) {
+    rootElement.querySelectorAll("[data-transfer-target-city-id]").forEach((element) => {
+      element.addEventListener("click", () => {
+        onHeroTransferSelectTargetCity(element.getAttribute("data-transfer-target-city-id"));
+      });
+    });
+  }
+
+  if (onHeroTransferConfirm) {
+    rootElement.querySelector("[data-transfer-confirm='true']")?.addEventListener("click", () => {
+      if (!pendingHeroTransfer?.selectedHeroId || !pendingHeroTransfer?.selectedTargetCityId) {
+        return;
+      }
+
+      onHeroTransferConfirm({
+        heroId: pendingHeroTransfer.selectedHeroId,
+        targetCityId: pendingHeroTransfer.selectedTargetCityId,
+      });
+    });
+  }
+
+  if (onHeroTransferCancel) {
+    rootElement.querySelector("[data-transfer-cancel='true']")?.addEventListener("click", () => {
+      onHeroTransferCancel();
     });
   }
 

@@ -151,6 +151,98 @@
 - Future regression reminder: enemy movement must not set `hasActed=true` by itself.
 - Future regression reminder: movement uses `hasMoved=true`; attack/skill/strategy/wait consumes `hasActed=true`.
 
+## v0.4-1 Victory Hero Recruitment QA
+- [x] After conquering Luoyang, Luoyang `ownerFactionId` becomes `player`.
+- [x] After conquering Luoyang, `관우` and `장비` become `side: "player"`.
+- [x] After conquering Pyongyang, `광개토대왕` and `도림` become `side: "player"`.
+- [x] After conquering Kyoto, `노부나가` and `겐신` become `side: "player"`.
+- [x] No recruitment happens on player defeat.
+- [x] Re-processing an already player-owned city does not duplicate heroes or throw errors.
+- [x] Manual battle still works.
+- [x] Auto battle still works.
+- [x] Victory/defeat world map return still works.
+- Future regression reminder: `recruitCityHeroesToFaction(cityId, factionId)` must remain city/faction generic and must not hardcode Luoyang or specific heroes.
+
+## v0.4-2 Region-Based Hero Control QA
+- [x] Fresh Hanseong player heroes are `이순신` / `정도전`.
+- [x] Player attacks Luoyang from Hanseong: deployment shows `이순신` / `정도전`.
+- [x] Player conquers Luoyang: `관우` / `장비` become `side: "player"` and `locationCityId: "luoyang"`.
+- [x] If player attacks from Luoyang, deployment shows `관우` / `장비`.
+- [x] If Kyoto captures Hanseong, `이순신` / `정도전` become `side: "enemy"` and `locationCityId: "hanseong"`.
+- [x] After Hanseong is lost and player owns only Luoyang, attacking Hanseong from Luoyang shows `관우` / `장비`, not `이순신` / `정도전`.
+- [x] No hardcoded Hanseong deployment remains.
+- [x] Manual battle still works.
+- [x] Auto battle still works.
+- [x] Victory/defeat world map return still works.
+- Future regression reminder: deployment candidates must come from `hero.side` plus `hero.locationCityId`, not the original city roster alone.
+
+## v0.4-2a Buff Source Label + Selected Attack Origin QA
+- [x] `개혁령` displays as `개혁령 효과 +15% · 2턴` only on allied units affected by Jeong Do-jeon.
+- [x] `영락대업` displays as `영락대업 효과 +20% · 2턴` only on allied units affected by Gwanggaeto.
+- [x] Enemy units no longer show `개혁령 효과` when they were actually buffed by `영락대업`.
+- [x] Hanseong -> Pyongyang conquest still works.
+- [x] After conquering Pyongyang, clicking Pyongyang first and then Luoyang uses Pyongyang as origin.
+- [x] Deployment modal shows origin city: Pyongyang.
+- [x] Deployment candidates are `광개토대왕` / `도림`, not `이순신` / `정도전`.
+- [x] If selected origin is invalid, fallback still allows attack from a valid adjacent player-owned city.
+- [x] Manual battle still works.
+- [x] Auto battle still works.
+- [x] Victory/defeat world map return still works.
+- Future regression reminder: future `ally_attack_buff` skills must use actual `skill.id` and `skill.name` for source status labels.
+
+## v0.4-2b Generic Ally Buff Battle Log QA
+- [x] Jeong Do-jeon's `개혁령` battle log uses actor and skill data dynamically.
+- [x] Gwanggaeto's `영락대업` battle log uses actor and skill data dynamically.
+- [x] Future ally attack buff skills do not fall back to `정도전이 개혁령을 선포했습니다.`
+- [x] Unit card buff labels remain source-based.
+- [x] Manual battle still works.
+- [x] Auto battle still works.
+- Future regression reminder: `getAllyAttackBuffOpeningLog(casterUnit, skill)` must not hardcode hero names, skill names, or skill IDs.
+
+## v0.4-2c Battle Spawn Direction QA
+- [x] Hanseong -> Pyongyang battle: attacker Hanseong side spawns left.
+- [x] Hanseong -> Pyongyang battle: defender Pyongyang side spawns right.
+- [x] Pyongyang -> Luoyang battle: attacker Pyongyang side spawns right.
+- [x] Pyongyang -> Luoyang battle: defender Luoyang side spawns left.
+- [x] Units do not overlap.
+- [x] Units face each other.
+- [x] Enemy invasion defense battle spawns attacker/defender on opposite sides.
+- [x] Player is not assumed to always be left.
+- [x] Enemy is not assumed to always be right.
+- [x] Manual battle still works.
+- [x] Auto battle still works.
+- [x] Skill targeting still works.
+- [x] Buff labels/logs still work.
+- [x] Victory/defeat world map return still works.
+- Future regression reminder: hero ID must not decide battlefield left/right spawn side.
+
+## v0.4-3 Hero Transfer QA
+- [x] Player owns only Hanseong at fresh start: transfer button is hidden or disabled.
+- [x] Player conquers Luoyang: `관우` / `장비` are stationed in Luoyang.
+- [x] Select Luoyang: `무장 이동` button appears.
+- [x] Open transfer modal: `관우` / `장비` are listed as transferable heroes.
+- [x] Hanseong appears as a destination city.
+- [x] Transfer `관우` from Luoyang to Hanseong.
+- [x] Select Hanseong -> attack an enemy city: deployment candidates include `이순신` / `정도전` / `관우`.
+- [x] Select Luoyang -> attack an enemy city: deployment candidates include `장비`, not `관우`.
+- [x] Enemy-owned cities are not valid destinations.
+- [x] Enemy-side heroes cannot be transferred.
+- [x] Cancel button closes modal without changing hero location.
+- [x] 3-hero deployment and battle entry work.
+- [x] Manual battle still works.
+- [x] Auto battle still works.
+- [x] Victory/defeat world map return still works.
+- [x] Directional battle spawn still works after transfer.
+- Future regression reminder: transfer validation must live in helper/state logic, not only UI controls.
+
+## v0.4-3a Selected City Stationed Heroes UI QA
+- [x] Hanseong at fresh start shows `이순신` / `정도전`.
+- [x] After conquering Luoyang, Luoyang shows `관우` / `장비`.
+- [x] After transferring `관우` to Hanseong, Hanseong shows `이순신` / `정도전` / `관우`.
+- [x] Luoyang then shows `장비` only.
+- [x] UI remains readable and does not break the selected city panel.
+- Future regression reminder: selected city stationed heroes display should read current mutable `hero.locationCityId`, not static initial rosters.
+
 ## Skill Text Checks
 - `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`

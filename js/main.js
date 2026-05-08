@@ -8,7 +8,12 @@ import {
   selectCity,
   startBattle,
   cancelHeroDeployment,
+  cancelHeroTransfer,
+  confirmHeroTransfer,
   openHeroDeployment,
+  openHeroTransfer,
+  selectHeroTransferHero,
+  selectHeroTransferTargetCity,
   toggleDeploymentHero,
   updateBattleState,
 } from "./core/app_state.js";
@@ -755,6 +760,48 @@ function rerender() {
       clearBattleTempoTimers();
       clearAutoBattleTimer();
       appState = cancelHeroDeployment(appState);
+      rerender();
+    },
+    onHeroTransferOpen: (cityId) => {
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
+      appState = openHeroTransfer(appState, cityId);
+      rerender();
+    },
+    onHeroTransferSelectHero: (heroId) => {
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
+      appState = selectHeroTransferHero(appState, heroId);
+      rerender();
+    },
+    onHeroTransferSelectTargetCity: (targetCityId) => {
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
+      appState = selectHeroTransferTargetCity(appState, targetCityId);
+      rerender();
+    },
+    onHeroTransferConfirm: ({ heroId, targetCityId }) => {
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
+      appState = confirmHeroTransfer(appState, heroId, targetCityId);
+      rerender();
+    },
+    onHeroTransferCancel: () => {
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      appState = cancelHeroTransfer(appState);
       rerender();
     },
     onBattleChoiceCancel: () => {

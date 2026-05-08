@@ -109,6 +109,57 @@ export function getHeroIdsBySideAndLocation(cityId, factionId) {
     .map((hero) => hero.id);
 }
 
+export function getTransferableHeroesFromCity(cityId, factionId = "player") {
+  return heroes.filter((hero) => hero.side === factionId && hero.locationCityId === cityId);
+}
+
+export function getFactionOwnedDestinationCities(cities, factionId = "player", excludeCityId = null) {
+  return cities.filter((city) => city.ownerFactionId === factionId && city.id !== excludeCityId);
+}
+
+export function transferHeroToCity(heroId, targetCityId, cities, factionId = "player") {
+  const hero = heroes.find((entry) => entry.id === heroId) ?? null;
+
+  if (!hero) {
+    return { ok: false, reason: "missing_hero" };
+  }
+
+  if (hero.side !== factionId) {
+    return { ok: false, reason: "invalid_hero_faction" };
+  }
+
+  const targetCity = cities.find((city) => city.id === targetCityId) ?? null;
+
+  if (!targetCity) {
+    return { ok: false, reason: "missing_target_city" };
+  }
+
+  if (targetCity.ownerFactionId !== factionId) {
+    return { ok: false, reason: "invalid_target_faction" };
+  }
+
+  const fromCityId = hero.locationCityId ?? null;
+  const sourceCity = cities.find((city) => city.id === fromCityId) ?? null;
+
+  if (!sourceCity || sourceCity.ownerFactionId !== factionId) {
+    return { ok: false, reason: "invalid_source_faction" };
+  }
+
+  if (fromCityId === targetCityId) {
+    return { ok: false, reason: "same_city" };
+  }
+
+  hero.locationCityId = targetCityId;
+
+  return {
+    ok: true,
+    heroId: hero.id,
+    heroName: hero.name,
+    fromCityId,
+    targetCityId,
+  };
+}
+
 export function convertCityHeroesToFaction(cityId, factionId) {
   const convertedHeroes = [];
 

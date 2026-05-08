@@ -1,15 +1,111 @@
 # Current State
 
 ## Status
-- Current Version: `v0.4-0b Enemy Move-Then-Act AI Fix`
-- Status: `Stable 4-city / 8-hero PC web MVP baseline with hero deployment flow, centered deployment modal, and enemy move-then-act AI fix completed. Manual browser QA passed.`
-- Main loop: world map -> battle -> victory/defeat result -> world map return
+- Current Version: `v0.4-3 Stable`
+- Stable baseline name: `Region-Based Hero Control + Directional Battle Spawn + Hero Transfer MVP`
+- Status: `Stable 4-city / 8-hero PC web MVP baseline with region-based hero stationing, conquest recruitment, directional battle spawn, and hero transfer completed. Manual browser QA passed.`
+- Main loop: world map -> hero deployment -> battle -> victory/defeat result -> world map return
+
+## Design Identity
+- SamWar_web is currently a region-based hero strategy game.
+- The player controls regions, not a permanent ruler character.
+- The player acts as the king/state will.
+- Heroes are assets stationed in regions and can be moved between owned regions.
+- A city owner controls heroes stationed in that city.
+- This is not currently a ruler/character-selection game like classic Romance of the Three Kingdoms.
+
+## Current Core Gameplay Loop
+1. Select player-owned region.
+2. Attack adjacent enemy region.
+3. Win battle.
+4. Capture city.
+5. Stationed enemy heroes switch to player side.
+6. Heroes remain stationed in conquered city.
+7. Player can transfer heroes between player-owned cities.
+8. Deployment candidates come from the selected origin city's stationed heroes.
+9. Battle spawn direction follows world-map city direction.
 
 ## Current 4-City MVP
-- Hanseong: player-owned, defenders `이순신`, `정도전`
-- Luoyang: enemy-owned, defenders `관우`, `장비`
-- Pyongyang: enemy-owned, defenders `광개토대왕`, `도림`
-- Kyoto: enemy-owned, defenders `노부나가`, `겐신`
+- Hanseong: player-owned at fresh start, initial defenders `이순신`, `정도전`
+- Luoyang: enemy-owned at fresh start, initial defenders `관우`, `장비`
+- Pyongyang: enemy-owned at fresh start, initial defenders `광개토대왕`, `도림`
+- Kyoto: enemy-owned at fresh start, initial defenders `노부나가`, `겐신`
+
+## Region-Based Hero Control
+- Runtime hero ownership uses `hero.side`.
+- Runtime hero stationing uses `hero.locationCityId`.
+- Initial `locationCityId` values are initialized from `battleRosters.cityDefenderRosters`.
+- Deployment candidates are no longer hardcoded to Hanseong.
+- Player attack deployment candidates come from:
+  - `hero.side === "player" && hero.locationCityId === originCityId`
+- Selecting a player-owned city stores it as `selection.originCityId`.
+- Clicking an enemy city preserves the previous selected origin.
+- Attack choice prefers a valid selected origin when it is player-owned and adjacent to the target.
+- Fallback still finds a valid adjacent player-owned city if the selected origin is invalid.
+
+## Conquest Recruitment
+- When a city is conquered, heroes stationed in that city switch to the conquering faction.
+- `recruitCityHeroesToFaction(cityId, factionId)` delegates to `convertCityHeroesToFaction(cityId, factionId)`.
+- Captured heroes remain stationed in the conquered city.
+- Example player conquest:
+  - Luoyang captured -> `관우` / `장비` become `side: "player"` and remain `locationCityId: "luoyang"`.
+  - Pyongyang captured -> `광개토대왕` / `도림` become `side: "player"` and remain `locationCityId: "pyeongyang"`.
+- Example enemy conquest:
+  - Hanseong captured by enemy -> `이순신` / `정도전` become `side: "enemy"` and remain `locationCityId: "hanseong"`.
+- No loyalty, persuasion, chance, escape, execution, or recruitment UI exists yet.
+
+## Hero Transfer
+- Player can transfer heroes between player-owned cities.
+- Transfer is instant.
+- No turn cost, troop transfer, food cost, travel time, fatigue, loyalty, persuasion, governor/chancellor, or domestic-affairs integration.
+- Transfer helpers:
+  - `getTransferableHeroesFromCity(cityId, factionId)`
+  - `getFactionOwnedDestinationCities(cities, factionId, excludeCityId)`
+  - `transferHeroToCity(heroId, targetCityId, cities, factionId)`
+- App state actions:
+  - `openHeroTransfer(appState, sourceCityId)`
+  - `cancelHeroTransfer(appState)`
+  - `selectHeroTransferHero(appState, heroId)`
+  - `selectHeroTransferTargetCity(appState, targetCityId)`
+  - `confirmHeroTransfer(appState, heroId, targetCityId)`
+- UI:
+  - selected city panel button: `무장 이동`
+  - centered hero transfer modal via `renderHeroTransferPanel()`
+  - selectable source-city heroes
+  - selectable player-owned destination cities
+
+## Selected City Stationed Heroes UI
+- Selected city panel shows `주둔 무장`.
+- Displays all heroes whose `hero.locationCityId === selectedCity.id`.
+- Uses portrait thumbnails when available.
+- Empty state: `주둔 무장 없음`.
+- Reinforces conquest, recruitment, and transfer results on the world map.
+
+## Battle Spawn Direction
+- Battle spawn positions are no longer decided by hero ID.
+- `buildBattleUnit(heroId, spawnPosition, facing)` uses role-based spawn data.
+- Helpers:
+  - `getBattleSpawnSides(attackerCity, defenderCity)`
+  - `getFacingForBattleSide(side)`
+  - `getSpawnSlot(side, index)`
+- Spawn direction follows world-map city x positions:
+  - attacker city right of defender city -> attacker right / defender left
+  - attacker city left of defender city -> attacker left / defender right
+  - fallback -> attacker left / defender right
+- Player is not assumed to always spawn left.
+- Enemy is not assumed to always spawn right.
+
+## Ally Attack Buff Labels And Logs
+- Ally attack buff unit-card/status labels are source-skill based.
+- Status fields:
+  - `buffAttackSourceSkillId`
+  - `buffAttackSourceSkillName`
+- `개혁령` displays as `개혁령 효과 +15% · 2턴`.
+- `영락대업` displays as `영락대업 효과 +20% · 2턴`.
+- Future `effectType: "ally_attack_buff"` skills should display their own skill names.
+- `getAllyAttackBuffOpeningLog(casterUnit, skill)` is generic.
+- Current battle-log format:
+  - `${casterUnit.name}: ${skill.name} 발동. 아군 공격력 +${buffPercent}% · ${duration}턴`
 
 ## Implemented Systems
 - 14x8 Phaser battlefield.
@@ -17,6 +113,10 @@
 - World-map attack and defense battle choices.
 - City ownership transfer after battle results.
 - Explicit city defender rosters.
+- Region-based hero ownership/stationing.
+- Conquest hero recruitment by city stationing.
+- Hero transfer between player-owned cities.
+- Selected city stationed heroes display.
 - Hero roster portraits and battlefield portrait badges.
 - Unique skill cut-ins for all 8 MVP heroes.
 - Victory/defeat result cut-in images and result music.
@@ -34,18 +134,9 @@
 - Presentation effects mini pass for clearer floating battle feedback.
 - Subtle hit knockback reaction for damage effects.
 - Hit knockback is render-only and does not change unit grid position.
-- Hero deployment flow before invasion battles.
-- Centered hero deployment modal separate from the right HUD.
+- Centered hero deployment modal.
 - `selectedHeroIds`-based attacker roster for attack battles.
 - Enemy AI move-then-act flow.
-
-## Pyongyang System
-- `광개토대왕` uses `영락대업`.
-- `도림` uses `흑백이간`.
-- `영락대업`: allied attack buff.
-- `흑백이간`: enemy collision plus confusion/shake logic.
-- Pyongyang battle starts with `gwanggaeto` and `dorim`.
-- Existing Hanseong, Luoyang, and Kyoto battles still initialize.
 
 ## Auto Battle State
 Current AI priority:
@@ -67,78 +158,12 @@ Known fixes:
 - Yi Sun-sin `학익진 포격` returns a valid target in auto battle.
 - Wait fallback is guarded by final attack/move checks.
 
-## Status Icons
-Active battlefield icons:
-- 혼란: `🌀`
-- 동요: `⚠`
-- 공격력 상승: `▲`
-- 방어 태세: `◆`
-
-Documented future icon convention:
-- 공격력 상승 `▲`
-- 공격력 감소 `▼`
-- 방어 / 방어력 상승 `◆`
-- 방어력 감소 `◇`
-- 혼란 `🌀`
-- 동요 `⚠`
-- 기절 `✖`
-- 화상 `🔥`
-- 중독 `☠`
-- 도발 `!`
-- 속박 `⛓`
-
-## Cut-in Text Data
-Unique skill cut-ins display:
-- `skill.name`
-- `skill.cutinQuote`
-- `skill.cutinEffectText`
-
-Current cut-in duration:
-- All 8 unique skills: `cutinDurationMs: 2200`
-
-Current skill text:
-- `hakikjin_barrage` / `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
-- `reform_order` / `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
-- `matchlock_volley` / `삼단격`: `화승총 사격의 매운 맛을 보여주마!`, `(사정범위 내 적 공격)`
-- `cavalry_charge` / `차륜전`: `돌격! 적진을 때려부숴라!`, `(적진 돌파 공격)`
-- `crescent_blade_slash` / `언월참`: `내 앞을 가로막는 자! 목을 내놓아라!`, `(강력한 단일 공격)`
-- `changban_shatter` / `장판파열`: `음하하~ 내 고함 한 방에 쩔쩔들 매는군!`, `(주변 적 동요)`
-- `yeongnak_grand_legacy` / `영락대업`: `전군이여! 나를 믿고 따르라!`, `(아군 공격력 상승)`
-- `black_white_scheming` / `흑백이간`: `내 비책! 서로를 죽일 것이다!`, `(적 충돌 · 혼란/동요)`
-
 ## Terrain Data
 - `terrainTypes` are defined in `data/battle_terrain.js`.
 - `terrainMap` is attached in `createInitialBattleState()`.
 - All current MVP battle tiles default to `"plain"`.
 - Terrain currently has no gameplay or visual effect.
-
-## Action Presentation
-- `battleState.lastAction` is still the current presentation snapshot.
-- `renderFloatingEffects()` now uses helper methods such as `getLastActionPresentation()`, `hasNewActionPresentation()`, and `getActionPresentationEffects()`.
-- Current rendering behavior remains immediate; no real animation queue exists yet.
-- Unique skill cut-ins are triggered outside `battle_scene.js` through the main/UI flow.
-
-## Presentation Effects
-- Floating effect readability was polished in v0.3-7e.
-- Damage feedback now includes subtle visual hit response.
-- v0.3-7f adds render-only knockback through unit render groups.
-- Knockback is based on attacker-to-target direction and returns the unit to its original rendered position.
-- Only damage-like effects trigger knockback.
-- `unit.x` / `unit.y` and battle logic remain unchanged.
-
-## Hero Deployment
-- World-map attack now opens the hero deployment modal before battle.
-- Current player candidates are derived from Hanseong roster: `이순신` and `정도전`.
-- Player can select one or both heroes.
-- Selected heroes are passed into battle initialization.
-- Defender roster behavior remains target-city based.
-- Troop allocation, hero recruitment, relocation, and garrison management are not implemented yet.
-
-## Enemy AI Fix
-- Enemy movement now sets `hasMoved=true` while preserving `hasActed=false`.
-- Enemy units can move and then attack/use skill/use strategy in the same enemy turn.
-- Enemy units cannot move twice in the same turn.
-- Wait only consumes the action when no valid follow-up exists.
+- Do not activate terrain rules until a dedicated terrain patch.
 
 ## Visual Decisions To Preserve
 - Cut-in/result image assets are not edited for text.
@@ -150,15 +175,13 @@ Current skill text:
 - Skill title/effect position: lower center.
 - Do not casually change Phaser render config, texture filtering, `pixelArt`, `roundPixels`, or mipmap settings.
 
-## Known Future Work
-- Next recommended step: `v0.4-1 Troop Allocation MVP`.
-- Victory hero recruitment and hero relocation should remain future patches.
-- Future animation queue/SFX/camera/projectile work should build on the action presentation helper flow.
-- Do not change battle logic or timing until a dedicated presentation-queue patch.
-- Future SFX, camera shake, projectile effects, and real animation queue should remain separate dedicated patches.
-- Keep knockback presentation-only unless a future gameplay displacement feature is explicitly designed.
-- Terrain rules remain inactive until a dedicated terrain rules patch.
-- Future large battlefield / 2.5D work should continue through the coordinate adapter and render layers.
-- Later audio pass: skill SFX, voice AI from `cutinQuote`, possible `cutinVoice` / `sfx` fields.
-- Later visual sharpness pass after MVP stabilizes.
-- 10-city / 20-hero expansion only after 4-city / 8-hero systems are accepted.
+## Next Direction
+- Next recommended milestone: `v0.5-0 Domestic Affairs Scaffold`.
+- v0.5-0 should be a replaceable scaffold, not the final domestic system.
+- Later domestic affairs may add:
+  - chancellor
+  - governor/city lord
+  - chancellor-governor compatibility
+  - city management efficiency
+  - resource income cycles
+- Do not implement troop allocation, troop loss persistence, terrain effects, or unit type selection before the relevant dedicated tasks.
