@@ -29,13 +29,6 @@ function getSelectedCity(appState) {
   return cityMap.get(appState.selection.cityId) ?? appState.world.cities[0];
 }
 
-function getLinkedCities(cities, selectedCity) {
-  const cityMap = buildCityMap(cities);
-  return selectedCity.neighbors
-    .map((neighborId) => cityMap.get(neighborId))
-    .filter(Boolean);
-}
-
 function getStationedHeroes(heroes, selectedCity) {
   return heroes.filter((hero) => hero.locationCityId === selectedCity.id);
 }
@@ -62,6 +55,85 @@ function renderStationedHeroes(heroes) {
             </div>
           `
       }
+    </div>
+  `;
+}
+
+function getDomesticValue(domestic, key) {
+  const value = domestic?.[key] ?? 0;
+  return Number.isFinite(value) ? value : 0;
+}
+
+function getResourceValue(resources, key) {
+  const value = resources?.[key] ?? 0;
+  return Number.isFinite(value) ? value : 0;
+}
+
+function renderDomesticStatRow(label, value) {
+  const clampedValue = Math.max(0, Math.min(100, value));
+
+  return `
+    <div class="domestic-stat-row">
+      <div class="domestic-row-header">
+        <span>${label}</span>
+        <strong>${value}</strong>
+      </div>
+      <div class="domestic-bar" aria-hidden="true">
+        <span class="domestic-bar-fill" style="width: ${clampedValue}%;"></span>
+      </div>
+    </div>
+  `;
+}
+
+function renderResourceRow(label, value) {
+  return `
+    <div class="domestic-resource-row">
+      <span>${label}</span>
+      <strong>${value}</strong>
+    </div>
+  `;
+}
+
+function renderYieldRow(label, value, timingLabel) {
+  return `
+    <div class="domestic-yield-row">
+      <span>${label}</span>
+      <strong>+${value} / ${timingLabel}</strong>
+    </div>
+  `;
+}
+
+function renderCityDomesticPanel(selectedCity) {
+  const domestic = selectedCity.domestic ?? {};
+  const resources = selectedCity.resources ?? {};
+  const yields = selectedCity.yields ?? {};
+
+  return `
+    <div class="city-domestic-panel">
+      <div class="city-domestic-section">
+        <p class="city-domestic-heading">내정</p>
+        ${renderDomesticStatRow("민심", getDomesticValue(domestic, "morale"))}
+        ${renderDomesticStatRow("치안", getDomesticValue(domestic, "publicOrder"))}
+        ${renderDomesticStatRow("농업", getDomesticValue(domestic, "agriculture"))}
+        ${renderDomesticStatRow("상업", getDomesticValue(domestic, "commerce"))}
+        ${renderDomesticStatRow("안정", getDomesticValue(domestic, "stability"))}
+      </div>
+      <div class="city-domestic-section">
+        <p class="city-domestic-heading">자원</p>
+        ${renderResourceRow("쌀", getResourceValue(resources, "rice"))}
+        ${renderResourceRow("보리", getResourceValue(resources, "barley"))}
+        ${renderResourceRow("해산물", getResourceValue(resources, "seafood"))}
+        ${renderResourceRow("금전", getResourceValue(resources, "gold"))}
+        ${renderResourceRow("특산", getResourceValue(resources, "specialty"))}
+      </div>
+      <div class="city-domestic-section">
+        <p class="city-domestic-heading">예상 수입</p>
+        ${renderYieldRow("쌀", getResourceValue(yields, "riceHarvest"), "가을")}
+        ${renderYieldRow("보리", getResourceValue(yields, "barleyHarvest"), "봄")}
+        ${renderYieldRow("해산물", getResourceValue(yields, "seafoodPerTurn"), "턴")}
+        ${renderYieldRow("상업", getResourceValue(yields, "commerceIncome"), "계절")}
+        ${renderYieldRow("특산", getResourceValue(yields, "specialtyIncome"), "겨울")}
+      </div>
     </div>
   `;
 }
@@ -345,7 +417,6 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onConfirmEnemyTurnResult,
   } = handlers;
   const selectedCity = getSelectedCity(appState);
-  const linkedCities = getLinkedCities(world.cities, selectedCity);
   const stationedHeroes = getStationedHeroes(world.heroes, selectedCity);
   const cityEdges = getCityEdges(world.cities);
   const selectedFaction = getFactionById(world.factions, selectedCity.ownerFactionId);
@@ -391,12 +462,6 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
             .join("")}
         </svg>
 
-        <header class="title-panel">
-          <p class="eyebrow">${meta.phase}</p>
-          <h1 id="samwar-title" class="title">${meta.title}</h1>
-          <p class="title-copy">임시 풀스크린 세계지도 위에서 성곽 랜드마크 기준 4도시 전선을 검증하는 MVP 화면</p>
-        </header>
-
         <div class="city-layer" aria-label="World map city anchors">
           ${world.cities
             .map((city) => {
@@ -424,7 +489,22 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
             .join("")}
         </div>
 
-        <aside class="hud-stack" aria-label="Selected city details">
+        <aside class="left-hud-stack" aria-label="World overview">
+          <header class="title-panel">
+            <p class="eyebrow">${meta.phase}</p>
+            <h1 id="samwar-title" class="title">${meta.title}</h1>
+            <p class="title-copy">임시 풀스크린 세계지도 위에서 성곽 랜드마크 기준 4도시 전선을 검증하는 MVP 화면</p>
+          </header>
+
+          <section class="detail-card hud-panel mvp-goal-panel">
+            <h3 class="detail-heading">MVP 목표</h3>
+            <ul class="goal-list">
+              <li>배경 맵의 성곽 랜드마크에 4개 도시 앵커를 맞춰 전선을 검증합니다.</li>
+              <li>도시 선택과 공격 진입, 점령, 통일 메시지까지 현재 월드맵 루프를 확인합니다.</li>
+              <li>전투는 Phaser 기반 MVP이며 수동 지휘와 자동 위임 흐름을 함께 검증합니다.</li>
+            </ul>
+          </section>
+
           <section class="turn-card hud-panel">
             <span class="turn-label">World Turn</span>
             <strong class="turn-value">제 ${meta.turn}턴</strong>
@@ -436,7 +516,9 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
               </button>
             ` : ""}
           </section>
+        </aside>
 
+        <aside class="hud-stack" aria-label="Selected city details">
           <section class="detail-card hud-panel">
             <p class="eyebrow">Selected City</p>
             <h2 class="city-detail-name">${selectedCity.name}</h2>
@@ -449,7 +531,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
               canOpenHeroTransfer
                 ? `
                   <button
-                    class="attack-button"
+                    class="attack-button hero-transfer-inline-button"
                     type="button"
                     data-hero-transfer-open-city-id="${selectedCity.id}"
                     ${hasHeroTransferDestination ? "" : "disabled"}
@@ -460,6 +542,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
                 `
                 : ""
             }
+            ${renderCityDomesticPanel(selectedCity)}
             ${
               canOpenAttackChoice
                 ? `
@@ -480,34 +563,6 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
 
           ${renderBattleChoicePanel(pendingBattleChoice)}
           ${renderEnemyTurnResultPanel(world.pendingEnemyTurnResult)}
-
-          <section class="detail-card hud-panel">
-            <h3 class="detail-heading">연결 도시</h3>
-            <div class="linked-city-list">
-              ${linkedCities
-                .map((city) => {
-                  const faction = getFactionById(world.factions, city.ownerFactionId);
-                  return `
-                    <button class="linked-city-item" type="button" data-city-id="${city.id}">
-                      <span>${city.name}</span>
-                      <span style="color: ${faction?.color ?? "#d3b273"};">
-                        ${faction?.name ?? "미상"}
-                      </span>
-                    </button>
-                  `;
-                })
-                .join("")}
-            </div>
-          </section>
-
-          <section class="detail-card hud-panel mvp-goal-panel">
-            <h3 class="detail-heading">MVP 목표</h3>
-            <ul class="goal-list">
-              <li>배경 맵의 성곽 랜드마크에 4개 도시 앵커를 맞춰 전선을 검증합니다.</li>
-              <li>도시 선택과 공격 진입, 점령, 통일 메시지까지 현재 월드맵 루프를 확인합니다.</li>
-              <li>전투는 Phaser 기반 MVP이며 수동 지휘와 자동 위임 흐름을 함께 검증합니다.</li>
-            </ul>
-          </section>
         </aside>
         ${renderHeroDeploymentPanel(pendingHeroDeployment)}
         ${renderHeroTransferPanel(pendingHeroTransfer)}

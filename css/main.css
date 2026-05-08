@@ -139,6 +139,16 @@ button {
   background: linear-gradient(180deg, rgba(52, 72, 104, 0.96), rgba(22, 34, 53, 0.96));
 }
 
+.hero-transfer-inline-button {
+  width: auto;
+  min-height: 0;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  line-height: 1.2;
+}
+
 .map-image,
 .map-overlay {
   position: absolute;
@@ -177,12 +187,17 @@ button {
   filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.55));
 }
 
-.title-panel {
+.left-hud-stack {
   position: absolute;
   top: 22px;
   left: 22px;
   z-index: 5;
-  width: min(460px, calc(100vw - 44px));
+  display: grid;
+  gap: 16px;
+  width: min(380px, calc(100vw - 44px));
+}
+
+.title-panel {
   padding: 20px 22px;
 }
 
@@ -302,7 +317,7 @@ button {
   z-index: 5;
   display: grid;
   gap: 16px;
-  width: min(360px, calc(100vw - 44px));
+  width: min(380px, calc(100vw - 44px));
 }
 
 .hud-panel {
@@ -398,6 +413,76 @@ button {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+.city-domestic-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(248, 215, 152, 0.14);
+}
+
+.city-domestic-section {
+  display: grid;
+  gap: 7px;
+}
+
+.city-domestic-heading {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.domestic-stat-row {
+  display: grid;
+  gap: 4px;
+}
+
+.domestic-row-header,
+.domestic-resource-row,
+.domestic-yield-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.domestic-row-header strong,
+.domestic-resource-row strong,
+.domestic-yield-row strong {
+  color: var(--text-main);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.domestic-bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.domestic-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(91, 184, 255, 0.82), rgba(248, 215, 152, 0.86));
+}
+
+.domestic-resource-row,
+.domestic-yield-row {
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.domestic-resource-row:last-child,
+.domestic-yield-row:last-child {
+  border-bottom: 0;
 }
 
 .attack-button {
@@ -1260,8 +1345,16 @@ button {
 }
 
 @media (max-width: 1500px) {
+  .left-hud-stack {
+    gap: 10px;
+    width: min(320px, calc(100vw - 36px));
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(209, 176, 117, 0.35) rgba(7, 14, 23, 0.12);
+  }
+
   .title-panel {
-    width: min(340px, calc(100vw - 36px));
     padding: 18px 20px;
     border-radius: 18px;
   }
@@ -1285,22 +1378,25 @@ button {
 
   .hud-stack {
     gap: 10px;
-    width: min(280px, calc(100vw - 36px));
+    width: min(340px, calc(100vw - 36px));
     max-height: calc(100vh - 24px);
     overflow: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(209, 176, 117, 0.35) rgba(7, 14, 23, 0.12);
   }
 
+  .left-hud-stack::-webkit-scrollbar,
   .hud-stack::-webkit-scrollbar {
     width: 8px;
   }
 
+  .left-hud-stack::-webkit-scrollbar-track,
   .hud-stack::-webkit-scrollbar-track {
     background: rgba(7, 14, 23, 0.12);
     border-radius: 999px;
   }
 
+  .left-hud-stack::-webkit-scrollbar-thumb,
   .hud-stack::-webkit-scrollbar-thumb {
     background: rgba(209, 176, 117, 0.35);
     border-radius: 999px;
@@ -1395,8 +1491,12 @@ button {
 }
 
 @media (max-width: 1100px) {
+  .left-hud-stack {
+    width: min(340px, calc(100vw - 44px));
+  }
+
   .title-panel {
-    width: min(400px, calc(100vw - 44px));
+    width: auto;
   }
 
   .battle-screen {
@@ -1447,6 +1547,7 @@ button {
     padding-bottom: 24px;
   }
 
+  .left-hud-stack,
   .title-panel,
   .hud-panel,
   .turn-card {
@@ -1454,8 +1555,14 @@ button {
     border-radius: 18px;
   }
 
-  .title-panel {
+  .left-hud-stack {
     margin: 14px 14px 0;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .title-panel {
     width: auto;
   }
 
@@ -1463,6 +1570,8 @@ button {
     position: static;
     width: auto;
     margin: 14px 14px 0;
+    max-height: none;
+    overflow: visible;
   }
 
   .hero-deployment-overlay {
@@ -1519,6 +1628,7 @@ button {
     min-height: 86vh;
   }
 
+  .left-hud-stack,
   .title-panel,
   .hud-stack {
     margin-left: 10px;

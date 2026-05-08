@@ -243,6 +243,34 @@
 - [x] UI remains readable and does not break the selected city panel.
 - Future regression reminder: selected city stationed heroes display should read current mutable `hero.locationCityId`, not static initial rosters.
 
+## v0.5-0a Domestic Stats & Resource Display QA
+- [x] Fresh start: selecting Hanseong shows domestic stats.
+- [x] Hanseong shows text/number/bar rows for `민심` / `치안` / `농업` / `상업` / `안정`.
+- [x] Hanseong shows separated resources: `쌀` / `보리` / `해산물` / `금전` / `특산`.
+- [x] Hanseong shows expected income rows.
+- [x] Luoyang, Pyongyang, and Kyoto also show the domestic panel.
+- [x] Existing stationed hero portraits still show correctly.
+- [x] Hero transfer button still works.
+- [x] Attack/deployment flow still works.
+- [x] Directional battle spawn still works.
+- [x] No browser/headless validation was run by Codex.
+- Future regression reminder: `initializeCityDomesticData(cities)` must return copied city objects and must not mutate imported static city data in-place.
+- Future regression reminder: current domestic/resource/yield values are scaffold defaults, not final formulas or balance.
+- Future regression reminder: do not collapse rice/barley/seafood/gold/specialty into one final generic `food` model.
+
+## v0.5-0a World Map HUD Polish QA
+- [x] Left HUD shows SamWar Web title panel.
+- [x] MVP Goal panel appears below the title panel.
+- [x] World Turn panel appears below MVP Goal on the left side.
+- [x] Right HUD starts with Selected City panel.
+- [x] Selected City panel no longer has World Turn above it.
+- [x] Hero transfer button appears directly under stationed heroes and is smaller.
+- [x] Domestic/resource/yield sections remain readable.
+- [x] Turn End button still works.
+- [x] Hero transfer still works.
+- [x] Attack/deployment still works.
+- Future regression reminder: Selected City is the primary right-side management panel.
+
 ## Skill Text Checks
 - `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`

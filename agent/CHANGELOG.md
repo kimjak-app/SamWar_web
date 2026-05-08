@@ -1,5 +1,61 @@
 # Changelog
 
+## v0.5-0a Stable Domestic Stats & Resource Display Scaffold + World Map HUD Polish
+- Closed the current baseline as `v0.5-0a Stable`.
+- Added a replaceable domestic affairs scaffold for city-level values.
+- This is not the final domestic affairs system.
+- Added runtime city scaffold fields:
+  - `domestic`
+  - `resources`
+  - `yields`
+- Added `initializeCityDomesticData(cities)`.
+  - Returns copied city objects.
+  - Does not mutate imported static city data in-place.
+  - Preserves future per-city overrides.
+  - Fills missing scaffold defaults.
+- `createInitialAppState()` now initializes `world.cities` through `initializeCityDomesticData(cities)`.
+- Domestic scaffold shape:
+  - `domestic.publicOrder`
+  - `domestic.morale`
+  - `domestic.agriculture`
+  - `domestic.commerce`
+  - `domestic.stability`
+  - `resources.rice`
+  - `resources.barley`
+  - `resources.seafood`
+  - `resources.gold`
+  - `resources.specialty`
+  - `yields.riceHarvest`
+  - `yields.barleyHarvest`
+  - `yields.seafoodPerTurn`
+  - `yields.commerceIncome`
+  - `yields.specialtyIncome`
+- Added selected city domestic display:
+  - `renderCityDomesticPanel(selectedCity)`
+  - text/number/bar rows for domestic stats
+  - separated resource rows
+  - expected income rows
+- Added compact domestic CSS classes:
+  - `.city-domestic-panel`
+  - `.city-domestic-section`
+  - `.city-domestic-heading`
+  - `.domestic-stat-row`
+  - `.domestic-row-header`
+  - `.domestic-bar`
+  - `.domestic-bar-fill`
+  - `.domestic-resource-row`
+  - `.domestic-yield-row`
+- No final formulas, seasonal calendar, chancellor, governor, compatibility, troop allocation, recruitment, troop loss persistence, terrain effects, battle AI, damage, skills, spawn, hero transfer, recruitment, or asset changes.
+- World map HUD polish:
+  - Left HUD now contains title panel, MVP Goal panel, and World Turn panel.
+  - Right HUD starts with the Selected City panel.
+  - World Turn is no longer stacked above Selected City on the right.
+  - Hero transfer button appears directly below stationed heroes and uses compact styling.
+  - Domestic stats/resources/yields appear below the hero transfer action.
+  - Right-side linked cities panel was removed to reduce crowding; city selection remains available through map city nodes.
+- `node --check` passed for changed JS files.
+- User manual browser QA confirmed current stable baseline.
+
 ## v0.4-3 Stable Region-Based Hero Control + Directional Battle Spawn + Hero Transfer MVP
 - Closed the v0.4 region-based hero-control line as the current stable baseline.
 - SamWar_web is now documented as a region-based hero strategy MVP:

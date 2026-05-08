@@ -1,18 +1,26 @@
 # Current State
 
 ## Status
-- Current Version: `v0.4-3 Stable`
-- Stable baseline name: `Region-Based Hero Control + Directional Battle Spawn + Hero Transfer MVP`
-- Status: `Stable 4-city / 8-hero PC web MVP baseline with region-based hero stationing, conquest recruitment, directional battle spawn, and hero transfer completed. Manual browser QA passed.`
+- Current Version: `v0.5-0a Stable`
+- Stable baseline name: `Domestic Stats & Resource Display Scaffold + World Map HUD Polish`
+- Status: `Stable 4-city / 8-hero PC web MVP baseline with region-based hero stationing, conquest recruitment, directional battle spawn, hero transfer, selected-city stationed hero UI, and replaceable domestic/resource display scaffold completed. Manual browser QA passed.`
 - Main loop: world map -> hero deployment -> battle -> victory/defeat result -> world map return
 
 ## Design Identity
-- SamWar_web is currently a region-based hero strategy game.
-- The player controls regions, not a permanent ruler character.
-- The player acts as the king/state will.
-- Heroes are assets stationed in regions and can be moved between owned regions.
-- A city owner controls heroes stationed in that city.
-- This is not currently a ruler/character-selection game like classic Romance of the Three Kingdoms.
+- SamWar_web is not currently a game where the player chooses one specific ruler or battlefield character.
+- The player is not a person who enters battle directly.
+- The player acts as the king/state will that controls regions, manages heroes, and operates the state.
+- Player = king / state will.
+- Regions/cities = control units.
+- Heroes = talents stationed in regions.
+- Battles = performed through hero combinations.
+- Domestic affairs = planned to run through future chancellor/governor systems.
+- Current direction:
+  - conquer regions to gain heroes
+  - move heroes to shape fronts
+  - manage city-level domestic values and resources
+  - later operate the state through chancellor and city-lord automation
+- This is a region-based East Asian hero strategy simulation, not a classic ruler/character-selection game.
 
 ## Current Core Gameplay Loop
 1. Select player-owned region.
@@ -81,6 +89,66 @@
 - Empty state: `주둔 무장 없음`.
 - Reinforces conquest, recruitment, and transfer results on the world map.
 
+## Domestic Stats And Resource Display Scaffold
+- v0.5-0a added a replaceable domestic affairs scaffold.
+- This is not the final domestic affairs system.
+- No chancellor, governor, compatibility, seasonal formula, calendar, troop allocation, recruitment, or troop loss persistence exists yet.
+- Runtime city objects are initialized with:
+  - `domestic`
+  - `resources`
+  - `yields`
+- Helper:
+  - `initializeCityDomesticData(cities)`
+- `initializeCityDomesticData()` returns copied city objects and preserves future per-city overrides.
+- `createInitialAppState()` initializes `world.cities` through `initializeCityDomesticData(cities)`.
+- Domestic fields:
+  - `publicOrder`
+  - `morale`
+  - `agriculture`
+  - `commerce`
+  - `stability`
+- Resource fields:
+  - `rice`
+  - `barley`
+  - `seafood`
+  - `gold`
+  - `specialty`
+- Yield fields:
+  - `riceHarvest`
+  - `barleyHarvest`
+  - `seafoodPerTurn`
+  - `commerceIncome`
+  - `specialtyIncome`
+- Selected city panel displays:
+  - `내정`
+  - `자원`
+  - `예상 수입`
+- Current display is text, numbers, and simple bars only.
+- Do not treat the current values or yield timings as final formulas.
+- Do not collapse future resources into one final generic `food` model.
+
+## World Map HUD Layout
+- Left HUD:
+  1. SamWar Web title panel
+  2. MVP Goal panel
+  3. World Turn panel
+- Right HUD:
+  1. Selected City panel
+  2. active battle-choice/enemy-result panels only when needed
+- World Turn is no longer above Selected City on the right.
+- Selected City panel order:
+  1. city name
+  2. region/faction
+  3. description
+  4. stationed heroes
+  5. compact hero transfer button
+  6. domestic stats
+  7. resources
+  8. expected income
+  9. attack note/button
+- Right-side linked cities panel was removed to reduce HUD crowding.
+- City selection remains available through map city nodes.
+
 ## Battle Spawn Direction
 - Battle spawn positions are no longer decided by hero ID.
 - `buildBattleUnit(heroId, spawnPosition, facing)` uses role-based spawn data.
@@ -117,6 +185,8 @@
 - Conquest hero recruitment by city stationing.
 - Hero transfer between player-owned cities.
 - Selected city stationed heroes display.
+- Domestic stats/resource/yield display scaffold.
+- Left/right world map HUD split for title/MVP/turn versus selected-city management.
 - Hero roster portraits and battlefield portrait badges.
 - Unique skill cut-ins for all 8 MVP heroes.
 - Victory/defeat result cut-in images and result music.
@@ -176,8 +246,8 @@ Known fixes:
 - Do not casually change Phaser render config, texture filtering, `pixelArt`, `roundPixels`, or mipmap settings.
 
 ## Next Direction
-- Next recommended milestone: `v0.5-0 Domestic Affairs Scaffold`.
-- v0.5-0 should be a replaceable scaffold, not the final domestic system.
+- Next recommended milestone: `v0.5-0b Domestic Calendar / Turn-End Resource Update Scaffold` or investigation for it.
+- v0.5 work should remain replaceable and should not lock final domestic formulas too early.
 - Later domestic affairs may add:
   - chancellor
   - governor/city lord

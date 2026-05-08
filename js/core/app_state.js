@@ -11,6 +11,7 @@ import {
   getAttackSourceCity,
   getHeroIdsBySideAndLocation,
   getTransferableHeroesFromCity,
+  initializeCityDomesticData,
   initializeHeroLocationsFromRosters,
   occupyCity,
   recruitCityHeroesToFaction,
@@ -41,7 +42,7 @@ export function createInitialAppState() {
     pendingHeroDeployment: null,
     pendingHeroTransfer: null,
     world: {
-      cities,
+      cities: initializeCityDomesticData(cities),
       factions,
       heroes,
       skills,

@@ -277,6 +277,87 @@
 - Next direction documented as `v0.5-0 Domestic Affairs Scaffold`.
 - v0.5-0 should remain replaceable and should not lock final domestic formulas too early.
 
+### v0.5-0a Domestic Stats & Resource Display MVP
+- Added a replaceable domestic affairs scaffold.
+- This is not the final domestic affairs system.
+- Added `initializeCityDomesticData(cities)`.
+- `initializeCityDomesticData()`:
+  - returns copied city objects
+  - does not mutate imported static city data in-place
+  - preserves future per-city overrides
+  - fills missing scaffold defaults
+- `createInitialAppState()` now initializes `world.cities` through `initializeCityDomesticData(cities)`.
+- Runtime city scaffold fields:
+  - `domestic`
+  - `resources`
+  - `yields`
+- Domestic fields:
+  - `publicOrder`
+  - `morale`
+  - `agriculture`
+  - `commerce`
+  - `stability`
+- Resource fields:
+  - `rice`
+  - `barley`
+  - `seafood`
+  - `gold`
+  - `specialty`
+- Yield fields:
+  - `riceHarvest`
+  - `barleyHarvest`
+  - `seafoodPerTurn`
+  - `commerceIncome`
+  - `specialtyIncome`
+- Added selected city display helper:
+  - `renderCityDomesticPanel(selectedCity)`
+- Selected city panel now displays:
+  - `내정`
+  - `자원`
+  - `예상 수입`
+- UI uses text, numbers, and simple bars only.
+- No final formulas, calendar/month/year, seasonal update, chancellor, governor, compatibility, troop allocation, recruitment, troop loss persistence, terrain effects, battle AI, damage, skill, spawn, hero transfer, recruitment, or asset changes.
+- `node --check` passed for changed JS files.
+
+### v0.5-0a World Map HUD Polish
+- Reorganized world map HUD layout to reduce right-panel crowding.
+- Left HUD now contains:
+  1. SamWar Web title panel
+  2. MVP Goal panel
+  3. World Turn panel
+- Right HUD now starts with Selected City.
+- World Turn is no longer above Selected City on the right side.
+- Selected City panel order:
+  1. city name
+  2. region/faction
+  3. description
+  4. stationed heroes
+  5. compact hero transfer button
+  6. domestic stats
+  7. resources
+  8. expected income
+  9. attack note/button
+- Hero transfer button was moved directly under stationed heroes and made smaller.
+- Right-side linked cities panel was removed to keep Selected City as the primary management panel.
+- City selection remains available through map city nodes.
+- `node --check js/ui/world_map_ui.js` passed.
+
+### v0.5-0a Stable Baseline Closed
+- Current stable baseline:
+  - `v0.5-0a Stable`
+  - `Domestic Stats & Resource Display Scaffold + World Map HUD Polish`
+- Manual QA confirmed by user.
+- Current identity:
+  - Player = king/state will
+  - Regions/cities = control units
+  - Heroes = talents stationed in regions
+  - Battles = performed through hero combinations
+  - Domestic affairs = planned to run later through chancellor/city-lord automation
+- Next direction:
+  - `v0.5-0b Domestic Calendar / Turn-End Resource Update Scaffold` investigation or implementation.
+  - Keep resource cycles replaceable.
+  - Do not lock final domestic formulas.
+
 ### Current Unique Skill Cut-in Text
 - `hakikjin_barrage` / `학익진 포격`: `사정거리 안 모든 적을 포격하라!`, `(사정범위 내 모든 적 공격)`
 - `reform_order` / `개혁령`: `나의 계책! 아군의 공격력을 단숨에 끌어올렸다!`, `(아군 공격력 상승)`
@@ -294,7 +375,7 @@
 - User may overwrite PNGs manually later.
 
 ### Next TODO
-1. v0.5-0 Domestic Affairs Scaffold.
+1. v0.5-0b Domestic Calendar / Turn-End Resource Update Scaffold.
 2. v0.5-1 Domestic Role Scaffold later.
 3. v0.5-2 Resource Cycle Pass later.
 4. Troop Allocation MVP remains postponed until domestic/resource/troop-pool foundations exist.

@@ -7,6 +7,30 @@ export function getFactionById(factions, factionId) {
 
 export const ENEMY_INVASION_CHANCE = 0.45;
 
+const defaultCityDomestic = {
+  publicOrder: 70,
+  morale: 65,
+  agriculture: 55,
+  commerce: 45,
+  stability: 60,
+};
+
+const defaultCityResources = {
+  rice: 800,
+  barley: 300,
+  seafood: 120,
+  gold: 500,
+  specialty: 0,
+};
+
+const defaultCityYields = {
+  riceHarvest: 300,
+  barleyHarvest: 120,
+  seafoodPerTurn: 20,
+  commerceIncome: 100,
+  specialtyIncome: 400,
+};
+
 export function isPlayerCity(city) {
   return city?.ownerFactionId === "player";
 }
@@ -78,6 +102,24 @@ export function occupyCity(cities, cityId, ownerFactionId = "player") {
   return cities.map((city) =>
     city.id === cityId ? { ...city, ownerFactionId } : city,
   );
+}
+
+export function initializeCityDomesticData(cities) {
+  return cities.map((city) => ({
+    ...city,
+    domestic: {
+      ...defaultCityDomestic,
+      ...(city.domestic ?? {}),
+    },
+    resources: {
+      ...defaultCityResources,
+      ...(city.resources ?? {}),
+    },
+    yields: {
+      ...defaultCityYields,
+      ...(city.yields ?? {}),
+    },
+  }));
 }
 
 export function initializeHeroLocationsFromRosters() {
