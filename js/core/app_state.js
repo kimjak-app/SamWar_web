@@ -1,20 +1,25 @@
 import { cities } from "../../data/cities.js";
 import { factions } from "../../data/factions.js";
-import { battleRosters } from "../../data/battle_rosters.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
 import { createInitialBattleState } from "./battle_state.js";
 import {
   ENEMY_INVASION_CHANCE,
   canAttackCity,
+  convertCityHeroesToFaction,
   getAttackSourceCity,
+  getHeroIdsBySideAndLocation,
+  initializeHeroLocationsFromRosters,
   occupyCity,
+  recruitCityHeroesToFaction,
   rollEnemyInvasion,
 } from "./world_rules.js";
 
 const DEFAULT_SELECTED_CITY_ID = "hanseong";
 
 export function createInitialAppState() {
+  initializeHeroLocationsFromRosters();
+
   return {
     meta: {
       title: "SamWar Web",
@@ -26,6 +31,7 @@ export function createInitialAppState() {
     mode: "world",
     selection: {
       cityId: DEFAULT_SELECTED_CITY_ID,
+      originCityId: DEFAULT_SELECTED_CITY_ID,
     },
     battle: null,
     pendingBattleChoice: null,
@@ -37,16 +43,23 @@ export function createInitialAppState() {
       skills,
       turnOwner: "player",
       pendingEnemyTurnResult: null,
+      lastRecruitmentResult: null,
     },
   };
 }
 
 export function selectCity(appState, cityId) {
+  const selectedCity = appState.world.cities.find((city) => city.id === cityId) ?? null;
+  const originCityId = selectedCity?.ownerFactionId === appState.meta.playerFactionId
+    ? cityId
+    : appState.selection.originCityId;
+
   return {
     ...appState,
     selection: {
       ...appState.selection,
       cityId,
+      originCityId,
     },
     pendingBattleChoice: appState.pendingBattleChoice?.type === "attack"
       ? null
@@ -77,10 +90,8 @@ function getSkillName(skillId) {
   return skills.find((skill) => skill.id === skillId)?.name ?? null;
 }
 
-function getPlayerDeploymentCandidateIds() {
-  return battleRosters.cityDefenderRosters?.[DEFAULT_SELECTED_CITY_ID]
-    ?? battleRosters.defaultPlayerAttack
-    ?? [];
+function getPlayerDeploymentCandidateIds(originCityId) {
+  return getHeroIdsBySideAndLocation(originCityId, "player");
 }
 
 function buildHeroDeployment(appState, cityId) {
@@ -90,8 +101,8 @@ function buildHeroDeployment(appState, cityId) {
     return null;
   }
 
-  const candidates = getPlayerDeploymentCandidateIds()
-    .map((heroId) => heroes.find((hero) => hero.id === heroId && hero.side === "player"))
+  const candidates = getPlayerDeploymentCandidateIds(pendingBattleChoice.originCityId)
+    .map((heroId) => heroes.find((hero) => hero.id === heroId))
     .filter(Boolean)
     .map((hero) => ({
       id: hero.id,
@@ -121,7 +132,12 @@ function buildHeroDeployment(appState, cityId) {
 
 function buildAttackBattleChoice(appState, cityId) {
   const defenderCity = appState.world.cities.find((city) => city.id === cityId);
-  const attackerCity = getAttackSourceCity(appState.world.cities, cityId);
+  const selectedOriginCity = appState.world.cities.find((city) => (
+    city.id === appState.selection.originCityId
+    && city.ownerFactionId === appState.meta.playerFactionId
+    && defenderCity?.neighbors.includes(city.id)
+  )) ?? null;
+  const attackerCity = selectedOriginCity ?? getAttackSourceCity(appState.world.cities, cityId);
 
   if (!defenderCity || !attackerCity || !canAttackCity(appState.world.cities, defenderCity)) {
     return null;
@@ -324,6 +340,7 @@ export function retreatFromBattle(appState) {
       battleContext.defenderCityId,
       "enemy",
     );
+    convertCityHeroesToFaction(battleContext.defenderCityId, "enemy");
 
     return advanceWorldTurn(appState, {
       mode: "world",
@@ -337,6 +354,7 @@ export function retreatFromBattle(appState) {
         cities: updatedCities,
         turnOwner: "player",
         pendingEnemyTurnResult: null,
+        lastRecruitmentResult: null,
       },
     });
   }
@@ -347,6 +365,10 @@ export function retreatFromBattle(appState) {
     battle: null,
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
+    world: {
+      ...appState.world,
+      lastRecruitmentResult: null,
+    },
   };
 }
 
@@ -364,9 +386,14 @@ export function returnFromBattle(appState) {
   };
 
   if (battleContext.type === "defense") {
-    const updatedCities = battle.status === "won"
-      ? appState.world.cities
-      : occupyCity(appState.world.cities, battle.defenderCityId, "enemy");
+    const defenseLost = battle.status !== "won";
+    const updatedCities = defenseLost
+      ? occupyCity(appState.world.cities, battle.defenderCityId, "enemy")
+      : appState.world.cities;
+
+    if (defenseLost) {
+      convertCityHeroesToFaction(battle.defenderCityId, "enemy");
+    }
 
     return advanceWorldTurn(appState, {
       mode: "world",
@@ -374,12 +401,14 @@ export function returnFromBattle(appState) {
       selection: {
         ...appState.selection,
         cityId: battle.defenderCityId,
+        originCityId: battle.defenderCityId,
       },
       world: {
         ...appState.world,
         cities: updatedCities,
         turnOwner: "player",
         pendingEnemyTurnResult: null,
+        lastRecruitmentResult: null,
       },
     });
   }
@@ -387,6 +416,10 @@ export function returnFromBattle(appState) {
   if (battle.status === "won") {
     const updatedCities = occupyCity(
       appState.world.cities,
+      battle.defenderCityId,
+      appState.meta.playerFactionId,
+    );
+    const recruitedHeroes = recruitCityHeroesToFaction(
       battle.defenderCityId,
       appState.meta.playerFactionId,
     );
@@ -404,6 +437,11 @@ export function returnFromBattle(appState) {
       world: {
         ...appState.world,
         cities: updatedCities,
+        lastRecruitmentResult: {
+          cityId: battle.defenderCityId,
+          factionId: appState.meta.playerFactionId,
+          heroes: recruitedHeroes,
+        },
       },
     };
   }
@@ -414,6 +452,10 @@ export function returnFromBattle(appState) {
     battle: null,
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
+    world: {
+      ...appState.world,
+      lastRecruitmentResult: null,
+    },
   };
 }
 

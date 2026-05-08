@@ -1,3 +1,6 @@
+import { battleRosters } from "../../data/battle_rosters.js";
+import { heroes } from "../../data/heroes.js";
+
 export function getFactionById(factions, factionId) {
   return factions.find((faction) => faction.id === factionId) ?? null;
 }
@@ -75,6 +78,66 @@ export function occupyCity(cities, cityId, ownerFactionId = "player") {
   return cities.map((city) =>
     city.id === cityId ? { ...city, ownerFactionId } : city,
   );
+}
+
+export function initializeHeroLocationsFromRosters() {
+  const initializedHeroes = [];
+
+  for (const [cityId, heroIds] of Object.entries(battleRosters.cityDefenderRosters ?? {})) {
+    for (const heroId of heroIds) {
+      const hero = heroes.find((entry) => entry.id === heroId);
+
+      if (!hero || hero.locationCityId) {
+        continue;
+      }
+
+      hero.locationCityId = cityId;
+      initializedHeroes.push({
+        id: hero.id,
+        name: hero.name,
+        locationCityId: cityId,
+      });
+    }
+  }
+
+  return initializedHeroes;
+}
+
+export function getHeroIdsBySideAndLocation(cityId, factionId) {
+  return heroes
+    .filter((hero) => hero.side === factionId && hero.locationCityId === cityId)
+    .map((hero) => hero.id);
+}
+
+export function convertCityHeroesToFaction(cityId, factionId) {
+  const convertedHeroes = [];
+
+  initializeHeroLocationsFromRosters();
+
+  for (const hero of heroes) {
+    if (hero.locationCityId !== cityId) {
+      continue;
+    }
+
+    const sideChanged = hero.side !== factionId;
+    hero.side = factionId;
+    hero.locationCityId = cityId;
+
+    if (!sideChanged) {
+      continue;
+    }
+
+    convertedHeroes.push({
+      id: hero.id,
+      name: hero.name,
+    });
+  }
+
+  return convertedHeroes;
+}
+
+export function recruitCityHeroesToFaction(cityId, factionId) {
+  return convertCityHeroesToFaction(cityId, factionId);
 }
 
 export function isWorldUnified(cities) {

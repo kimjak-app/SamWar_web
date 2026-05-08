@@ -163,6 +163,8 @@ function applyTurnStartEffects(battleState, side) {
           currentSkillCooldown: unit.currentSkillCooldown > 0 ? unit.currentSkillCooldown - 1 : 0,
           buffTurns: nextBuffTurns,
           buffAttackBonus: nextBuffTurns > 0 ? unit.buffAttackBonus : 0,
+          buffAttackSourceSkillId: nextBuffTurns > 0 ? unit.buffAttackSourceSkillId : null,
+          buffAttackSourceSkillName: nextBuffTurns > 0 ? unit.buffAttackSourceSkillName : null,
           defenseBuffTurns: nextDefenseBuffTurns,
           buffDefenseBonus: nextDefenseBuffTurns > 0 ? unit.buffDefenseBonus : 0,
           actionBlockReason: null,

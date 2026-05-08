@@ -1,9 +1,13 @@
-import { battleRosters, battleSpawnPositions } from "../../data/battle_rosters.js";
+import { battleSpawnPositions } from "../../data/battle_rosters.js";
 import { normalizeTerrainMap } from "../../data/battle_terrain.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
 import { strategies } from "../../data/strategies.js";
 import { BATTLE_GRID_HEIGHT, BATTLE_GRID_WIDTH } from "./battle_grid.js";
+import {
+  getHeroIdsBySideAndLocation,
+  initializeHeroLocationsFromRosters,
+} from "./world_rules.js";
 
 let battleSequence = 0;
 
@@ -48,6 +52,8 @@ function buildBattleUnit(heroId) {
     currentSkillCooldown: 0,
     buffAttackBonus: 0,
     buffTurns: 0,
+    buffAttackSourceSkillId: null,
+    buffAttackSourceSkillName: null,
     buffDefenseBonus: 0,
     defenseBuffTurns: 0,
     statusEffects: {
@@ -65,26 +71,18 @@ function buildBattleUnit(heroId) {
   };
 }
 
-function getCityDefenderRoster(city) {
-  if (!city?.id) {
-    return null;
-  }
-
-  return battleRosters.cityDefenderRosters?.[city.id] ?? null;
-}
-
 function getPlayerRoster(attackerCity, defenderCity, battleContext, attackerHeroIds = null) {
   if (battleContext?.type !== "defense" && Array.isArray(attackerHeroIds) && attackerHeroIds.length > 0) {
     return attackerHeroIds;
   }
 
   const rosterCity = battleContext?.type === "defense" ? defenderCity : attackerCity;
-  return getCityDefenderRoster(rosterCity) ?? battleRosters.defaultPlayerAttack;
+  return getHeroIdsBySideAndLocation(rosterCity?.id, "player");
 }
 
 function getEnemyRoster(attackerCity, defenderCity, battleContext) {
   const rosterCity = battleContext?.type === "defense" ? attackerCity : defenderCity;
-  return getCityDefenderRoster(rosterCity) ?? battleRosters.defaultEnemyDefense;
+  return getHeroIdsBySideAndLocation(rosterCity?.id, "enemy");
 }
 
 export function createInitialBattleState({
@@ -95,6 +93,8 @@ export function createInitialBattleState({
   attackerHeroIds = null,
 }) {
   battleSequence += 1;
+  initializeHeroLocationsFromRosters();
+
   const resolvedBattleContext = battleContext ?? {
     type: "attack",
     controlMode: autoBattleEnabled ? "auto" : "manual",

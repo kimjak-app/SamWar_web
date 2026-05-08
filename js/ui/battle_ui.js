@@ -110,7 +110,8 @@ function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = fals
   const statusParts = [];
 
   if (unit.buffTurns > 0 && unit.buffAttackBonus > 0) {
-    statusParts.push(`개혁령 효과 +${Math.round(unit.buffAttackBonus * 100)}% · ${unit.buffTurns}턴`);
+    const buffSourceName = unit.buffAttackSourceSkillName ?? "공격력 상승";
+    statusParts.push(`${buffSourceName} 효과 +${Math.round(unit.buffAttackBonus * 100)}% · ${unit.buffTurns}턴`);
   }
   const statusText = formatStatusList(unit);
 

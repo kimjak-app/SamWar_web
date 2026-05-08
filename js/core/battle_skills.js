@@ -208,11 +208,10 @@ export function applyReformOrder(battleState, casterUnit, skill) {
 }
 
 function getAllyAttackBuffOpeningLog(casterUnit, skill) {
-  if (skill.id === "yeongnak_grand_legacy") {
-    return `${casterUnit.name}의 ${skill.name}! 아군의 공격력이 상승했다.`;
-  }
+  const buffPercent = Math.round((skill.buffAttackBonus ?? 0) * 100);
+  const duration = skill.duration ?? 0;
 
-  return "정도전이 개혁령을 선포했습니다.";
+  return `${casterUnit.name}: ${skill.name} 발동. 아군 공격력 +${buffPercent}% · ${duration}턴`;
 }
 
 function applyAllyAttackBuffSkill(battleState, casterUnit, skill) {
@@ -234,6 +233,8 @@ function applyAllyAttackBuffSkill(battleState, casterUnit, skill) {
         hasActed: true,
         buffAttackBonus: skill.buffAttackBonus ?? 0,
         buffTurns: skill.duration ?? 0,
+        buffAttackSourceSkillId: skill.id,
+        buffAttackSourceSkillName: skill.name,
       };
     }
 
@@ -245,6 +246,8 @@ function applyAllyAttackBuffSkill(battleState, casterUnit, skill) {
         ...unit,
         buffAttackBonus: skill.buffAttackBonus ?? 0,
         buffTurns: skill.duration ?? 0,
+        buffAttackSourceSkillId: skill.id,
+        buffAttackSourceSkillName: skill.name,
       };
     }
 
