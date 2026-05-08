@@ -1,4 +1,3 @@
-import { battleSpawnPositions } from "../../data/battle_rosters.js";
 import { normalizeTerrainMap } from "../../data/battle_terrain.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
@@ -11,11 +10,48 @@ import {
 
 let battleSequence = 0;
 
-function buildBattleUnit(heroId) {
-  const hero = heroes.find((entry) => entry.id === heroId);
-  const spawnPosition = battleSpawnPositions[heroId];
+const battleSideSpawnSlots = {
+  left: [
+    { x: 2, y: 5 },
+    { x: 2, y: 4 },
+    { x: 1, y: 5 },
+    { x: 1, y: 4 },
+  ],
+  right: [
+    { x: 11, y: 3 },
+    { x: 11, y: 4 },
+    { x: 12, y: 3 },
+    { x: 12, y: 4 },
+  ],
+};
 
-  if (!hero || !spawnPosition) {
+export function getBattleSpawnSides(attackerCity, defenderCity) {
+  if (Number.isFinite(attackerCity?.x) && Number.isFinite(defenderCity?.x)) {
+    if (attackerCity.x > defenderCity.x) {
+      return { attackerSide: "right", defenderSide: "left" };
+    }
+
+    if (attackerCity.x < defenderCity.x) {
+      return { attackerSide: "left", defenderSide: "right" };
+    }
+  }
+
+  return { attackerSide: "left", defenderSide: "right" };
+}
+
+function getFacingForBattleSide(side) {
+  return side === "left" ? "right" : "left";
+}
+
+function getSpawnSlot(side, index) {
+  const slots = battleSideSpawnSlots[side] ?? battleSideSpawnSlots.left;
+  return slots[index] ?? slots[slots.length - 1];
+}
+
+function buildBattleUnit(heroId, spawnPosition, facing) {
+  const hero = heroes.find((entry) => entry.id === heroId);
+
+  if (!hero || !spawnPosition || !facing) {
     return null;
   }
 
@@ -63,7 +99,7 @@ function buildBattleUnit(heroId) {
     actionBlockReason: null,
     x: spawnPosition.x,
     y: spawnPosition.y,
-    facing: hero.side === "player" ? "right" : "left",
+    facing,
     isDefending: false,
     hasMoved: false,
     hasActed: false,
@@ -105,11 +141,26 @@ export function createInitialBattleState({
   const selectedAttackerHeroIds = Array.isArray(attackerHeroIds) && attackerHeroIds.length > 0
     ? attackerHeroIds
     : null;
-  const rosterUnitIds = [
-    ...getPlayerRoster(attackerCity, defenderCity, resolvedBattleContext, selectedAttackerHeroIds),
-    ...getEnemyRoster(attackerCity, defenderCity, resolvedBattleContext),
-  ];
-  const units = rosterUnitIds.map(buildBattleUnit).filter(Boolean);
+  const attackerRosterUnitIds = getPlayerRoster(
+    attackerCity,
+    defenderCity,
+    resolvedBattleContext,
+    selectedAttackerHeroIds,
+  );
+  const defenderRosterUnitIds = getEnemyRoster(attackerCity, defenderCity, resolvedBattleContext);
+  const { attackerSide, defenderSide } = getBattleSpawnSides(attackerCity, defenderCity);
+  const units = [
+    ...attackerRosterUnitIds.map((heroId, index) => buildBattleUnit(
+      heroId,
+      getSpawnSlot(attackerSide, index),
+      getFacingForBattleSide(attackerSide),
+    )),
+    ...defenderRosterUnitIds.map((heroId, index) => buildBattleUnit(
+      heroId,
+      getSpawnSlot(defenderSide, index),
+      getFacingForBattleSide(defenderSide),
+    )),
+  ].filter(Boolean);
   const openingLog = resolvedBattleContext.type === "defense"
     ? `${attackerCity.name}의 침공을 ${defenderCity.name}에서 맞아 방어전을 개시했습니다.`
     : `${attackerCity.name}에서 ${defenderCity.name} 공격을 개시했습니다.`;
