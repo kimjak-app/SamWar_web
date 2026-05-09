@@ -49,8 +49,11 @@ import {
   playWorldMapBgm,
   stopBgm,
 } from "./audio/bgm_manager.js";
+import { eventBus } from "./core/EventBus.js";
+import { gameStore } from "./core/GameStore.js";
 import { getSkillById } from "./core/battle_skills.js";
 import { renderLayout } from "./ui/layout_ui.js";
+import "./core/save_load.js";
 
 const appRoot = document.querySelector("#app");
 
@@ -65,7 +68,9 @@ let activeSkillCutin = null;
 let activeBattleResultCutin = null;
 let activeBattleResultAudio = null;
 let battleResultSequenceId = 0;
+const emittedBattleEndIds = new Set();
 const battleTempoTimerIds = new Set();
+let eventDrivenRerenderQueued = false;
 
 const BATTLE_TEMPO = {
   counterDelayMs: 1100,
@@ -84,7 +89,116 @@ const BATTLE_RESULT_AUDIO = {
 
 initializeBgmManager();
 
+function syncCompatibilityState(nextState = gameStore.getState()) {
+  if (nextState) {
+    appState = nextState;
+  }
+
+  if (typeof window !== "undefined") {
+    window.gameState = appState;
+  }
+
+  return appState;
+}
+
+function getAppState() {
+  return syncCompatibilityState();
+}
+
+function commitAppState(nextAppState) {
+  gameStore.update(() => nextAppState);
+  return syncCompatibilityState();
+}
+
+function updateAppState(updaterFn) {
+  if (typeof updaterFn !== "function") {
+    return getAppState();
+  }
+
+  gameStore.update((state) => updaterFn(state ?? appState));
+  return syncCompatibilityState();
+}
+
+function getSelectedCityId() {
+  return gameStore.getSelectedCityId();
+}
+
+function getSelectedHeroId() {
+  return gameStore.getSelectedHeroId();
+}
+
+function scheduleEventDrivenRerender() {
+  if (eventDrivenRerenderQueued) {
+    return;
+  }
+
+  eventDrivenRerenderQueued = true;
+  window.queueMicrotask(() => {
+    eventDrivenRerenderQueued = false;
+    rerender();
+  });
+}
+
+function emitBattleEnded(battleState, overrides = {}) {
+  if (!battleState) {
+    return;
+  }
+
+  const result = overrides.result ?? battleState.status ?? "ended";
+  const battleKey = `${battleState.id ?? "unknown"}:${result}`;
+
+  if (emittedBattleEndIds.has(battleKey)) {
+    return;
+  }
+
+  emittedBattleEndIds.add(battleKey);
+  eventBus.emit("battle:ended", {
+    battleId: battleState.id ?? null,
+    result,
+    attackerCityId: battleState.attackerCityId ?? null,
+    defenderCityId: battleState.defenderCityId ?? null,
+    battleContext: battleState.battleContext ?? null,
+  });
+}
+
+function emitCityConqueredEvents(previousState, nextState, context = {}) {
+  const previousCities = new Map((previousState?.world?.cities ?? []).map((city) => [city.id, city]));
+
+  for (const city of nextState?.world?.cities ?? []) {
+    const previousCity = previousCities.get(city.id);
+
+    if (!previousCity || previousCity.ownerFactionId === city.ownerFactionId) {
+      continue;
+    }
+
+    eventBus.emit("city:conquered", {
+      cityId: city.id,
+      previousOwnerFactionId: previousCity.ownerFactionId,
+      ownerFactionId: city.ownerFactionId,
+      source: context.source ?? "unknown",
+      battleId: context.battleId ?? null,
+    });
+  }
+}
+
+function emitHeroMoved(payload) {
+  eventBus.emit("hero:moved", payload);
+}
+
+gameStore.subscribe((nextState) => {
+  syncCompatibilityState(nextState);
+});
+
+eventBus.on("city:selected", scheduleEventDrivenRerender);
+eventBus.on("hero:moved", scheduleEventDrivenRerender);
+eventBus.on("city:conquered", scheduleEventDrivenRerender);
+eventBus.on("battle:ended", scheduleEventDrivenRerender);
+
+commitAppState(appState);
+
 function syncBgmWithMode() {
+  getAppState();
+
   if (activeBattleResultCutin) {
     return;
   }
@@ -175,6 +289,7 @@ function playResultAudio(src) {
 
 function scheduleBattleTempoTimer(callback, delayMs, battleId = appState.battle?.id ?? null) {
   const timerId = window.setTimeout(() => {
+    getAppState();
     battleTempoTimerIds.delete(timerId);
 
     if (!appState.battle || appState.battle.id !== battleId) {
@@ -189,6 +304,8 @@ function scheduleBattleTempoTimer(callback, delayMs, battleId = appState.battle?
 }
 
 function getRenderableAppState() {
+  getAppState();
+
   if (!appState.battle) {
     return appState;
   }
@@ -224,7 +341,7 @@ function applyBattleState(nextBattleState) {
     return;
   }
 
-  appState = updateBattleState(appState, nextBattleState);
+  updateAppState((state) => updateBattleState(state, nextBattleState));
   rerender();
 }
 
@@ -242,13 +359,20 @@ function finishBattleAfterResultCutin(battleId) {
   stopActiveBattleResultAudio();
   clearAutoBattleTimer();
   clearBattleTempoTimers();
-  appState = returnFromBattle(appState);
+  const previousState = appState;
+  const completedBattle = appState.battle;
+  commitAppState(returnFromBattle(appState));
+  emitBattleEnded(completedBattle);
+  emitCityConqueredEvents(previousState, appState, {
+    source: "battle",
+    battleId: completedBattle?.id ?? null,
+  });
   rerender();
 }
 
 async function startBattleResultCutinSequence(nextBattleState) {
   if (!nextBattleState || nextBattleState.status === "active") {
-    appState = updateBattleState(appState, nextBattleState);
+    updateAppState((state) => updateBattleState(state, nextBattleState));
     rerender();
     return;
   }
@@ -266,7 +390,7 @@ async function startBattleResultCutinSequence(nextBattleState) {
     image: isVictory ? BATTLE_RESULT_VICTORY_IMAGE : BATTLE_RESULT_DEFEAT_IMAGE,
     audio: resultAudioSrc,
   };
-  appState = updateBattleState(appState, nextBattleState);
+  updateAppState((state) => updateBattleState(state, nextBattleState));
   rerender();
   const scheduledResultCutin = activeBattleResultCutin;
   let durationMs = BATTLE_RESULT_FALLBACK_MS;
@@ -698,11 +822,14 @@ function scheduleAutoBattleStep() {
 }
 
 function rerender() {
+  getAppState();
   clearAutoBattleTimer();
   syncBgmWithMode();
 
   renderLayout(appRoot, getRenderableAppState(), {
     onCitySelect: (cityId) => {
+      getAppState();
+
       if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
         return;
       }
@@ -712,141 +839,184 @@ function rerender() {
       }
 
       clearBattleTempoTimers();
-      appState = selectCity(appState, cityId);
+      updateAppState((state) => selectCity(state, cityId));
+      eventBus.emit("city:selected", {
+        cityId: getSelectedCityId(),
+      });
       rerender();
     },
     onAttackCity: (cityId) => {
+      getAppState();
+
       if (appState.mode !== "world" || appState.world.turnOwner !== "player" || appState.world.pendingEnemyTurnResult) {
         return;
       }
 
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = openHeroDeployment(appState, cityId);
+      updateAppState((state) => openHeroDeployment(state, cityId));
       rerender();
     },
     onBattleChoiceConfirm: ({ cityId, autoBattleEnabled }) => {
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = startBattle(appState, cityId, { autoBattleEnabled });
+      updateAppState((state) => startBattle(state, cityId, { autoBattleEnabled }));
       rerender();
       if (autoBattleEnabled) {
         ensureBattleProgress();
       }
     },
     onHeroDeploymentToggle: (heroId) => {
+      getAppState();
+
       if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
         return;
       }
 
-      appState = toggleDeploymentHero(appState, heroId);
+      updateAppState((state) => toggleDeploymentHero(state, heroId));
       rerender();
     },
     onHeroDeploymentStart: ({ cityId, selectedHeroIds }) => {
+      getAppState();
+
       if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult || selectedHeroIds.length === 0) {
         return;
       }
 
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = startBattle(appState, cityId, { attackerHeroIds: selectedHeroIds });
+      updateAppState((state) => startBattle(state, cityId, { attackerHeroIds: selectedHeroIds }));
       rerender();
     },
     onHeroDeploymentCancel: () => {
+      getAppState();
+
       if (appState.mode !== "world") {
         return;
       }
 
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = cancelHeroDeployment(appState);
+      updateAppState((state) => cancelHeroDeployment(state));
       rerender();
     },
     onHeroTransferOpen: (cityId) => {
+      getAppState();
+
       if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
         return;
       }
 
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = openHeroTransfer(appState, cityId);
+      updateAppState((state) => openHeroTransfer(state, cityId));
       rerender();
     },
     onHeroTransferSelectHero: (heroId) => {
+      getAppState();
+
       if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
         return;
       }
 
-      appState = selectHeroTransferHero(appState, heroId);
+      updateAppState((state) => selectHeroTransferHero(state, heroId));
       rerender();
     },
     onHeroTransferSelectTargetCity: (targetCityId) => {
+      getAppState();
+
       if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
         return;
       }
 
-      appState = selectHeroTransferTargetCity(appState, targetCityId);
+      updateAppState((state) => selectHeroTransferTargetCity(state, targetCityId));
       rerender();
     },
     onHeroTransferConfirm: ({ heroId, targetCityId }) => {
+      getAppState();
+
       if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
         return;
       }
 
-      appState = confirmHeroTransfer(appState, heroId, targetCityId);
+      const movedHero = appState.world.heroes.find((hero) => hero.id === heroId) ?? null;
+      const fromCityId = movedHero?.locationCityId ?? appState.pendingHeroTransfer?.sourceCityId ?? null;
+      const previousState = appState;
+      updateAppState((state) => confirmHeroTransfer(state, heroId, targetCityId));
+
+      if (appState !== previousState && fromCityId && fromCityId !== targetCityId) {
+        emitHeroMoved({
+          heroId: getSelectedHeroId() ?? heroId,
+          fromCityId,
+          targetCityId,
+        });
+      }
+
       rerender();
     },
     onHeroTransferCancel: () => {
+      getAppState();
+
       if (appState.mode !== "world") {
         return;
       }
 
-      appState = cancelHeroTransfer(appState);
+      updateAppState((state) => cancelHeroTransfer(state));
       rerender();
     },
     onBattleChoiceCancel: () => {
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = cancelBattleChoice(appState);
+      updateAppState((state) => cancelBattleChoice(state));
       rerender();
     },
     onEndWorldTurn: () => {
+      getAppState();
+
       if (appState.mode !== "world") {
         return;
       }
 
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = endWorldTurn(appState);
+      updateAppState((state) => endWorldTurn(state));
       rerender();
     },
     onConfirmEnemyTurnResult: () => {
+      getAppState();
+
       if (appState.mode !== "world") {
         return;
       }
 
       clearBattleTempoTimers();
       clearAutoBattleTimer();
-      appState = confirmEnemyTurnResult(appState);
+      updateAppState((state) => confirmEnemyTurnResult(state));
       rerender();
     },
     onBattleSelectUnit: (unitId) => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
 
-      appState = updateBattleState(appState, selectBattleUnit(appState.battle, unitId));
+      updateAppState((state) => updateBattleState(state, selectBattleUnit(state.battle, unitId)));
       rerender();
     },
     onBattleMoveUnit: (position) => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
 
-      appState = updateBattleState(appState, moveSelectedUnit(appState.battle, position));
+      updateAppState((state) => updateBattleState(state, moveSelectedUnit(state.battle, position)));
       rerender();
     },
     onBattleAttackUnit: (targetUnitId) => {
+      getAppState();
+
       if (!canUseManualBattleControls() || !appState.battle.selectedUnitId) {
         return;
       }
@@ -874,38 +1044,48 @@ function rerender() {
       finishPlayerFlow(nextBattleState);
     },
     onBattleSetFacing: (direction) => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
 
-      appState = updateBattleState(appState, setSelectedUnitFacing(appState.battle, direction));
+      updateAppState((state) => updateBattleState(state, setSelectedUnitFacing(state.battle, direction)));
       rerender();
     },
     onBattleCancelPendingMove: () => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
 
-      appState = updateBattleState(appState, cancelPendingMove(appState.battle));
+      updateAppState((state) => updateBattleState(state, cancelPendingMove(state.battle)));
       rerender();
     },
     onBattleCancelActionMode: () => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
 
-      appState = updateBattleState(appState, cancelBattleActionMode(appState.battle));
+      updateAppState((state) => updateBattleState(state, cancelBattleActionMode(state.battle)));
       rerender();
     },
     onBattleEnterAttackMode: () => {
+      getAppState();
+
       if (!canUseManualBattleControls() || !appState.battle?.selectedUnitId) {
         return;
       }
 
-      appState = updateBattleState(appState, enterAttackMode(appState.battle));
+      updateAppState((state) => updateBattleState(state, enterAttackMode(state.battle)));
       rerender();
     },
     onBattleUseSkill: (targetUnitId) => {
+      getAppState();
+
       if (!canUseManualBattleControls() || !appState.battle.selectedUnitId) {
         return;
       }
@@ -920,14 +1100,18 @@ function rerender() {
       finishPlayerFlow(useSelectedUnitSkill(appState.battle, targetUnitId));
     },
     onBattleEnterStrategyMode: () => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
 
-      appState = updateBattleState(appState, enterStrategyMode(appState.battle));
+      updateAppState((state) => updateBattleState(state, enterStrategyMode(state.battle)));
       rerender();
     },
     onBattleUseStrategy: (targetUnitId) => {
+      getAppState();
+
       if (!canUseManualBattleControls() || !appState.battle.selectedUnitId) {
         return;
       }
@@ -935,6 +1119,8 @@ function rerender() {
       finishPlayerFlow(useSelectedUnitStrategy(appState.battle, targetUnitId));
     },
     onBattleDefend: () => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
@@ -942,6 +1128,8 @@ function rerender() {
       finishPlayerFlow(defendSelectedUnit(appState.battle));
     },
     onBattleWait: () => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
@@ -949,6 +1137,8 @@ function rerender() {
       finishPlayerFlow(waitSelectedUnit(appState.battle));
     },
     onBattleEnterSkillMode: () => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
@@ -962,10 +1152,12 @@ function rerender() {
         return;
       }
 
-      appState = updateBattleState(appState, enterSkillMode(appState.battle));
+      updateAppState((state) => updateBattleState(state, enterSkillMode(state.battle)));
       rerender();
     },
     onBattleEndTurn: () => {
+      getAppState();
+
       if (!canUseManualBattleControls()) {
         return;
       }
@@ -973,35 +1165,57 @@ function rerender() {
       startEnemyTurnSequence(endPlayerTurn(appState.battle));
     },
     onBattleToggleAutoBattle: () => {
+      getAppState();
+
       if (!appState.battle || appState.battle.status !== "active" || battleTempoLocked) {
         return;
       }
 
-      appState = updateBattleState(
-        appState,
-        setAutoBattleEnabled(appState.battle, !appState.battle.autoBattleEnabled),
+      updateAppState((state) =>
+        updateBattleState(
+          state,
+          setAutoBattleEnabled(state.battle, !state.battle.autoBattleEnabled),
+        ),
       );
       rerender();
       ensureBattleProgress();
     },
     onBattleRetreat: () => {
+      getAppState();
+
       if (battleTempoLocked && appState.battle?.status === "active") {
         return;
       }
 
       clearAutoBattleTimer();
       clearBattleTempoTimers();
-      appState = retreatFromBattle(appState);
+      const previousState = appState;
+      const completedBattle = appState.battle;
+      commitAppState(retreatFromBattle(appState));
+      emitBattleEnded(completedBattle, { result: "retreated" });
+      emitCityConqueredEvents(previousState, appState, {
+        source: "retreat",
+        battleId: completedBattle?.id ?? null,
+      });
       rerender();
     },
     onBattleReturnToWorld: () => {
+      getAppState();
+
       if (isBattleResultCutinActive()) {
         return;
       }
 
       clearAutoBattleTimer();
       clearBattleTempoTimers();
-      appState = returnFromBattle(appState);
+      const previousState = appState;
+      const completedBattle = appState.battle;
+      commitAppState(returnFromBattle(appState));
+      emitBattleEnded(completedBattle);
+      emitCityConqueredEvents(previousState, appState, {
+        source: "battle",
+        battleId: completedBattle?.id ?? null,
+      });
       rerender();
     },
   });
