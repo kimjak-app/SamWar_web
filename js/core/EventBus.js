@@ -56,9 +56,4 @@ function createEventBus() {
 
 export const eventBus = createEventBus();
 
-if (typeof window !== "undefined") {
-  window.EventBus = eventBus;
-  window.eventBus = eventBus;
-}
-
-export { createEventBus };
+export { createEventBus, eventBus as EventBus };

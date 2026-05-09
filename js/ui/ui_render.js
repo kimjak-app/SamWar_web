@@ -212,10 +212,3 @@ export function renderAllWorldUI(appState) {
     </main>
   `;
 }
-
-if (typeof window !== "undefined") {
-  window.SamWarUI = {
-    ...(window.SamWarUI ?? {}),
-    renderAllWorldUI,
-  };
-}

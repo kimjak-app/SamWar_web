@@ -88,13 +88,6 @@ function createGameStore(initialState = null) {
   };
 }
 
-export const gameStore = createGameStore(
-  typeof window !== "undefined" && window.gameState ? window.gameState : null,
-);
+export const gameStore = createGameStore(null);
 
-if (typeof window !== "undefined") {
-  window.GameStore = gameStore;
-  window.gameStore = gameStore;
-}
-
-export { createGameStore };
+export { createGameStore, gameStore as GameStore };

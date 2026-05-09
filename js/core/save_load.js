@@ -101,10 +101,6 @@ export function loadGame() {
     const loadedState = hydrateLoadedState(snapshot.state);
     gameStore.update(() => loadedState);
 
-    if (typeof window !== "undefined") {
-      window.gameState = loadedState;
-    }
-
     return {
       ok: true,
       snapshot: {
@@ -130,15 +126,6 @@ export function clearSave() {
 
   storage.removeItem(SAVE_KEY);
   return { ok: true };
-}
-
-if (typeof window !== "undefined") {
-  window.SamWarSaveLoad = {
-    createSaveSnapshot,
-    saveGame,
-    loadGame,
-    clearSave,
-  };
 }
 
 export { SAVE_KEY, SAVE_VERSION };

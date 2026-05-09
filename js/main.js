@@ -52,8 +52,13 @@ import {
 import { eventBus } from "./core/EventBus.js";
 import { gameStore } from "./core/GameStore.js";
 import { getSkillById } from "./core/battle_skills.js";
+import {
+  clearSave,
+  createSaveSnapshot,
+  loadGame,
+  saveGame,
+} from "./core/save_load.js";
 import { renderLayout } from "./ui/layout_ui.js";
-import "./core/save_load.js";
 
 const appRoot = document.querySelector("#app");
 
@@ -92,10 +97,6 @@ initializeBgmManager();
 function syncCompatibilityState(nextState = gameStore.getState()) {
   if (nextState) {
     appState = nextState;
-  }
-
-  if (typeof window !== "undefined") {
-    window.gameState = appState;
   }
 
   return appState;
