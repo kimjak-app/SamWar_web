@@ -1,5 +1,6 @@
 import { battleRosters } from "../../data/battle_rosters.js";
 import { heroes } from "../../data/heroes.js";
+import { DOMESTIC_STAT_KEYS, FACTION_IDS, RESOURCE_KEYS, YIELD_KEYS } from "../constants.js";
 
 export function getFactionById(factions, factionId) {
   return factions.find((faction) => faction.id === factionId) ?? null;
@@ -8,35 +9,35 @@ export function getFactionById(factions, factionId) {
 export const ENEMY_INVASION_CHANCE = 0.45;
 
 const defaultCityDomestic = {
-  publicOrder: 70,
-  morale: 65,
-  agriculture: 55,
-  commerce: 45,
-  stability: 60,
+  [DOMESTIC_STAT_KEYS.PUBLIC_ORDER]: 70,
+  [DOMESTIC_STAT_KEYS.MORALE]: 65,
+  [DOMESTIC_STAT_KEYS.AGRICULTURE]: 55,
+  [DOMESTIC_STAT_KEYS.COMMERCE]: 45,
+  [DOMESTIC_STAT_KEYS.STABILITY]: 60,
 };
 
 const defaultCityResources = {
-  rice: 800,
-  barley: 300,
-  seafood: 120,
-  gold: 500,
-  specialty: 0,
+  [RESOURCE_KEYS.RICE]: 800,
+  [RESOURCE_KEYS.BARLEY]: 300,
+  [RESOURCE_KEYS.SEAFOOD]: 120,
+  [RESOURCE_KEYS.GOLD]: 500,
+  [RESOURCE_KEYS.SPECIALTY]: 0,
 };
 
 const defaultCityYields = {
-  riceHarvest: 300,
-  barleyHarvest: 120,
-  seafoodPerTurn: 20,
-  commerceIncome: 100,
-  specialtyIncome: 400,
+  [YIELD_KEYS.RICE_HARVEST]: 300,
+  [YIELD_KEYS.BARLEY_HARVEST]: 120,
+  [YIELD_KEYS.SEAFOOD_PER_TURN]: 20,
+  [YIELD_KEYS.COMMERCE_INCOME]: 100,
+  [YIELD_KEYS.SPECIALTY_INCOME]: 400,
 };
 
 export function isPlayerCity(city) {
-  return city?.ownerFactionId === "player";
+  return city?.ownerFactionId === FACTION_IDS.PLAYER;
 }
 
 export function isEnemyCity(city) {
-  return city?.ownerFactionId === "enemy";
+  return city?.ownerFactionId === FACTION_IDS.ENEMY;
 }
 
 export function canAttackCity(cities, targetCity) {
@@ -98,7 +99,7 @@ export function rollEnemyInvasion(cities, chance = ENEMY_INVASION_CHANCE, random
   return candidates[selectedIndex] ?? null;
 }
 
-export function occupyCity(cities, cityId, ownerFactionId = "player") {
+export function occupyCity(cities, cityId, ownerFactionId = FACTION_IDS.PLAYER) {
   return cities.map((city) =>
     city.id === cityId ? { ...city, ownerFactionId } : city,
   );
@@ -151,15 +152,15 @@ export function getHeroIdsBySideAndLocation(cityId, factionId) {
     .map((hero) => hero.id);
 }
 
-export function getTransferableHeroesFromCity(cityId, factionId = "player") {
+export function getTransferableHeroesFromCity(cityId, factionId = FACTION_IDS.PLAYER) {
   return heroes.filter((hero) => hero.side === factionId && hero.locationCityId === cityId);
 }
 
-export function getFactionOwnedDestinationCities(cities, factionId = "player", excludeCityId = null) {
+export function getFactionOwnedDestinationCities(cities, factionId = FACTION_IDS.PLAYER, excludeCityId = null) {
   return cities.filter((city) => city.ownerFactionId === factionId && city.id !== excludeCityId);
 }
 
-export function transferHeroToCity(heroId, targetCityId, cities, factionId = "player") {
+export function transferHeroToCity(heroId, targetCityId, cities, factionId = FACTION_IDS.PLAYER) {
   const hero = heroes.find((entry) => entry.id === heroId) ?? null;
 
   if (!hero) {

@@ -1,4 +1,13 @@
+import { DOMESTIC_STAT_KEYS, RESOURCE_KEYS, SEASON_KEYS, YIELD_KEYS } from "../constants.js";
 import { canAttackCity, getFactionById, isEnemyCity, isPlayerCity, isWorldUnified } from "../core/world_rules.js";
+
+const SEASON_LABELS = Object.freeze({
+  [SEASON_KEYS.SPRING]: "봄",
+  [SEASON_KEYS.AUTUMN]: "가을",
+  [SEASON_KEYS.WINTER]: "겨울",
+  [SEASON_KEYS.SEASON]: "계절",
+  [SEASON_KEYS.TURN]: "턴",
+});
 
 function buildCityMap(cities) {
   return new Map(cities.map((city) => [city.id, city]));
@@ -112,27 +121,27 @@ function renderCityDomesticPanel(selectedCity) {
     <div class="city-domestic-panel">
       <div class="city-domestic-section">
         <p class="city-domestic-heading">내정</p>
-        ${renderDomesticStatRow("민심", getDomesticValue(domestic, "morale"))}
-        ${renderDomesticStatRow("치안", getDomesticValue(domestic, "publicOrder"))}
-        ${renderDomesticStatRow("농업", getDomesticValue(domestic, "agriculture"))}
-        ${renderDomesticStatRow("상업", getDomesticValue(domestic, "commerce"))}
-        ${renderDomesticStatRow("안정", getDomesticValue(domestic, "stability"))}
+        ${renderDomesticStatRow("민심", getDomesticValue(domestic, DOMESTIC_STAT_KEYS.MORALE))}
+        ${renderDomesticStatRow("치안", getDomesticValue(domestic, DOMESTIC_STAT_KEYS.PUBLIC_ORDER))}
+        ${renderDomesticStatRow("농업", getDomesticValue(domestic, DOMESTIC_STAT_KEYS.AGRICULTURE))}
+        ${renderDomesticStatRow("상업", getDomesticValue(domestic, DOMESTIC_STAT_KEYS.COMMERCE))}
+        ${renderDomesticStatRow("안정", getDomesticValue(domestic, DOMESTIC_STAT_KEYS.STABILITY))}
       </div>
       <div class="city-domestic-section">
         <p class="city-domestic-heading">자원</p>
-        ${renderResourceRow("쌀", getResourceValue(resources, "rice"))}
-        ${renderResourceRow("보리", getResourceValue(resources, "barley"))}
-        ${renderResourceRow("해산물", getResourceValue(resources, "seafood"))}
-        ${renderResourceRow("금전", getResourceValue(resources, "gold"))}
-        ${renderResourceRow("특산", getResourceValue(resources, "specialty"))}
+        ${renderResourceRow("쌀", getResourceValue(resources, RESOURCE_KEYS.RICE))}
+        ${renderResourceRow("보리", getResourceValue(resources, RESOURCE_KEYS.BARLEY))}
+        ${renderResourceRow("해산물", getResourceValue(resources, RESOURCE_KEYS.SEAFOOD))}
+        ${renderResourceRow("금전", getResourceValue(resources, RESOURCE_KEYS.GOLD))}
+        ${renderResourceRow("특산", getResourceValue(resources, RESOURCE_KEYS.SPECIALTY))}
       </div>
       <div class="city-domestic-section">
         <p class="city-domestic-heading">예상 수입</p>
-        ${renderYieldRow("쌀", getResourceValue(yields, "riceHarvest"), "가을")}
-        ${renderYieldRow("보리", getResourceValue(yields, "barleyHarvest"), "봄")}
-        ${renderYieldRow("해산물", getResourceValue(yields, "seafoodPerTurn"), "턴")}
-        ${renderYieldRow("상업", getResourceValue(yields, "commerceIncome"), "계절")}
-        ${renderYieldRow("특산", getResourceValue(yields, "specialtyIncome"), "겨울")}
+        ${renderYieldRow("쌀", getResourceValue(yields, YIELD_KEYS.RICE_HARVEST), SEASON_LABELS[SEASON_KEYS.AUTUMN])}
+        ${renderYieldRow("보리", getResourceValue(yields, YIELD_KEYS.BARLEY_HARVEST), SEASON_LABELS[SEASON_KEYS.SPRING])}
+        ${renderYieldRow("해산물", getResourceValue(yields, YIELD_KEYS.SEAFOOD_PER_TURN), SEASON_LABELS[SEASON_KEYS.TURN])}
+        ${renderYieldRow("상업", getResourceValue(yields, YIELD_KEYS.COMMERCE_INCOME), SEASON_LABELS[SEASON_KEYS.SEASON])}
+        ${renderYieldRow("특산", getResourceValue(yields, YIELD_KEYS.SPECIALTY_INCOME), SEASON_LABELS[SEASON_KEYS.WINTER])}
       </div>
     </div>
   `;
