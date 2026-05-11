@@ -11,6 +11,7 @@ import {
   createInitialDomesticPolicy,
   createInitialEnemyResourceStock,
   createInitialResourceStock,
+  normalizeChancellorHeroId,
   normalizeChancellorPolicy,
   normalizeTaxLevel,
 } from "./domestic_income.js";
@@ -48,8 +49,8 @@ export function createInitialAppState() {
   return {
     meta: withCalendarMeta({
       title: "SamWar Web",
-      phase: "World Map 4-City MVP",
-      status: "전투 없이 도시 선택과 진군 경로만 확인 가능한 첫 플레이 화면",
+      phase: "World",
+      status: "",
       playerFactionId: "player",
       turn: 1,
       calendar: createInitialCalendar(),
@@ -95,6 +96,20 @@ export function setChancellorPolicy(appState, chancellorPolicy) {
     domesticPolicy: {
       ...(appState.domesticPolicy ?? {}),
       chancellorPolicy: normalizeChancellorPolicy(chancellorPolicy),
+    },
+  };
+}
+
+export function setChancellorHeroId(appState, chancellorHeroId) {
+  return {
+    ...appState,
+    domesticPolicy: {
+      ...(appState.domesticPolicy ?? {}),
+      chancellorHeroId: normalizeChancellorHeroId(
+        chancellorHeroId,
+        appState?.world?.heroes,
+        appState?.meta?.playerFactionId,
+      ),
     },
   };
 }

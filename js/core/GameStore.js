@@ -14,9 +14,12 @@ function syncDerivedState(state) {
     return state;
   }
 
+  const playerFactionId = state.meta.playerFactionId ?? "player";
+  const heroes = state?.world?.heroes ?? [];
+
   return {
     ...state,
-    domesticPolicy: normalizeDomesticPolicy(state.domesticPolicy),
+    domesticPolicy: normalizeDomesticPolicy(state.domesticPolicy, heroes, playerFactionId),
     resources: normalizeResourceStock(state.resources),
     enemyResources: normalizeEnemyResourceStock(state.enemyResources),
     meta: {

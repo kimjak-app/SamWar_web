@@ -184,7 +184,7 @@ export function renderAllWorldUI(appState) {
 
   return `
     <main class="map-screen">
-      <section class="world-stage" aria-labelledby="samwar-title">
+      <section class="world-stage" aria-label="SamWar world map">
         <div class="map-image" aria-hidden="true"></div>
         <div class="map-overlay" aria-hidden="true"></div>
 

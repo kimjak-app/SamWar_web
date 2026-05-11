@@ -2,6 +2,7 @@ import {
   CHANCELLOR_POLICY_DESCRIPTIONS,
   CHANCELLOR_POLICY_LABELS,
   CHANCELLOR_POLICY_KEYS,
+  CHANCELLOR_TYPE_LABELS,
   LOYALTY_LABELS,
   LOYALTY_KEYS,
   RESOURCE_KEYS,
@@ -13,6 +14,7 @@ import {
   calculateHeroUpkeep,
   calculateSaltPreservationNeed,
   calculateSoldierUpkeepPreview,
+  getEligibleChancellorHeroes,
   getWarehouseStatus,
   getTaxGoldMultiplier,
   getTaxLoyaltyDelta,
@@ -140,6 +142,78 @@ function formatTaxEffect(tax) {
   return `세금 효과: 인구·상업세 적용, 충성도 ${formatSignedValue(tax.loyaltyDelta)}`;
 }
 
+function renderChancellorPortrait(hero) {
+  if (hero?.portraitImage) {
+    return `<img class="chancellor-portrait" src="${hero.portraitImage}" alt="${hero.name} 초상화" loading="lazy" />`;
+  }
+
+  return `<div class="chancellor-portrait chancellor-portrait-fallback" aria-hidden="true">${hero?.name?.slice(0, 1) ?? "?"}</div>`;
+}
+
+function formatChancellorTypeLine(label, type, aptitude) {
+  if (!type) {
+    return `${label}: 없음`;
+  }
+
+  const typeLabel = CHANCELLOR_TYPE_LABELS[type] ?? type;
+  return `${label}: ${typeLabel} ${aptitude}`;
+}
+
+function renderChancellorCard(appState) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const domesticPolicy = normalizeDomesticPolicy(
+    appState?.domesticPolicy,
+    appState?.world?.heroes,
+    playerFactionId,
+  );
+  const candidates = getEligibleChancellorHeroes(appState?.world?.heroes, playerFactionId);
+  const currentChancellor = candidates.find((hero) => hero.id === domesticPolicy.chancellorHeroId) ?? null;
+  const options = [
+    '<option value="">미임명</option>',
+    ...candidates.map((hero) => `<option value="${hero.id}" ${hero.id === domesticPolicy.chancellorHeroId ? "selected" : ""}>${hero.name}</option>`),
+  ].join("");
+
+  return `
+    <section class="chancellor-panel" aria-label="Chancellor">
+      <span class="chancellor-label">재상</span>
+      ${currentChancellor ? `
+        <div class="chancellor-card">
+          ${renderChancellorPortrait(currentChancellor)}
+          <div class="chancellor-copy">
+            <strong class="chancellor-name">${currentChancellor.name}</strong>
+            <span class="chancellor-meta">${formatChancellorTypeLine(
+              "주",
+              currentChancellor.chancellorProfile?.primaryType,
+              currentChancellor.chancellorProfile?.primaryAptitude,
+            )}</span>
+            <span class="chancellor-meta">${formatChancellorTypeLine(
+              "보조",
+              currentChancellor.chancellorProfile?.secondaryType,
+              currentChancellor.chancellorProfile?.secondaryAptitude,
+            )}</span>
+          </div>
+        </div>
+      ` : `
+        <div class="chancellor-card chancellor-card-empty">
+          <div class="chancellor-copy">
+            <strong class="chancellor-name">미임명</strong>
+            <span class="chancellor-meta">재상 없음</span>
+          </div>
+        </div>
+      `}
+      <label class="policy-control">
+        <span class="policy-control-header">
+          <span>재상 임명</span>
+          <strong>${currentChancellor ? currentChancellor.name : "미임명"}</strong>
+        </span>
+        <select class="policy-select" data-chancellor-hero-id="true" aria-label="재상 임명">
+          ${options}
+        </select>
+      </label>
+    </section>
+  `;
+}
+
 function renderChancellorPolicyControl(chancellorPolicy) {
   const options = Object.values(CHANCELLOR_POLICY_KEYS)
     .map((policyKey) => `
@@ -171,7 +245,11 @@ function formatChancellorPolicySummary(incomeResult, chancellorPolicy) {
 
 function renderWarehousePanel(appState) {
   const playerFactionId = appState?.meta?.playerFactionId ?? "player";
-  const domesticPolicy = normalizeDomesticPolicy(appState?.domesticPolicy);
+  const domesticPolicy = normalizeDomesticPolicy(
+    appState?.domesticPolicy,
+    appState?.world?.heroes,
+    playerFactionId,
+  );
   const lastUpkeep = appState?.world?.lastUpkeepResult?.player;
   const heroUpkeep = lastUpkeep?.upkeep
     ?? applyChancellorPolicyToHeroUpkeep(
@@ -211,7 +289,7 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
   const { meta, world } = appState;
   const nationalLoyalty = meta?.[LOYALTY_KEYS.NATIONAL] ?? appState.nation?.loyalty ?? 75;
   const calendarLabel = formatCalendarLabel(deriveCalendarFromTurn(meta.turn));
-  const domesticPolicy = normalizeDomesticPolicy(appState.domesticPolicy);
+  const domesticPolicy = normalizeDomesticPolicy(appState.domesticPolicy, world?.heroes, meta?.playerFactionId);
   const taxLevel = domesticPolicy.taxLevel;
   const chancellorPolicy = domesticPolicy.chancellorPolicy;
   const currentTax = {
@@ -224,21 +302,6 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
 
   return `
     <aside class="left-hud-stack" aria-label="World overview">
-      <header class="title-panel">
-        <p class="eyebrow">${meta.phase}</p>
-        <h1 id="samwar-title" class="title">${meta.title}</h1>
-        <p class="title-copy">임시 풀스크린 세계지도 위에서 성곽 랜드마크 기준 4도시 전선을 검증하는 MVP 화면</p>
-      </header>
-
-      <section class="detail-card hud-panel mvp-goal-panel">
-        <h3 class="detail-heading">MVP 목표</h3>
-        <ul class="goal-list">
-          <li>배경 맵의 성곽 랜드마크에 4개 도시 앵커를 맞춰 전선을 검증합니다.</li>
-          <li>도시 선택과 공격 진입, 점령, 통일 메시지까지 현재 월드맵 루프를 확인합니다.</li>
-          <li>전투는 Phaser 기반 MVP이며 수동 지휘와 자동 위임 흐름을 함께 검증합니다.</li>
-        </ul>
-      </section>
-
       <section class="turn-card hud-panel">
         <span class="turn-label">World Turn</span>
         <strong class="turn-value">제 ${meta.turn}턴</strong>
@@ -262,13 +325,14 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
           >
           <span class="tax-control-copy">${getTaxDescription(taxLevel)}</span>
         </label>
+        ${renderChancellorCard(appState)}
         ${renderChancellorPolicyControl(chancellorPolicy)}
         <span class="turn-stock">보유 자원: ${formatResourceStock(appState.resources)}</span>
         ${renderWarehousePanel(appState)}
         ${incomeSummary ? `<span class="turn-income">${incomeSummary}</span>` : ""}
         <span class="turn-policy-effect">${chancellorPolicySummary}</span>
         ${taxEffect ? `<span class="turn-tax-effect">${taxEffect}</span>` : ""}
-        <span class="turn-copy">${unified ? "천하통일 달성" : meta.status}</span>
+        ${unified ? '<span class="turn-tax-effect">천하통일 달성</span>' : ""}
         ${canEndTurn ? `
           <button class="attack-button world-turn-button" type="button" data-end-world-turn="true">
             턴 종료

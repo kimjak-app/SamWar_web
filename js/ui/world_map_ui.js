@@ -16,6 +16,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onHeroTransferCancel,
     onEndWorldTurn,
     onTaxLevelChange,
+    onChancellorHeroChange,
     onChancellorPolicyChange,
     onConfirmEnemyTurnResult,
   } = handlers;
@@ -161,6 +162,12 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   if (onChancellorPolicyChange) {
     rootElement.querySelector("[data-chancellor-policy]")?.addEventListener("change", (event) => {
       onChancellorPolicyChange(event.currentTarget.value);
+    });
+  }
+
+  if (onChancellorHeroChange) {
+    rootElement.querySelector("[data-chancellor-hero-id]")?.addEventListener("change", (event) => {
+      onChancellorHeroChange(event.currentTarget.value);
     });
   }
 

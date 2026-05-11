@@ -118,6 +118,10 @@ function isActiveHero(hero) {
     && hero.active !== false;
 }
 
+function isEligibleChancellorHero(hero, playerFactionId = FACTION_IDS.PLAYER) {
+  return isActiveHero(hero) && hero?.side === playerFactionId;
+}
+
 function getShortageEntries(shortage) {
   return Object.entries(shortage)
     .filter(([, amount]) => amount > 0)
@@ -184,19 +188,44 @@ export function normalizeChancellorPolicy(policy) {
   return CHANCELLOR_POLICY_KEYS.BALANCED;
 }
 
+export function getEligibleChancellorHeroes(heroes = [], playerFactionId = FACTION_IDS.PLAYER) {
+  return (heroes ?? []).filter((hero) => isEligibleChancellorHero(hero, playerFactionId));
+}
+
+export function normalizeChancellorHeroId(
+  chancellorHeroId,
+  heroes = [],
+  playerFactionId = FACTION_IDS.PLAYER,
+) {
+  if (!chancellorHeroId) {
+    return null;
+  }
+
+  return getEligibleChancellorHeroes(heroes, playerFactionId)
+    .some((hero) => hero.id === chancellorHeroId)
+    ? chancellorHeroId
+    : null;
+}
+
 export function createInitialDomesticPolicy() {
   return {
     taxLevel: DOMESTIC_TAX_RULES.DEFAULT_TAX_LEVEL,
     chancellorPolicy: CHANCELLOR_POLICY_KEYS.BALANCED,
+    chancellorHeroId: null,
   };
 }
 
-export function normalizeDomesticPolicy(domesticPolicy = {}) {
+export function normalizeDomesticPolicy(
+  domesticPolicy = {},
+  heroes = [],
+  playerFactionId = FACTION_IDS.PLAYER,
+) {
   return {
     ...createInitialDomesticPolicy(),
     ...(domesticPolicy ?? {}),
     taxLevel: normalizeTaxLevel(domesticPolicy?.taxLevel),
     chancellorPolicy: normalizeChancellorPolicy(domesticPolicy?.chancellorPolicy),
+    chancellorHeroId: normalizeChancellorHeroId(domesticPolicy?.chancellorHeroId, heroes, playerFactionId),
   };
 }
 

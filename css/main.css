@@ -272,6 +272,69 @@ button {
   line-height: 1.35;
 }
 
+.chancellor-panel {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin: 4px 0 6px;
+}
+
+.chancellor-label {
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+}
+
+.chancellor-card {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid rgba(209, 176, 117, 0.16);
+  border-radius: 10px;
+  background: rgba(12, 24, 38, 0.48);
+}
+
+.chancellor-card-empty {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.chancellor-portrait {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  border: 1px solid rgba(248, 215, 152, 0.24);
+  background: linear-gradient(180deg, rgba(24, 35, 50, 0.98), rgba(14, 21, 31, 0.98));
+  object-fit: cover;
+}
+
+.chancellor-portrait-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--accent-strong);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.chancellor-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chancellor-name {
+  color: var(--text-main);
+  font-size: 0.96rem;
+  line-height: 1.2;
+}
+
+.chancellor-meta {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
 .world-turn-button {
   width: 100%;
   margin-top: 10px;

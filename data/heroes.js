@@ -1,7 +1,15 @@
+import { CHANCELLOR_STAT_KEYS } from "../js/constants.js";
+
 export const heroes = [
   {
     id: "yi_sun_sin",
     name: "이순신",
+    chancellorProfile: {
+      primaryType: CHANCELLOR_STAT_KEYS.MILITARY_ADMIN,
+      primaryAptitude: 5,
+      secondaryType: CHANCELLOR_STAT_KEYS.ADMINISTRATIVE,
+      secondaryAptitude: 2,
+    },
     side: "player",
     role: "ranged",
     troops: 110,
@@ -31,6 +39,12 @@ export const heroes = [
   {
     id: "jeong_do_jeon",
     name: "정도전",
+    chancellorProfile: {
+      primaryType: CHANCELLOR_STAT_KEYS.POLITICAL,
+      primaryAptitude: 4,
+      secondaryType: CHANCELLOR_STAT_KEYS.ADMINISTRATIVE,
+      secondaryAptitude: 3,
+    },
     side: "player",
     role: "support",
     troops: 90,
@@ -60,6 +74,12 @@ export const heroes = [
   {
     id: "nobunaga",
     name: "노부나가",
+    chancellorProfile: {
+      primaryType: CHANCELLOR_STAT_KEYS.ECONOMIC,
+      primaryAptitude: 4,
+      secondaryType: CHANCELLOR_STAT_KEYS.MILITARY_ADMIN,
+      secondaryAptitude: 3,
+    },
     side: "enemy",
     role: "ranged",
     troops: 120,
@@ -89,6 +109,12 @@ export const heroes = [
   {
     id: "kenshin",
     name: "겐신",
+    chancellorProfile: {
+      primaryType: CHANCELLOR_STAT_KEYS.MILITARY_ADMIN,
+      primaryAptitude: 4,
+      secondaryType: CHANCELLOR_STAT_KEYS.POLITICAL,
+      secondaryAptitude: 2,
+    },
     side: "enemy",
     role: "melee",
     troops: 115,
@@ -118,6 +144,12 @@ export const heroes = [
   {
     id: "guan_yu",
     name: "관우",
+    chancellorProfile: {
+      primaryType: CHANCELLOR_STAT_KEYS.MILITARY_ADMIN,
+      primaryAptitude: 4,
+      secondaryType: CHANCELLOR_STAT_KEYS.POLITICAL,
+      secondaryAptitude: 2,
+    },
     side: "enemy",
     role: "melee",
     troops: 120,
@@ -147,6 +179,12 @@ export const heroes = [
   {
     id: "zhang_fei",
     name: "장비",
+    chancellorProfile: {
+      primaryType: CHANCELLOR_STAT_KEYS.MILITARY_ADMIN,
+      primaryAptitude: 2,
+      secondaryType: null,
+      secondaryAptitude: 0,
+    },
     side: "enemy",
     role: "melee",
     troops: 125,
@@ -176,6 +214,12 @@ export const heroes = [
   {
     id: "gwanggaeto",
     name: "광개토대왕",
+    chancellorProfile: {
+      primaryType: CHANCELLOR_STAT_KEYS.POLITICAL,
+      primaryAptitude: 5,
+      secondaryType: CHANCELLOR_STAT_KEYS.MILITARY_ADMIN,
+      secondaryAptitude: 3,
+    },
     side: "enemy",
     role: "support",
     troops: 120,
@@ -205,6 +249,12 @@ export const heroes = [
   {
     id: "dorim",
     name: "도림",
+    chancellorProfile: {
+      primaryType: CHANCELLOR_STAT_KEYS.DIPLOMATIC,
+      primaryAptitude: 4,
+      secondaryType: CHANCELLOR_STAT_KEYS.POLITICAL,
+      secondaryAptitude: 2,
+    },
     side: "enemy",
     role: "support",
     troops: 85,
