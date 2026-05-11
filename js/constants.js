@@ -244,17 +244,33 @@ export const CHANCELLOR_POLICY_EFFECTS = Object.freeze({
 });
 
 export const CHANCELLOR_STAT_KEYS = Object.freeze({
-  POLITICS: "politics",
-  COMMERCE: "commerce",
-  ADMINISTRATION: "administration",
-  DIPLOMACY: "diplomacy",
-  MILITARY_ADMINISTRATION: "militaryAdministration",
+  POLITICAL: "political",
+  ECONOMIC: "economic",
+  ADMINISTRATIVE: "administrative",
+  DIPLOMATIC: "diplomatic",
+  MILITARY_ADMIN: "militaryAdmin",
 });
 
 export const CHANCELLOR_STAT_LABELS = Object.freeze({
-  [CHANCELLOR_STAT_KEYS.POLITICS]: "정치력",
-  [CHANCELLOR_STAT_KEYS.COMMERCE]: "상업력",
-  [CHANCELLOR_STAT_KEYS.ADMINISTRATION]: "행정력",
-  [CHANCELLOR_STAT_KEYS.DIPLOMACY]: "외교력",
-  [CHANCELLOR_STAT_KEYS.MILITARY_ADMINISTRATION]: "군정력",
+  [CHANCELLOR_STAT_KEYS.POLITICAL]: "정치력",
+  [CHANCELLOR_STAT_KEYS.ECONOMIC]: "경제력",
+  [CHANCELLOR_STAT_KEYS.ADMINISTRATIVE]: "행정력",
+  [CHANCELLOR_STAT_KEYS.DIPLOMATIC]: "외교력",
+  [CHANCELLOR_STAT_KEYS.MILITARY_ADMIN]: "군정력",
+});
+
+export const CHANCELLOR_TYPE_LABELS = Object.freeze({
+  [CHANCELLOR_STAT_KEYS.POLITICAL]: "정치형",
+  [CHANCELLOR_STAT_KEYS.ECONOMIC]: "경제형",
+  [CHANCELLOR_STAT_KEYS.ADMINISTRATIVE]: "행정형",
+  [CHANCELLOR_STAT_KEYS.DIPLOMATIC]: "외교형",
+  [CHANCELLOR_STAT_KEYS.MILITARY_ADMIN]: "군정형",
+});
+
+export const CHANCELLOR_TYPE_DESCRIPTIONS = Object.freeze({
+  [CHANCELLOR_STAT_KEYS.POLITICAL]: "민심·충성도·세금 부담·국가 안정에 강한 재상",
+  [CHANCELLOR_STAT_KEYS.ECONOMIC]: "농업·상업·생산·세금·재정 운용에 강하고 나라의 부와 생산 기반을 키우는 재상",
+  [CHANCELLOR_STAT_KEYS.ADMINISTRATIVE]: "창고·유지비·분배·실행 효율에 강한 재상",
+  [CHANCELLOR_STAT_KEYS.DIPLOMATIC]: "무역·화친·협상·외부 거래에 강한 재상",
+  [CHANCELLOR_STAT_KEYS.MILITARY_ADMIN]: "군량·병력 운용·영웅/병사 유지·군사 동원에 강한 재상",
 });
