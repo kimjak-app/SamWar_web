@@ -57,10 +57,6 @@ function formatIncomeSummary(incomeResult) {
   return summary ? `이번 턴 수입: ${summary}` : "이번 턴 수입 없음";
 }
 
-function formatTaxMultiplier(multiplier) {
-  return multiplier.toFixed(1);
-}
-
 function formatSignedValue(value) {
   if (value > 0) {
     return `+${value}`;
@@ -86,7 +82,7 @@ function formatTaxEffect(tax) {
     return "";
   }
 
-  return `세금 효과: 금전 x${formatTaxMultiplier(tax.goldMultiplier)}, 충성도 ${formatSignedValue(tax.loyaltyDelta)}`;
+  return `세금 효과: 생산물 차등과세 적용, 충성도 ${formatSignedValue(tax.loyaltyDelta)}`;
 }
 
 export function renderWorldHud(appState, { canEndTurn, unified } = {}) {

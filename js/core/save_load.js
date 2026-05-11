@@ -3,8 +3,8 @@ import { heroes as canonicalHeroes } from "../../data/heroes.js";
 import { normalizeDomesticPolicy, normalizeResourceStock } from "./domestic_income.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
-const SAVE_KEY = "samwar.save.v0.5-1d";
-const SAVE_VERSION = "0.5-1d";
+const SAVE_KEY = "samwar.save.v0.5-1d-1";
+const SAVE_VERSION = "0.5-1d-1";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {

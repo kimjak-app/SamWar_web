@@ -1,10 +1,15 @@
 import {
+  CITY_TAX_BONUSES,
+  COMMERCE_TAX_POINT_PER_RATING,
   DOMESTIC_INCOME_RULES,
   DOMESTIC_TAX_RULES,
   FACTION_IDS,
   LOYALTY_KEYS,
   RESOURCE_KEYS,
+  RESOURCE_TAX_TIERS,
+  RESOURCE_TAX_TIER_VALUES,
   SEASON_KEYS,
+  TAX_POINT_TO_GOLD,
 } from "../constants.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
@@ -52,11 +57,11 @@ function addDetail(details, resource, amount, reason, city) {
   });
 }
 
-function createTaxEffect(baseTotals, taxLevel) {
+function createTaxEffect(baseTotals, totals, taxLevel) {
   const normalizedTaxLevel = normalizeTaxLevel(taxLevel);
   const goldMultiplier = getTaxGoldMultiplier(normalizedTaxLevel);
   const goldBeforeTax = baseTotals[RESOURCE_KEYS.GOLD] ?? 0;
-  const goldAfterTax = Math.round(goldBeforeTax * goldMultiplier);
+  const goldAfterTax = totals[RESOURCE_KEYS.GOLD] ?? 0;
 
   return {
     taxLevel: normalizedTaxLevel,
@@ -65,6 +70,7 @@ function createTaxEffect(baseTotals, taxLevel) {
     goldBeforeTax,
     goldAfterTax,
     goldDelta: goldAfterTax - goldBeforeTax,
+    formula: "resource_tier_tax",
   };
 }
 
@@ -136,30 +142,68 @@ export function getTaxLoyaltyDelta(taxLevel) {
   return 0;
 }
 
-export function applyTaxToIncomeTotals(totals, taxLevel) {
-  const nextTotals = {
-    ...totals,
-    [RESOURCE_KEYS.GOLD]: Math.round(
-      (totals?.[RESOURCE_KEYS.GOLD] ?? 0) * getTaxGoldMultiplier(taxLevel),
-    ),
-  };
-
-  return nextTotals;
+export function calculateResourceTaxPoints(resources = {}) {
+  return Object.entries(RESOURCE_TAX_TIERS).reduce((total, [resourceKey, taxTier]) => {
+    const tierValue = RESOURCE_TAX_TIER_VALUES[taxTier] ?? 0;
+    return total + getRating(resources, resourceKey) * tierValue;
+  }, 0);
 }
 
-export function calculateCityTurnIncome(city, calendar) {
+export function getCityTypeTaxBonus(city) {
+  return CITY_TAX_BONUSES[city?.type] ?? 1.0;
+}
+
+export function calculateCityTaxableValue(city) {
+  const resourceTaxPoints = calculateResourceTaxPoints(city?.resources);
+  const commerceTaxPoints = getRating(city, "commerceRating") * COMMERCE_TAX_POINT_PER_RATING;
+  const cityTypeBonus = getCityTypeTaxBonus(city);
+  const taxablePoints = (resourceTaxPoints + commerceTaxPoints) * cityTypeBonus;
+
+  return {
+    resourceTaxPoints,
+    commerceTaxPoints,
+    cityTypeBonus,
+    taxablePoints,
+    taxableValue: taxablePoints * TAX_POINT_TO_GOLD,
+  };
+}
+
+export function calculateCityGoldTaxIncome(city, taxLevel) {
+  const taxableValue = calculateCityTaxableValue(city);
+  const goldMultiplier = getTaxGoldMultiplier(taxLevel);
+
+  return {
+    ...taxableValue,
+    taxLevel: normalizeTaxLevel(taxLevel),
+    goldMultiplier,
+    gold: Math.round(taxableValue.taxableValue * goldMultiplier),
+  };
+}
+
+export function applyTaxToIncomeTotals(totals, taxLevel, ownedCities = []) {
+  const gold = ownedCities.reduce(
+    (total, city) => total + calculateCityGoldTaxIncome(city, taxLevel).gold,
+    0,
+  );
+
+  return {
+    ...totals,
+    [RESOURCE_KEYS.GOLD]: gold,
+  };
+}
+
+export function calculateCityTurnIncome(city, calendar, taxLevel = DOMESTIC_TAX_RULES.DEFAULT_TAX_LEVEL) {
   const resources = city?.resources ?? {};
   const income = createEmptyIncomeTotals();
   const details = [];
   const seafoodIncome = getRating(resources, RESOURCE_KEYS.SEAFOOD)
     * DOMESTIC_INCOME_RULES.SEAFOOD_PER_RATING_PER_TURN;
-  const commerceIncome = getRating(city, "commerceRating")
-    * DOMESTIC_INCOME_RULES.COMMERCE_PER_RATING_PER_TURN;
+  const goldTaxIncome = calculateCityGoldTaxIncome(city, taxLevel);
 
   income[RESOURCE_KEYS.SEAFOOD] += seafoodIncome;
-  income[RESOURCE_KEYS.GOLD] += commerceIncome;
+  income[RESOURCE_KEYS.GOLD] += goldTaxIncome.gold;
   addDetail(details, RESOURCE_KEYS.SEAFOOD, seafoodIncome, "매턴 수산물", city);
-  addDetail(details, RESOURCE_KEYS.GOLD, commerceIncome, "상업 수입", city);
+  addDetail(details, RESOURCE_KEYS.GOLD, goldTaxIncome.gold, "생산물 차등과세", city);
 
   if (calendar?.season === SEASON_KEYS.SPRING) {
     const barleyIncome = getRating(resources, RESOURCE_KEYS.BARLEY)
@@ -177,6 +221,7 @@ export function calculateCityTurnIncome(city, calendar) {
 
   return {
     ...income,
+    tax: goldTaxIncome,
     details,
   };
 }
@@ -188,13 +233,10 @@ export function calculatePlayerTurnIncome(state) {
   const cityIncomes = [];
   const details = [];
   const domesticPolicy = normalizeDomesticPolicy(state?.domesticPolicy);
+  const ownedCities = (state?.world?.cities ?? []).filter((city) => city.ownerFactionId === playerFactionId);
 
-  for (const city of state?.world?.cities ?? []) {
-    if (city.ownerFactionId !== playerFactionId) {
-      continue;
-    }
-
-    const cityIncome = calculateCityTurnIncome(city, calendar);
+  for (const city of ownedCities) {
+    const cityIncome = calculateCityTurnIncome(city, calendar, domesticPolicy.taxLevel);
     cityIncomes.push({
       cityId: city.id,
       cityName: city.name,
@@ -208,13 +250,20 @@ export function calculatePlayerTurnIncome(state) {
     details.push(...cityIncome.details);
   }
 
-  const totals = applyTaxToIncomeTotals(baseTotals, domesticPolicy.taxLevel);
-  const tax = createTaxEffect(baseTotals, domesticPolicy.taxLevel);
+  const baseTotalsAtNormalTax = {
+    ...baseTotals,
+    [RESOURCE_KEYS.GOLD]: ownedCities.reduce(
+      (total, city) => total + calculateCityGoldTaxIncome(city, DOMESTIC_TAX_RULES.DEFAULT_TAX_LEVEL).gold,
+      0,
+    ),
+  };
+  const totals = applyTaxToIncomeTotals(baseTotals, domesticPolicy.taxLevel, ownedCities);
+  const tax = createTaxEffect(baseTotalsAtNormalTax, totals, domesticPolicy.taxLevel);
 
   return {
     turn: state?.meta?.turn ?? 1,
     calendar,
-    baseTotals,
+    baseTotals: baseTotalsAtNormalTax,
     totals,
     tax,
     cityIncomes,

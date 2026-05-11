@@ -110,3 +110,39 @@ export const DOMESTIC_TAX_RULES = Object.freeze({
   BASE_GOLD_MULTIPLIER: 1.0,
   MAX_GOLD_MULTIPLIER: 2.0,
 });
+
+export const RESOURCE_TAX_TIERS = Object.freeze({
+  [RESOURCE_KEYS.RICE]: "food_low",
+  [RESOURCE_KEYS.BARLEY]: "food_low",
+  [RESOURCE_KEYS.SEAFOOD]: "food_low",
+  [RESOURCE_KEYS.WOOD]: "basic",
+  [RESOURCE_KEYS.IRON]: "strategic",
+  [RESOURCE_KEYS.HORSES]: "strategic",
+  [RESOURCE_KEYS.SILK]: "luxury",
+  [RESOURCE_KEYS.SALT]: "salt_premium",
+});
+
+export const RESOURCE_TAX_TIER_VALUES = Object.freeze({
+  food_low: 1,
+  basic: 2,
+  strategic: 3,
+  luxury: 4,
+  salt_premium: 5,
+});
+
+export const RESOURCE_TAX_TIER_LABELS = Object.freeze({
+  food_low: "식량계 낮은 과세",
+  basic: "기초 자원 일반 과세",
+  strategic: "전략 자원 높은 과세",
+  luxury: "고급 자원 높은 과세",
+  salt_premium: "최고 전략 자원 최고 과세",
+});
+
+export const TAX_POINT_TO_GOLD = 0.5;
+export const COMMERCE_TAX_POINT_PER_RATING = 1;
+
+export const CITY_TAX_BONUSES = Object.freeze({
+  [CITY_TYPES.COMMERCIAL_CAPITAL]: 1.25,
+  [CITY_TYPES.COASTAL_TRADE_CITY]: 1.15,
+  [CITY_TYPES.PRODUCTION_CITY]: 1.0,
+});
