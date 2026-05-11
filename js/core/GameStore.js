@@ -1,9 +1,25 @@
+import { deriveCalendarFromTurn } from "./world_calendar.js";
+
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+function syncCalendar(state) {
+  if (!isObject(state) || !isObject(state.meta)) {
+    return state;
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      calendar: deriveCalendarFromTurn(state.meta.turn),
+    },
+  };
+}
+
 function createGameStore(initialState = null) {
-  let state = initialState;
+  let state = syncCalendar(initialState);
   const listeners = new Set();
 
   function notify(nextState, previousState) {
@@ -26,7 +42,7 @@ function createGameStore(initialState = null) {
       ? { ...previousState, ...patch }
       : patch;
 
-    state = nextState;
+    state = syncCalendar(nextState);
     notify(state, previousState);
     return state;
   }
@@ -43,7 +59,7 @@ function createGameStore(initialState = null) {
       return state;
     }
 
-    state = nextState;
+    state = syncCalendar(nextState);
     notify(state, previousState);
     return state;
   }

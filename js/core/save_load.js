@@ -1,8 +1,9 @@
 import { gameStore } from "./GameStore.js";
 import { heroes as canonicalHeroes } from "../../data/heroes.js";
+import { deriveCalendarFromTurn } from "./world_calendar.js";
 
-const SAVE_KEY = "samwar.save.v0.5-1a";
-const SAVE_VERSION = "0.5-1a";
+const SAVE_KEY = "samwar.save.v0.5-1b";
+const SAVE_VERSION = "0.5-1b";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {
@@ -35,6 +36,10 @@ function hydrateLoadedState(state) {
 
   return {
     ...state,
+    meta: {
+      ...(state.meta ?? {}),
+      calendar: deriveCalendarFromTurn(state.meta?.turn),
+    },
     world: {
       ...state.world,
       heroes: hydrateCanonicalHeroes(state.world.heroes),
@@ -52,6 +57,7 @@ export function createSaveSnapshot(state = gameStore.getState()) {
     saveVersion: SAVE_VERSION,
     savedAt: new Date().toISOString(),
     worldTurn: state?.meta?.turn ?? null,
+    calendar: deriveCalendarFromTurn(state?.meta?.turn),
     currentPhase: state?.mode ?? null,
     nationalLoyalty: state?.meta?.nationalLoyalty ?? null,
     selectedCityId: state?.selection?.cityId ?? null,

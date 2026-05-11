@@ -76,3 +76,21 @@ export const SEASON_KEYS = Object.freeze({
   SEASON: "season",
   TURN: "turn",
 });
+
+export const SEASON_LABELS = Object.freeze({
+  [SEASON_KEYS.SPRING]: "봄",
+  [SEASON_KEYS.SUMMER]: "여름",
+  [SEASON_KEYS.AUTUMN]: "가을",
+  [SEASON_KEYS.WINTER]: "겨울",
+});
+
+export const SEASON_ORDER = Object.freeze([
+  SEASON_KEYS.SPRING,
+  SEASON_KEYS.SUMMER,
+  SEASON_KEYS.AUTUMN,
+  SEASON_KEYS.WINTER,
+]);
+
+export const SEASON_TURNS = 10;
+export const YEAR_TURNS = 40;
+export const START_YEAR = 154;

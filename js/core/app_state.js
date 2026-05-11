@@ -4,6 +4,7 @@ import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
 import { LOYALTY_KEYS } from "../constants.js";
 import { createInitialBattleState } from "./battle_state.js";
+import { createInitialCalendar, deriveCalendarFromTurn } from "./world_calendar.js";
 import {
   ENEMY_INVASION_CHANCE,
   canAttackCity,
@@ -22,18 +23,28 @@ import {
 
 const DEFAULT_SELECTED_CITY_ID = "hanseong";
 
+function withCalendarMeta(meta) {
+  const turn = meta?.turn ?? 1;
+
+  return {
+    ...meta,
+    calendar: deriveCalendarFromTurn(turn),
+  };
+}
+
 export function createInitialAppState() {
   initializeHeroLocationsFromRosters();
 
   return {
-    meta: {
+    meta: withCalendarMeta({
       title: "SamWar Web",
       phase: "World Map 4-City MVP",
       status: "전투 없이 도시 선택과 진군 경로만 확인 가능한 첫 플레이 화면",
       playerFactionId: "player",
       turn: 1,
+      calendar: createInitialCalendar(),
       [LOYALTY_KEYS.NATIONAL]: 75,
-    },
+    }),
     mode: "world",
     selection: {
       cityId: DEFAULT_SELECTED_CITY_ID,
@@ -77,12 +88,14 @@ export function selectCity(appState, cityId) {
 }
 
 function advanceWorldTurn(appState, overrides = {}) {
+  const nextTurn = appState.meta.turn + 1;
+
   return {
     ...appState,
-    meta: {
+    meta: withCalendarMeta({
       ...appState.meta,
-      turn: appState.meta.turn + 1,
-    },
+      turn: nextTurn,
+    }),
     world: {
       ...appState.world,
       turnOwner: "player",

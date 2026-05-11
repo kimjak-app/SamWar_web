@@ -133,6 +133,12 @@ button {
   line-height: 1.1;
 }
 
+.turn-calendar {
+  color: var(--accent-strong);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
 .turn-loyalty {
   color: var(--accent-strong);
   font-size: 0.92rem;
