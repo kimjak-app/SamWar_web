@@ -1,9 +1,12 @@
+import { LOYALTY_LABELS, LOYALTY_KEYS } from "../constants.js";
+
 function getWorldTurnOwnerLabel(turnOwner) {
   return turnOwner === "enemy" ? "적군 턴" : "아군 턴";
 }
 
 export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
   const { meta, world } = appState;
+  const nationalLoyalty = meta?.[LOYALTY_KEYS.NATIONAL] ?? appState.nation?.loyalty ?? 75;
 
   return `
     <aside class="left-hud-stack" aria-label="World overview">
@@ -26,6 +29,7 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
         <span class="turn-label">World Turn</span>
         <strong class="turn-value">제 ${meta.turn}턴</strong>
         <strong class="turn-owner">${getWorldTurnOwnerLabel(world.turnOwner)}</strong>
+        <span class="turn-loyalty">${LOYALTY_LABELS[LOYALTY_KEYS.NATIONAL]} ${nationalLoyalty}</span>
         <span class="turn-copy">${unified ? "천하통일 달성" : meta.status}</span>
         ${canEndTurn ? `
           <button class="attack-button world-turn-button" type="button" data-end-world-turn="true">

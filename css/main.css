@@ -133,6 +133,12 @@ button {
   line-height: 1.1;
 }
 
+.turn-loyalty {
+  color: var(--accent-strong);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
 .world-turn-button {
   width: 100%;
   margin-top: 10px;
@@ -341,6 +347,12 @@ button {
 .city-detail-meta {
   margin: 10px 0 0;
   color: var(--accent-strong);
+}
+
+.city-detail-submeta {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
 }
 
 .city-detail-copy {

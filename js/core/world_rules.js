@@ -1,6 +1,12 @@
 import { battleRosters } from "../../data/battle_rosters.js";
 import { heroes } from "../../data/heroes.js";
-import { DOMESTIC_STAT_KEYS, FACTION_IDS, RESOURCE_KEYS, YIELD_KEYS } from "../constants.js";
+import {
+  CITY_TYPES,
+  DOMESTIC_STAT_KEYS,
+  FACTION_IDS,
+  RESOURCE_KEYS,
+  YIELD_KEYS,
+} from "../constants.js";
 
 export function getFactionById(factions, factionId) {
   return factions.find((faction) => faction.id === factionId) ?? null;
@@ -10,16 +16,21 @@ export const ENEMY_INVASION_CHANCE = 0.45;
 
 const defaultCityDomestic = {
   [DOMESTIC_STAT_KEYS.PUBLIC_ORDER]: 70,
-  [DOMESTIC_STAT_KEYS.MORALE]: 65,
+  [DOMESTIC_STAT_KEYS.PUBLIC_SUPPORT]: 65,
   [DOMESTIC_STAT_KEYS.AGRICULTURE]: 55,
   [DOMESTIC_STAT_KEYS.COMMERCE]: 45,
   [DOMESTIC_STAT_KEYS.STABILITY]: 60,
 };
 
 const defaultCityResources = {
-  [RESOURCE_KEYS.RICE]: 800,
-  [RESOURCE_KEYS.BARLEY]: 300,
-  [RESOURCE_KEYS.SEAFOOD]: 120,
+  [RESOURCE_KEYS.RICE]: 2,
+  [RESOURCE_KEYS.BARLEY]: 2,
+  [RESOURCE_KEYS.SEAFOOD]: 1,
+  [RESOURCE_KEYS.WOOD]: 1,
+  [RESOURCE_KEYS.IRON]: 1,
+  [RESOURCE_KEYS.HORSES]: 0,
+  [RESOURCE_KEYS.SILK]: 1,
+  [RESOURCE_KEYS.SALT]: 1,
   [RESOURCE_KEYS.GOLD]: 500,
   [RESOURCE_KEYS.SPECIALTY]: 0,
 };
@@ -108,9 +119,15 @@ export function occupyCity(cities, cityId, ownerFactionId = FACTION_IDS.PLAYER) 
 export function initializeCityDomesticData(cities) {
   return cities.map((city) => ({
     ...city,
+    type: city.type ?? CITY_TYPES.PRODUCTION_CITY,
+    commerceRating: city.commerceRating ?? 3,
+    cityLoyalty: city.cityLoyalty ?? 75,
     domestic: {
       ...defaultCityDomestic,
       ...(city.domestic ?? {}),
+      [DOMESTIC_STAT_KEYS.PUBLIC_SUPPORT]: city.domestic?.[DOMESTIC_STAT_KEYS.PUBLIC_SUPPORT]
+        ?? city.domestic?.[DOMESTIC_STAT_KEYS.MORALE]
+        ?? defaultCityDomestic[DOMESTIC_STAT_KEYS.PUBLIC_SUPPORT],
     },
     resources: {
       ...defaultCityResources,

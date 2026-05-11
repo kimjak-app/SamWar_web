@@ -1,8 +1,8 @@
 import { gameStore } from "./GameStore.js";
 import { heroes as canonicalHeroes } from "../../data/heroes.js";
 
-const SAVE_KEY = "samwar.save.v0.5-0r";
-const SAVE_VERSION = "0.5-0r";
+const SAVE_KEY = "samwar.save.v0.5-1a";
+const SAVE_VERSION = "0.5-1a";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {
@@ -53,6 +53,7 @@ export function createSaveSnapshot(state = gameStore.getState()) {
     savedAt: new Date().toISOString(),
     worldTurn: state?.meta?.turn ?? null,
     currentPhase: state?.mode ?? null,
+    nationalLoyalty: state?.meta?.nationalLoyalty ?? null,
     selectedCityId: state?.selection?.cityId ?? null,
     selectedHeroId,
     cities: state?.world?.cities ?? [],

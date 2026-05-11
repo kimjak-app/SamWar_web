@@ -1,56 +1,65 @@
-import { RESOURCE_KEYS, SEASON_KEYS, YIELD_KEYS } from "../constants.js";
+import { RESOURCE_KEYS, RESOURCE_LABELS } from "../constants.js";
 
-const SEASON_LABELS = Object.freeze({
-  [SEASON_KEYS.SPRING]: "봄",
-  [SEASON_KEYS.AUTUMN]: "가을",
-  [SEASON_KEYS.WINTER]: "겨울",
-  [SEASON_KEYS.SEASON]: "계절",
-  [SEASON_KEYS.TURN]: "턴",
-});
+const CITY_RESOURCE_KEYS = Object.freeze([
+  RESOURCE_KEYS.RICE,
+  RESOURCE_KEYS.BARLEY,
+  RESOURCE_KEYS.SEAFOOD,
+  RESOURCE_KEYS.WOOD,
+  RESOURCE_KEYS.IRON,
+  RESOURCE_KEYS.HORSES,
+  RESOURCE_KEYS.SILK,
+  RESOURCE_KEYS.SALT,
+]);
 
 function getResourceValue(resources, key) {
   const value = resources?.[key] ?? 0;
   return Number.isFinite(value) ? value : 0;
 }
 
+function formatRating(value) {
+  const clampedValue = Math.max(0, Math.min(5, Math.trunc(value)));
+
+  if (clampedValue === 0) {
+    return "-";
+  }
+
+  return "★".repeat(clampedValue);
+}
+
 function renderResourceRow(label, value) {
   return `
     <div class="domestic-resource-row">
       <span>${label}</span>
-      <strong>${value}</strong>
+      <strong>${formatRating(value)}</strong>
     </div>
   `;
 }
 
-function renderYieldRow(label, value, timingLabel) {
+function renderCommerceRatingRow(value) {
   return `
     <div class="domestic-yield-row">
-      <span>${label}</span>
-      <strong>+${value} / ${timingLabel}</strong>
+      <span>상업력</span>
+      <strong>${formatRating(value)}</strong>
     </div>
   `;
 }
 
 export function renderResourcePanel(city) {
   const resources = city.resources ?? {};
-  const yields = city.yields ?? {};
 
   return `
     <div class="city-domestic-section">
-      <p class="city-domestic-heading">자원</p>
-      ${renderResourceRow("쌀", getResourceValue(resources, RESOURCE_KEYS.RICE))}
-      ${renderResourceRow("보리", getResourceValue(resources, RESOURCE_KEYS.BARLEY))}
-      ${renderResourceRow("해산물", getResourceValue(resources, RESOURCE_KEYS.SEAFOOD))}
-      ${renderResourceRow("금전", getResourceValue(resources, RESOURCE_KEYS.GOLD))}
-      ${renderResourceRow("특산", getResourceValue(resources, RESOURCE_KEYS.SPECIALTY))}
+      <p class="city-domestic-heading">자원 생산력</p>
+      ${CITY_RESOURCE_KEYS
+        .map((resourceKey) => renderResourceRow(
+          RESOURCE_LABELS[resourceKey],
+          getResourceValue(resources, resourceKey),
+        ))
+        .join("")}
     </div>
     <div class="city-domestic-section">
-      <p class="city-domestic-heading">예상 수입</p>
-      ${renderYieldRow("쌀", getResourceValue(yields, YIELD_KEYS.RICE_HARVEST), SEASON_LABELS[SEASON_KEYS.AUTUMN])}
-      ${renderYieldRow("보리", getResourceValue(yields, YIELD_KEYS.BARLEY_HARVEST), SEASON_LABELS[SEASON_KEYS.SPRING])}
-      ${renderYieldRow("해산물", getResourceValue(yields, YIELD_KEYS.SEAFOOD_PER_TURN), SEASON_LABELS[SEASON_KEYS.TURN])}
-      ${renderYieldRow("상업", getResourceValue(yields, YIELD_KEYS.COMMERCE_INCOME), SEASON_LABELS[SEASON_KEYS.SEASON])}
-      ${renderYieldRow("특산", getResourceValue(yields, YIELD_KEYS.SPECIALTY_INCOME), SEASON_LABELS[SEASON_KEYS.WINTER])}
+      <p class="city-domestic-heading">상업</p>
+      ${renderCommerceRatingRow(city.commerceRating ?? 0)}
     </div>
   `;
 }

@@ -1,3 +1,4 @@
+import { CITY_TYPE_LABELS, LOYALTY_LABELS, LOYALTY_KEYS } from "../constants.js";
 import { canAttackCity, isEnemyCity, isPlayerCity, isWorldUnified } from "../core/world_rules.js";
 import { renderDomesticPanel } from "./domestic_ui.js";
 import { renderGarrisonPanel } from "./garrison_ui.js";
@@ -32,6 +33,17 @@ function renderCityDomesticPanel(selectedCity) {
   `;
 }
 
+function renderCityProfile(selectedCity) {
+  const cityTypeLabel = CITY_TYPE_LABELS[selectedCity.type] ?? selectedCity.type ?? "미정";
+  const cityLoyalty = selectedCity[LOYALTY_KEYS.CITY] ?? selectedCity.loyalty ?? 75;
+
+  return `
+    <p class="city-detail-meta city-detail-submeta">
+      유형: ${cityTypeLabel} · ${LOYALTY_LABELS[LOYALTY_KEYS.CITY]} ${cityLoyalty}
+    </p>
+  `;
+}
+
 export function renderSelectedCityPanel({
   appState,
   selectedCity,
@@ -50,6 +62,7 @@ export function renderSelectedCityPanel({
       <p class="city-detail-meta">
         ${selectedCity.region} · ${selectedFaction?.name ?? "중립"}
       </p>
+      ${renderCityProfile(selectedCity)}
       <p class="city-detail-copy">${getStatusText(world.cities, selectedCity)}</p>
       ${renderGarrisonPanel(stationedHeroes)}
       ${

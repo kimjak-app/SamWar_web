@@ -23,11 +23,14 @@ function renderDomesticStatRow(label, value) {
 
 export function renderDomesticPanel(city) {
   const domestic = city.domestic ?? {};
+  const publicSupport = Number.isFinite(domestic[DOMESTIC_STAT_KEYS.PUBLIC_SUPPORT])
+    ? domestic[DOMESTIC_STAT_KEYS.PUBLIC_SUPPORT]
+    : getDomesticValue(domestic, DOMESTIC_STAT_KEYS.MORALE);
 
   return `
     <div class="city-domestic-section">
       <p class="city-domestic-heading">내정</p>
-      ${renderDomesticStatRow("민심", getDomesticValue(domestic, DOMESTIC_STAT_KEYS.MORALE))}
+      ${renderDomesticStatRow("민심", publicSupport)}
       ${renderDomesticStatRow("치안", getDomesticValue(domestic, DOMESTIC_STAT_KEYS.PUBLIC_ORDER))}
       ${renderDomesticStatRow("농업", getDomesticValue(domestic, DOMESTIC_STAT_KEYS.AGRICULTURE))}
       ${renderDomesticStatRow("상업", getDomesticValue(domestic, DOMESTIC_STAT_KEYS.COMMERCE))}

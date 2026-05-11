@@ -2,6 +2,7 @@ import { cities } from "../../data/cities.js";
 import { factions } from "../../data/factions.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
+import { LOYALTY_KEYS } from "../constants.js";
 import { createInitialBattleState } from "./battle_state.js";
 import {
   ENEMY_INVASION_CHANCE,
@@ -31,6 +32,7 @@ export function createInitialAppState() {
       status: "전투 없이 도시 선택과 진군 경로만 확인 가능한 첫 플레이 화면",
       playerFactionId: "player",
       turn: 1,
+      [LOYALTY_KEYS.NATIONAL]: 75,
     },
     mode: "world",
     selection: {

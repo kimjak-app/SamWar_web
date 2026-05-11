@@ -4,6 +4,7 @@ export const FACTION_IDS = Object.freeze({
 });
 
 export const DOMESTIC_STAT_KEYS = Object.freeze({
+  PUBLIC_SUPPORT: "publicSupport",
   MORALE: "morale",
   PUBLIC_ORDER: "publicOrder",
   AGRICULTURE: "agriculture",
@@ -15,8 +16,48 @@ export const RESOURCE_KEYS = Object.freeze({
   RICE: "rice",
   BARLEY: "barley",
   SEAFOOD: "seafood",
+  WOOD: "wood",
+  IRON: "iron",
+  HORSES: "horses",
+  SILK: "silk",
+  SALT: "salt",
   GOLD: "gold",
   SPECIALTY: "specialty",
+});
+
+export const RESOURCE_LABELS = Object.freeze({
+  [RESOURCE_KEYS.RICE]: "쌀",
+  [RESOURCE_KEYS.BARLEY]: "보리",
+  [RESOURCE_KEYS.SEAFOOD]: "수산물",
+  [RESOURCE_KEYS.WOOD]: "목재",
+  [RESOURCE_KEYS.IRON]: "철",
+  [RESOURCE_KEYS.HORSES]: "말",
+  [RESOURCE_KEYS.SILK]: "비단",
+  [RESOURCE_KEYS.SALT]: "소금",
+  [RESOURCE_KEYS.GOLD]: "금전",
+  [RESOURCE_KEYS.SPECIALTY]: "특산",
+});
+
+export const CITY_TYPES = Object.freeze({
+  COMMERCIAL_CAPITAL: "commercial_capital",
+  PRODUCTION_CITY: "production_city",
+  COASTAL_TRADE_CITY: "coastal_trade_city",
+});
+
+export const CITY_TYPE_LABELS = Object.freeze({
+  [CITY_TYPES.COMMERCIAL_CAPITAL]: "상업대도시",
+  [CITY_TYPES.PRODUCTION_CITY]: "생산형",
+  [CITY_TYPES.COASTAL_TRADE_CITY]: "해안무역도시",
+});
+
+export const LOYALTY_KEYS = Object.freeze({
+  NATIONAL: "nationalLoyalty",
+  CITY: "cityLoyalty",
+});
+
+export const LOYALTY_LABELS = Object.freeze({
+  [LOYALTY_KEYS.NATIONAL]: "국가충성도",
+  [LOYALTY_KEYS.CITY]: "성충성도",
 });
 
 export const YIELD_KEYS = Object.freeze({
