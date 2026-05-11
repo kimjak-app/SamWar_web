@@ -16,6 +16,7 @@ export const cities = [
     y: 68,
     neighbors: ["hanseong", "pyeongyang"],
     type: CITY_TYPES.COMMERCIAL_CAPITAL,
+    populationRating: 5,
     commerceRating: 5,
     cityLoyalty: 74,
     domestic: {
@@ -54,6 +55,7 @@ export const cities = [
     y: 33.8,
     neighbors: ["hanseong", "luoyang", "kyoto"],
     type: CITY_TYPES.PRODUCTION_CITY,
+    populationRating: 3,
     commerceRating: 3,
     cityLoyalty: 72,
     domestic: {
@@ -92,6 +94,7 @@ export const cities = [
     y: 68,
     neighbors: ["pyeongyang", "luoyang", "kyoto"],
     type: CITY_TYPES.COMMERCIAL_CAPITAL,
+    populationRating: 4,
     commerceRating: 5,
     cityLoyalty: 78,
     domestic: {
@@ -130,6 +133,7 @@ export const cities = [
     y: 61.8,
     neighbors: ["hanseong", "pyeongyang"],
     type: CITY_TYPES.COASTAL_TRADE_CITY,
+    populationRating: 3,
     commerceRating: 3,
     cityLoyalty: 76,
     domestic: {

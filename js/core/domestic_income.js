@@ -1,15 +1,22 @@
 import {
-  CITY_TAX_BONUSES,
+  CHANCELLOR_POLICY_EFFECTS,
+  CHANCELLOR_POLICY_KEYS,
   COMMERCE_TAX_POINT_PER_RATING,
   DOMESTIC_INCOME_RULES,
   DOMESTIC_TAX_RULES,
   FACTION_IDS,
+  HERO_UPKEEP_RULES,
+  INITIAL_ENEMY_RESOURCE_STOCK,
+  INITIAL_RESOURCE_STOCK,
   LOYALTY_KEYS,
+  POPULATION_TAX_POINT_PER_RATING,
   RESOURCE_KEYS,
-  RESOURCE_TAX_TIERS,
-  RESOURCE_TAX_TIER_VALUES,
+  SALT_PRESERVATION_RULES,
   SEASON_KEYS,
+  SOLDIER_UPKEEP_RULES,
   TAX_POINT_TO_GOLD,
+  WAREHOUSE_CAPACITY,
+  WAREHOUSE_STATUS_THRESHOLDS,
 } from "../constants.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
@@ -37,6 +44,10 @@ function createEmptyIncomeTotals() {
     [RESOURCE_KEYS.SEAFOOD]: 0,
     [RESOURCE_KEYS.GOLD]: 0,
   };
+}
+
+function roundResourceAmount(amount) {
+  return Math.max(0, Math.round(amount));
 }
 
 function clamp(value, min, max) {
@@ -70,19 +81,85 @@ function createTaxEffect(baseTotals, totals, taxLevel) {
     goldBeforeTax,
     goldAfterTax,
     goldDelta: goldAfterTax - goldBeforeTax,
-    formula: "resource_tier_tax",
+    formula: "population_commerce_tax",
   };
+}
+
+function createChancellorPolicyEffect(policy, before, after) {
+  const normalizedPolicy = normalizeChancellorPolicy(policy);
+
+  return {
+    policy: normalizedPolicy,
+    effect: getChancellorPolicyEffect(normalizedPolicy),
+    before,
+    after,
+  };
+}
+
+function createResourceStockFromDefaults(defaults) {
+  return Object.fromEntries(
+    RESOURCE_STOCK_KEYS.map((resourceKey) => [resourceKey, defaults?.[resourceKey] ?? 0]),
+  );
+}
+
+function normalizeStockWithDefaults(resources = {}, defaults = INITIAL_RESOURCE_STOCK) {
+  return {
+    ...createResourceStockFromDefaults(defaults),
+    ...(resources ?? {}),
+  };
+}
+
+function isActiveHero(hero) {
+  return Boolean(hero)
+    && hero.dead !== true
+    && hero.isDead !== true
+    && hero.retired !== true
+    && hero.isRetired !== true
+    && hero.active !== false;
+}
+
+function getShortageEntries(shortage) {
+  return Object.entries(shortage)
+    .filter(([, amount]) => amount > 0)
+    .map(([resource, amount]) => ({ resource, amount }));
+}
+
+function getWarehouseStatusLabel(amount, capacity) {
+  if (capacity <= 0) {
+    return "안정";
+  }
+
+  const ratio = amount / capacity;
+
+  if (ratio > WAREHOUSE_STATUS_THRESHOLDS.FULL_MAX_RATIO) {
+    return "과잉";
+  }
+
+  if (ratio <= WAREHOUSE_STATUS_THRESHOLDS.LOW_MAX_RATIO) {
+    return "부족";
+  }
+
+  if (ratio <= WAREHOUSE_STATUS_THRESHOLDS.STABLE_MAX_RATIO) {
+    return "안정";
+  }
+
+  return "충분";
 }
 
 export function createInitialResourceStock() {
-  return Object.fromEntries(RESOURCE_STOCK_KEYS.map((resourceKey) => [resourceKey, 0]));
+  return createResourceStockFromDefaults(INITIAL_RESOURCE_STOCK);
+}
+
+export function createInitialEnemyResourceStock() {
+  return createResourceStockFromDefaults(INITIAL_ENEMY_RESOURCE_STOCK);
 }
 
 export function normalizeResourceStock(resources = {}) {
-  return {
-    ...createInitialResourceStock(),
-    ...(resources ?? {}),
-  };
+  return normalizeStockWithDefaults(resources, INITIAL_RESOURCE_STOCK);
+}
+
+export function normalizeEnemyResourceStock(resources = {}) {
+  return normalizeStockWithDefaults(resources, INITIAL_ENEMY_RESOURCE_STOCK);
 }
 
 export function normalizeTaxLevel(taxLevel) {
@@ -99,9 +176,18 @@ export function normalizeTaxLevel(taxLevel) {
   );
 }
 
+export function normalizeChancellorPolicy(policy) {
+  if (Object.values(CHANCELLOR_POLICY_KEYS).includes(policy)) {
+    return policy;
+  }
+
+  return CHANCELLOR_POLICY_KEYS.BALANCED;
+}
+
 export function createInitialDomesticPolicy() {
   return {
     taxLevel: DOMESTIC_TAX_RULES.DEFAULT_TAX_LEVEL,
+    chancellorPolicy: CHANCELLOR_POLICY_KEYS.BALANCED,
   };
 }
 
@@ -110,7 +196,15 @@ export function normalizeDomesticPolicy(domesticPolicy = {}) {
     ...createInitialDomesticPolicy(),
     ...(domesticPolicy ?? {}),
     taxLevel: normalizeTaxLevel(domesticPolicy?.taxLevel),
+    chancellorPolicy: normalizeChancellorPolicy(domesticPolicy?.chancellorPolicy),
   };
+}
+
+export function getChancellorPolicyEffect(policy) {
+  const normalizedPolicy = normalizeChancellorPolicy(policy);
+
+  return CHANCELLOR_POLICY_EFFECTS[normalizedPolicy]
+    ?? CHANCELLOR_POLICY_EFFECTS[CHANCELLOR_POLICY_KEYS.BALANCED];
 }
 
 export function getTaxGoldMultiplier(taxLevel) {
@@ -142,29 +236,34 @@ export function getTaxLoyaltyDelta(taxLevel) {
   return 0;
 }
 
-export function calculateResourceTaxPoints(resources = {}) {
-  return Object.entries(RESOURCE_TAX_TIERS).reduce((total, [resourceKey, taxTier]) => {
-    const tierValue = RESOURCE_TAX_TIER_VALUES[taxTier] ?? 0;
-    return total + getRating(resources, resourceKey) * tierValue;
-  }, 0);
+export function normalizePopulationRating(value) {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return 3;
+  }
+
+  return clamp(Math.round(numericValue), 1, 5);
 }
 
-export function getCityTypeTaxBonus(city) {
-  return CITY_TAX_BONUSES[city?.type] ?? 1.0;
+export function getCityTaxBasePoints(city) {
+  const populationTaxPoints = normalizePopulationRating(city?.populationRating)
+    * POPULATION_TAX_POINT_PER_RATING;
+  const commerceTaxPoints = getRating(city, "commerceRating") * COMMERCE_TAX_POINT_PER_RATING;
+
+  return {
+    populationTaxPoints,
+    commerceTaxPoints,
+    baseTaxPoints: populationTaxPoints + commerceTaxPoints,
+  };
 }
 
 export function calculateCityTaxableValue(city) {
-  const resourceTaxPoints = calculateResourceTaxPoints(city?.resources);
-  const commerceTaxPoints = getRating(city, "commerceRating") * COMMERCE_TAX_POINT_PER_RATING;
-  const cityTypeBonus = getCityTypeTaxBonus(city);
-  const taxablePoints = (resourceTaxPoints + commerceTaxPoints) * cityTypeBonus;
+  const taxBase = getCityTaxBasePoints(city);
 
   return {
-    resourceTaxPoints,
-    commerceTaxPoints,
-    cityTypeBonus,
-    taxablePoints,
-    taxableValue: taxablePoints * TAX_POINT_TO_GOLD,
+    ...taxBase,
+    taxableValue: taxBase.baseTaxPoints * TAX_POINT_TO_GOLD,
   };
 }
 
@@ -192,6 +291,26 @@ export function applyTaxToIncomeTotals(totals, taxLevel, ownedCities = []) {
   };
 }
 
+export function applyChancellorPolicyToIncomeTotals(totals, policy) {
+  const effect = getChancellorPolicyEffect(policy);
+
+  return {
+    ...totals,
+    [RESOURCE_KEYS.RICE]: roundResourceAmount(
+      (totals[RESOURCE_KEYS.RICE] ?? 0) * effect.incomeMultiplier * effect.riceMultiplier,
+    ),
+    [RESOURCE_KEYS.BARLEY]: roundResourceAmount(
+      (totals[RESOURCE_KEYS.BARLEY] ?? 0) * effect.incomeMultiplier * effect.barleyMultiplier,
+    ),
+    [RESOURCE_KEYS.SEAFOOD]: roundResourceAmount(
+      (totals[RESOURCE_KEYS.SEAFOOD] ?? 0) * effect.incomeMultiplier * effect.seafoodMultiplier,
+    ),
+    [RESOURCE_KEYS.GOLD]: roundResourceAmount(
+      (totals[RESOURCE_KEYS.GOLD] ?? 0) * effect.incomeMultiplier * effect.goldMultiplier,
+    ),
+  };
+}
+
 export function calculateCityTurnIncome(city, calendar, taxLevel = DOMESTIC_TAX_RULES.DEFAULT_TAX_LEVEL) {
   const resources = city?.resources ?? {};
   const income = createEmptyIncomeTotals();
@@ -203,7 +322,7 @@ export function calculateCityTurnIncome(city, calendar, taxLevel = DOMESTIC_TAX_
   income[RESOURCE_KEYS.SEAFOOD] += seafoodIncome;
   income[RESOURCE_KEYS.GOLD] += goldTaxIncome.gold;
   addDetail(details, RESOURCE_KEYS.SEAFOOD, seafoodIncome, "매턴 수산물", city);
-  addDetail(details, RESOURCE_KEYS.GOLD, goldTaxIncome.gold, "생산물 차등과세", city);
+  addDetail(details, RESOURCE_KEYS.GOLD, goldTaxIncome.gold, "인구·상업세", city);
 
   if (calendar?.season === SEASON_KEYS.SPRING) {
     const barleyIncome = getRating(resources, RESOURCE_KEYS.BARLEY)
@@ -257,8 +376,14 @@ export function calculatePlayerTurnIncome(state) {
       0,
     ),
   };
-  const totals = applyTaxToIncomeTotals(baseTotals, domesticPolicy.taxLevel, ownedCities);
-  const tax = createTaxEffect(baseTotalsAtNormalTax, totals, domesticPolicy.taxLevel);
+  const taxedTotals = applyTaxToIncomeTotals(baseTotals, domesticPolicy.taxLevel, ownedCities);
+  const totals = applyChancellorPolicyToIncomeTotals(taxedTotals, domesticPolicy.chancellorPolicy);
+  const tax = createTaxEffect(baseTotalsAtNormalTax, taxedTotals, domesticPolicy.taxLevel);
+  const chancellorPolicy = createChancellorPolicyEffect(
+    domesticPolicy.chancellorPolicy,
+    taxedTotals,
+    totals,
+  );
 
   return {
     turn: state?.meta?.turn ?? 1,
@@ -266,6 +391,7 @@ export function calculatePlayerTurnIncome(state) {
     baseTotals: baseTotalsAtNormalTax,
     totals,
     tax,
+    chancellorPolicy,
     cityIncomes,
     details,
   };
@@ -314,6 +440,212 @@ export function applyTaxLoyaltyEffect(state) {
       lastTaxResult: {
         taxLevel: domesticPolicy.taxLevel,
         loyaltyDelta,
+      },
+    },
+  };
+}
+
+export function calculateHeroUpkeep(heroes = [], side = FACTION_IDS.PLAYER) {
+  const activeHeroes = (heroes ?? []).filter((hero) => hero.side === side && isActiveHero(hero));
+  const cost = Object.fromEntries(
+    Object.entries(HERO_UPKEEP_RULES).map(([resourceKey, amount]) => [
+      resourceKey,
+      activeHeroes.length * amount,
+    ]),
+  );
+
+  return {
+    side,
+    heroCount: activeHeroes.length,
+    cost,
+    details: Object.entries(cost)
+      .filter(([, amount]) => amount > 0)
+      .map(([resource, amount]) => ({
+        resource,
+        amount,
+        reason: "영웅 유지비",
+      })),
+  };
+}
+
+export function applyChancellorPolicyToHeroUpkeep(upkeep, policy) {
+  const effect = getChancellorPolicyEffect(policy);
+  const cost = Object.fromEntries(
+    Object.entries(upkeep?.cost ?? {}).map(([resourceKey, amount]) => [
+      resourceKey,
+      roundResourceAmount(amount * effect.heroUpkeepMultiplier),
+    ]),
+  );
+
+  return {
+    ...upkeep,
+    baseCost: upkeep?.cost ?? {},
+    cost,
+    chancellorPolicy: normalizeChancellorPolicy(policy),
+  };
+}
+
+export function applyHeroUpkeep(resources, heroes = [], side = FACTION_IDS.PLAYER, chancellorPolicy = null) {
+  const baseUpkeep = calculateHeroUpkeep(heroes, side);
+  const upkeep = chancellorPolicy
+    ? applyChancellorPolicyToHeroUpkeep(baseUpkeep, chancellorPolicy)
+    : baseUpkeep;
+  const currentResources = side === FACTION_IDS.ENEMY
+    ? normalizeEnemyResourceStock(resources)
+    : normalizeResourceStock(resources);
+  const nextResources = { ...currentResources };
+  const shortage = {};
+
+  for (const [resourceKey, amount] of Object.entries(upkeep.cost)) {
+    const currentAmount = nextResources[resourceKey] ?? 0;
+    const nextAmount = currentAmount - amount;
+
+    if (nextAmount < 0) {
+      shortage[resourceKey] = Math.abs(nextAmount);
+      nextResources[resourceKey] = 0;
+    } else {
+      shortage[resourceKey] = 0;
+      nextResources[resourceKey] = nextAmount;
+    }
+  }
+
+  return {
+    resources: nextResources,
+    upkeep,
+    shortage,
+    shortageEntries: getShortageEntries(shortage),
+  };
+}
+
+export function calculateSoldierUpkeepPreview(state, side = FACTION_IDS.PLAYER) {
+  const troopCount = (state?.world?.heroes ?? [])
+    .filter((hero) => hero.side === side && isActiveHero(hero))
+    .reduce((total, hero) => total + Math.max(0, Number(hero.troops) || 0), 0);
+  const unitCount = troopCount > 0
+    ? Math.ceil(troopCount / SOLDIER_UPKEEP_RULES.TROOPS_PER_UNIT)
+    : 0;
+
+  return {
+    side,
+    troopCount,
+    unitCount,
+    applied: false,
+    cost: {
+      [RESOURCE_KEYS.RICE]: unitCount * SOLDIER_UPKEEP_RULES[RESOURCE_KEYS.RICE],
+      [RESOURCE_KEYS.BARLEY]: unitCount * SOLDIER_UPKEEP_RULES[RESOURCE_KEYS.BARLEY],
+      [RESOURCE_KEYS.SEAFOOD]: unitCount * SOLDIER_UPKEEP_RULES[RESOURCE_KEYS.SEAFOOD],
+    },
+  };
+}
+
+export function applyChancellorPolicyToSoldierUpkeepPreview(preview, policy) {
+  const effect = getChancellorPolicyEffect(policy);
+  const cost = Object.fromEntries(
+    Object.entries(preview?.cost ?? {}).map(([resourceKey, amount]) => [
+      resourceKey,
+      roundResourceAmount(amount * effect.soldierUpkeepPreviewMultiplier),
+    ]),
+  );
+
+  return {
+    ...preview,
+    baseCost: preview?.cost ?? {},
+    cost,
+    chancellorPolicy: normalizeChancellorPolicy(policy),
+  };
+}
+
+export function calculateSaltPreservationNeed(resources = {}, policy = CHANCELLOR_POLICY_KEYS.BALANCED) {
+  const stock = normalizeResourceStock(resources);
+  const baseNeeded = Math.ceil(
+    ((stock[RESOURCE_KEYS.RICE] ?? 0) + (stock[RESOURCE_KEYS.BARLEY] ?? 0))
+      * SALT_PRESERVATION_RULES.FOOD_SALT_RATIO
+    + (stock[RESOURCE_KEYS.SEAFOOD] ?? 0) * SALT_PRESERVATION_RULES.SEAFOOD_SALT_RATIO,
+  );
+  const needed = applyChancellorPolicyToSaltPreservationNeed(
+    { needed: baseNeeded, currentSalt: stock[RESOURCE_KEYS.SALT] ?? 0 },
+    policy,
+  ).needed;
+  const currentSalt = stock[RESOURCE_KEYS.SALT] ?? 0;
+
+  return {
+    baseNeeded,
+    needed,
+    currentSalt,
+    status: currentSalt >= needed ? "안정" : "부족",
+    applied: false,
+    chancellorPolicy: normalizeChancellorPolicy(policy),
+  };
+}
+
+export function applyChancellorPolicyToSaltPreservationNeed(saltNeed, policy) {
+  const effect = getChancellorPolicyEffect(policy);
+  const needed = Math.max(0, Math.ceil((saltNeed?.needed ?? 0) * effect.saltPreservationMultiplier));
+  const currentSalt = saltNeed?.currentSalt ?? 0;
+
+  return {
+    ...saltNeed,
+    baseNeeded: saltNeed?.baseNeeded ?? saltNeed?.needed ?? 0,
+    needed,
+    currentSalt,
+    status: currentSalt >= needed ? "안정" : "부족",
+    applied: false,
+    chancellorPolicy: normalizeChancellorPolicy(policy),
+  };
+}
+
+export function getWarehouseStatus(resources = {}) {
+  const stock = normalizeResourceStock(resources);
+
+  return Object.fromEntries(
+    RESOURCE_STOCK_KEYS.map((resourceKey) => {
+      const amount = stock[resourceKey] ?? 0;
+      const capacity = WAREHOUSE_CAPACITY[resourceKey] ?? 0;
+
+      return [resourceKey, {
+        resource: resourceKey,
+        amount,
+        capacity,
+        ratio: capacity > 0 ? amount / capacity : 0,
+        status: getWarehouseStatusLabel(amount, capacity),
+      }];
+    }),
+  );
+}
+
+export function applyTurnUpkeep(state) {
+  const playerFactionId = state?.meta?.playerFactionId ?? FACTION_IDS.PLAYER;
+  const domesticPolicy = normalizeDomesticPolicy(state?.domesticPolicy);
+  const playerResult = applyHeroUpkeep(
+    state?.resources,
+    state?.world?.heroes,
+    playerFactionId,
+    domesticPolicy.chancellorPolicy,
+  );
+  const enemyResult = applyHeroUpkeep(state?.enemyResources, state?.world?.heroes, FACTION_IDS.ENEMY);
+  const nextState = {
+    ...state,
+    resources: playerResult.resources,
+    enemyResources: enemyResult.resources,
+  };
+
+  return {
+    ...nextState,
+    world: {
+      ...nextState.world,
+      lastUpkeepResult: {
+        turn: state?.meta?.turn ?? 1,
+        chancellorPolicy: domesticPolicy.chancellorPolicy,
+        player: playerResult,
+        enemy: enemyResult,
+        soldierPreview: {
+          player: applyChancellorPolicyToSoldierUpkeepPreview(
+            calculateSoldierUpkeepPreview(nextState, playerFactionId),
+            domesticPolicy.chancellorPolicy,
+          ),
+          enemy: calculateSoldierUpkeepPreview(nextState, FACTION_IDS.ENEMY),
+        },
+        saltPreservation: calculateSaltPreservationNeed(playerResult.resources, domesticPolicy.chancellorPolicy),
       },
     },
   };

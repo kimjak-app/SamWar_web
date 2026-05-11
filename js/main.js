@@ -6,6 +6,7 @@ import {
   retreatFromBattle,
   returnFromBattle,
   selectCity,
+  setChancellorPolicy,
   setTaxLevel,
   startBattle,
   cancelHeroDeployment,
@@ -992,6 +993,16 @@ function rerender() {
       }
 
       updateAppState((state) => setTaxLevel(state, taxLevel));
+      rerender();
+    },
+    onChancellorPolicyChange: (chancellorPolicy) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => setChancellorPolicy(state, chancellorPolicy));
       rerender();
     },
     onConfirmEnemyTurnResult: () => {

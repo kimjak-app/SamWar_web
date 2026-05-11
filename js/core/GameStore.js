@@ -1,4 +1,8 @@
-import { normalizeDomesticPolicy, normalizeResourceStock } from "./domestic_income.js";
+import {
+  normalizeDomesticPolicy,
+  normalizeEnemyResourceStock,
+  normalizeResourceStock,
+} from "./domestic_income.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
 function isObject(value) {
@@ -14,6 +18,7 @@ function syncDerivedState(state) {
     ...state,
     domesticPolicy: normalizeDomesticPolicy(state.domesticPolicy),
     resources: normalizeResourceStock(state.resources),
+    enemyResources: normalizeEnemyResourceStock(state.enemyResources),
     meta: {
       ...state.meta,
       calendar: deriveCalendarFromTurn(state.meta.turn),

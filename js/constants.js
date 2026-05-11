@@ -99,7 +99,6 @@ export const DOMESTIC_INCOME_RULES = Object.freeze({
   SEAFOOD_PER_RATING_PER_TURN: 2,
   BARLEY_PER_RATING_IN_SPRING: 5,
   RICE_PER_RATING_IN_AUTUMN: 5,
-  COMMERCE_PER_RATING_PER_TURN: 3,
 });
 
 export const DOMESTIC_TAX_RULES = Object.freeze({
@@ -111,38 +110,151 @@ export const DOMESTIC_TAX_RULES = Object.freeze({
   MAX_GOLD_MULTIPLIER: 2.0,
 });
 
-export const RESOURCE_TAX_TIERS = Object.freeze({
-  [RESOURCE_KEYS.RICE]: "food_low",
-  [RESOURCE_KEYS.BARLEY]: "food_low",
-  [RESOURCE_KEYS.SEAFOOD]: "food_low",
-  [RESOURCE_KEYS.WOOD]: "basic",
-  [RESOURCE_KEYS.IRON]: "strategic",
-  [RESOURCE_KEYS.HORSES]: "strategic",
-  [RESOURCE_KEYS.SILK]: "luxury",
-  [RESOURCE_KEYS.SALT]: "salt_premium",
+export const POPULATION_TAX_POINT_PER_RATING = 3;
+export const COMMERCE_TAX_POINT_PER_RATING = 3;
+export const TAX_POINT_TO_GOLD = 1;
+
+export const INITIAL_RESOURCE_STOCK = Object.freeze({
+  [RESOURCE_KEYS.RICE]: 300,
+  [RESOURCE_KEYS.BARLEY]: 250,
+  [RESOURCE_KEYS.SEAFOOD]: 80,
+  [RESOURCE_KEYS.WOOD]: 100,
+  [RESOURCE_KEYS.IRON]: 50,
+  [RESOURCE_KEYS.HORSES]: 30,
+  [RESOURCE_KEYS.SILK]: 30,
+  [RESOURCE_KEYS.SALT]: 50,
+  [RESOURCE_KEYS.GOLD]: 200,
 });
 
-export const RESOURCE_TAX_TIER_VALUES = Object.freeze({
-  food_low: 1,
-  basic: 2,
-  strategic: 3,
-  luxury: 4,
-  salt_premium: 5,
+export const INITIAL_ENEMY_RESOURCE_STOCK = Object.freeze({
+  ...INITIAL_RESOURCE_STOCK,
 });
 
-export const RESOURCE_TAX_TIER_LABELS = Object.freeze({
-  food_low: "식량계 낮은 과세",
-  basic: "기초 자원 일반 과세",
-  strategic: "전략 자원 높은 과세",
-  luxury: "고급 자원 높은 과세",
-  salt_premium: "최고 전략 자원 최고 과세",
+export const WAREHOUSE_CAPACITY = Object.freeze({
+  [RESOURCE_KEYS.RICE]: 1000,
+  [RESOURCE_KEYS.BARLEY]: 1000,
+  [RESOURCE_KEYS.SEAFOOD]: 500,
+  [RESOURCE_KEYS.WOOD]: 800,
+  [RESOURCE_KEYS.IRON]: 500,
+  [RESOURCE_KEYS.HORSES]: 300,
+  [RESOURCE_KEYS.SILK]: 300,
+  [RESOURCE_KEYS.SALT]: 400,
+  [RESOURCE_KEYS.GOLD]: 9999,
 });
 
-export const TAX_POINT_TO_GOLD = 0.5;
-export const COMMERCE_TAX_POINT_PER_RATING = 1;
+export const WAREHOUSE_STATUS_THRESHOLDS = Object.freeze({
+  LOW_MAX_RATIO: 0.2,
+  STABLE_MAX_RATIO: 0.8,
+  FULL_MAX_RATIO: 1,
+});
 
-export const CITY_TAX_BONUSES = Object.freeze({
-  [CITY_TYPES.COMMERCIAL_CAPITAL]: 1.25,
-  [CITY_TYPES.COASTAL_TRADE_CITY]: 1.15,
-  [CITY_TYPES.PRODUCTION_CITY]: 1.0,
+export const HERO_UPKEEP_RULES = Object.freeze({
+  [RESOURCE_KEYS.RICE]: 8,
+  [RESOURCE_KEYS.SEAFOOD]: 3,
+  [RESOURCE_KEYS.SILK]: 1,
+});
+
+export const SOLDIER_UPKEEP_RULES = Object.freeze({
+  TROOPS_PER_UNIT: 100,
+  [RESOURCE_KEYS.RICE]: 6,
+  [RESOURCE_KEYS.BARLEY]: 5,
+  [RESOURCE_KEYS.SEAFOOD]: 1,
+});
+
+export const SALT_PRESERVATION_RULES = Object.freeze({
+  FOOD_SALT_RATIO: 0.08,
+  SEAFOOD_SALT_RATIO: 0.12,
+});
+
+export const CHANCELLOR_POLICY_KEYS = Object.freeze({
+  BALANCED: "balanced",
+  AGRICULTURE: "agriculture",
+  COMMERCE: "commerce",
+  TRADE: "trade",
+  MILITARY: "military",
+});
+
+export const CHANCELLOR_POLICY_LABELS = Object.freeze({
+  [CHANCELLOR_POLICY_KEYS.BALANCED]: "균형형",
+  [CHANCELLOR_POLICY_KEYS.AGRICULTURE]: "농업 중심",
+  [CHANCELLOR_POLICY_KEYS.COMMERCE]: "상업 중심",
+  [CHANCELLOR_POLICY_KEYS.TRADE]: "무역 중심",
+  [CHANCELLOR_POLICY_KEYS.MILITARY]: "군사 중심",
+});
+
+export const CHANCELLOR_POLICY_DESCRIPTIONS = Object.freeze({
+  [CHANCELLOR_POLICY_KEYS.BALANCED]: "보정 없음",
+  [CHANCELLOR_POLICY_KEYS.AGRICULTURE]: "쌀/보리 수입 증가, 금전 소폭 감소",
+  [CHANCELLOR_POLICY_KEYS.COMMERCE]: "금전 수입 증가, 식량 수입 소폭 감소",
+  [CHANCELLOR_POLICY_KEYS.TRADE]: "수산물/금전 소폭 증가, 소금 보존 부담 완화",
+  [CHANCELLOR_POLICY_KEYS.MILITARY]: "영웅 유지비 감소, 금전 소폭 감소",
+});
+
+export const CHANCELLOR_POLICY_EFFECTS = Object.freeze({
+  [CHANCELLOR_POLICY_KEYS.BALANCED]: Object.freeze({
+    incomeMultiplier: 1.0,
+    riceMultiplier: 1.0,
+    barleyMultiplier: 1.0,
+    seafoodMultiplier: 1.0,
+    goldMultiplier: 1.0,
+    heroUpkeepMultiplier: 1.0,
+    soldierUpkeepPreviewMultiplier: 1.0,
+    saltPreservationMultiplier: 1.0,
+  }),
+  [CHANCELLOR_POLICY_KEYS.AGRICULTURE]: Object.freeze({
+    incomeMultiplier: 1.0,
+    riceMultiplier: 1.15,
+    barleyMultiplier: 1.15,
+    seafoodMultiplier: 1.0,
+    goldMultiplier: 0.95,
+    heroUpkeepMultiplier: 1.0,
+    soldierUpkeepPreviewMultiplier: 1.0,
+    saltPreservationMultiplier: 1.0,
+  }),
+  [CHANCELLOR_POLICY_KEYS.COMMERCE]: Object.freeze({
+    incomeMultiplier: 1.0,
+    riceMultiplier: 0.95,
+    barleyMultiplier: 0.95,
+    seafoodMultiplier: 1.0,
+    goldMultiplier: 1.15,
+    heroUpkeepMultiplier: 1.0,
+    soldierUpkeepPreviewMultiplier: 1.0,
+    saltPreservationMultiplier: 1.0,
+  }),
+  [CHANCELLOR_POLICY_KEYS.TRADE]: Object.freeze({
+    incomeMultiplier: 1.0,
+    riceMultiplier: 1.0,
+    barleyMultiplier: 1.0,
+    seafoodMultiplier: 1.10,
+    goldMultiplier: 1.05,
+    heroUpkeepMultiplier: 1.0,
+    soldierUpkeepPreviewMultiplier: 1.0,
+    saltPreservationMultiplier: 0.90,
+  }),
+  [CHANCELLOR_POLICY_KEYS.MILITARY]: Object.freeze({
+    incomeMultiplier: 1.0,
+    riceMultiplier: 1.0,
+    barleyMultiplier: 1.0,
+    seafoodMultiplier: 1.0,
+    goldMultiplier: 0.95,
+    heroUpkeepMultiplier: 0.90,
+    soldierUpkeepPreviewMultiplier: 0.90,
+    saltPreservationMultiplier: 1.0,
+  }),
+});
+
+export const CHANCELLOR_STAT_KEYS = Object.freeze({
+  POLITICS: "politics",
+  COMMERCE: "commerce",
+  ADMINISTRATION: "administration",
+  DIPLOMACY: "diplomacy",
+  MILITARY_ADMINISTRATION: "militaryAdministration",
+});
+
+export const CHANCELLOR_STAT_LABELS = Object.freeze({
+  [CHANCELLOR_STAT_KEYS.POLITICS]: "정치력",
+  [CHANCELLOR_STAT_KEYS.COMMERCE]: "상업력",
+  [CHANCELLOR_STAT_KEYS.ADMINISTRATION]: "행정력",
+  [CHANCELLOR_STAT_KEYS.DIPLOMACY]: "외교력",
+  [CHANCELLOR_STAT_KEYS.MILITARY_ADMINISTRATION]: "군정력",
 });

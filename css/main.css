@@ -147,6 +147,7 @@ button {
 
 .turn-stock,
 .turn-income,
+.turn-policy-effect,
 .turn-tax-effect {
   color: var(--text-muted);
   font-size: 0.86rem;
@@ -154,8 +155,56 @@ button {
 }
 
 .turn-income,
+.turn-policy-effect,
 .turn-tax-effect {
   color: var(--text-main);
+}
+
+.warehouse-panel {
+  display: grid;
+  width: 100%;
+  gap: 6px;
+  margin: 4px 0;
+  padding: 10px;
+  border: 1px solid rgba(209, 176, 117, 0.16);
+  border-radius: 10px;
+  background: rgba(12, 24, 38, 0.48);
+}
+
+.warehouse-title {
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+}
+
+.warehouse-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.warehouse-row {
+  display: grid;
+  grid-template-columns: minmax(48px, 0.8fr) minmax(86px, 1.2fr) auto;
+  gap: 8px;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.warehouse-row strong {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.warehouse-row em {
+  color: var(--accent);
+  font-style: normal;
+}
+
+.warehouse-note {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 .tax-control {
@@ -183,6 +232,41 @@ button {
 }
 
 .tax-control-copy {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.policy-control {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  margin: 4px 0 6px;
+}
+
+.policy-control-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.policy-control-header strong {
+  color: var(--accent-strong);
+}
+
+.policy-select {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid rgba(209, 176, 117, 0.24);
+  border-radius: 8px;
+  background: rgba(7, 14, 23, 0.86);
+  color: var(--text-main);
+  font: inherit;
+}
+
+.policy-control-copy {
   color: var(--text-muted);
   font-size: 0.78rem;
   line-height: 1.35;

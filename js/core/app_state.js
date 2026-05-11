@@ -7,8 +7,11 @@ import { createInitialBattleState } from "./battle_state.js";
 import {
   applyPlayerTurnIncome,
   applyTaxLoyaltyEffect,
+  applyTurnUpkeep,
   createInitialDomesticPolicy,
+  createInitialEnemyResourceStock,
   createInitialResourceStock,
+  normalizeChancellorPolicy,
   normalizeTaxLevel,
 } from "./domestic_income.js";
 import { createInitialCalendar, deriveCalendarFromTurn } from "./world_calendar.js";
@@ -63,6 +66,7 @@ export function createInitialAppState() {
     pendingHeroTransfer: null,
     domesticPolicy: createInitialDomesticPolicy(),
     resources: createInitialResourceStock(),
+    enemyResources: createInitialEnemyResourceStock(),
     world: {
       cities: initializeCityDomesticData(cities),
       factions,
@@ -81,6 +85,16 @@ export function setTaxLevel(appState, taxLevel) {
     domesticPolicy: {
       ...(appState.domesticPolicy ?? {}),
       taxLevel: normalizeTaxLevel(taxLevel),
+    },
+  };
+}
+
+export function setChancellorPolicy(appState, chancellorPolicy) {
+  return {
+    ...appState,
+    domesticPolicy: {
+      ...(appState.domesticPolicy ?? {}),
+      chancellorPolicy: normalizeChancellorPolicy(chancellorPolicy),
     },
   };
 }
@@ -655,7 +669,8 @@ export function endWorldTurn(appState) {
   }
 
   const incomeAppliedState = applyPlayerTurnIncome(appState);
-  const taxAppliedState = applyTaxLoyaltyEffect(incomeAppliedState);
+  const upkeepAppliedState = applyTurnUpkeep(incomeAppliedState);
+  const taxAppliedState = applyTaxLoyaltyEffect(upkeepAppliedState);
   const invasionCandidate = rollEnemyInvasion(appState.world.cities, ENEMY_INVASION_CHANCE);
 
   if (invasionCandidate) {

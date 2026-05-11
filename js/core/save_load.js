@@ -1,10 +1,14 @@
 import { gameStore } from "./GameStore.js";
 import { heroes as canonicalHeroes } from "../../data/heroes.js";
-import { normalizeDomesticPolicy, normalizeResourceStock } from "./domestic_income.js";
+import {
+  normalizeDomesticPolicy,
+  normalizeEnemyResourceStock,
+  normalizeResourceStock,
+} from "./domestic_income.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
-const SAVE_KEY = "samwar.save.v0.5-1d-1";
-const SAVE_VERSION = "0.5-1d-1";
+const SAVE_KEY = "samwar.save.v0.5-1f";
+const SAVE_VERSION = "0.5-1f";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {
@@ -39,6 +43,7 @@ function hydrateLoadedState(state) {
     ...state,
     domesticPolicy: normalizeDomesticPolicy(state.domesticPolicy),
     resources: normalizeResourceStock(state.resources),
+    enemyResources: normalizeEnemyResourceStock(state.enemyResources),
     meta: {
       ...(state.meta ?? {}),
       calendar: deriveCalendarFromTurn(state.meta?.turn),
@@ -66,6 +71,7 @@ export function createSaveSnapshot(state = gameStore.getState()) {
     domesticPolicy: normalizeDomesticPolicy(state?.domesticPolicy),
     taxLevel: normalizeDomesticPolicy(state?.domesticPolicy).taxLevel,
     resources: normalizeResourceStock(state?.resources),
+    enemyResources: normalizeEnemyResourceStock(state?.enemyResources),
     selectedCityId: state?.selection?.cityId ?? null,
     selectedHeroId,
     cities: state?.world?.cities ?? [],

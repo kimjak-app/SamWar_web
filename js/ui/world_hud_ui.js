@@ -1,10 +1,19 @@
 import {
+  CHANCELLOR_POLICY_DESCRIPTIONS,
+  CHANCELLOR_POLICY_LABELS,
+  CHANCELLOR_POLICY_KEYS,
   LOYALTY_LABELS,
   LOYALTY_KEYS,
   RESOURCE_KEYS,
   RESOURCE_LABELS,
 } from "../constants.js";
 import {
+  applyChancellorPolicyToHeroUpkeep,
+  applyChancellorPolicyToSoldierUpkeepPreview,
+  calculateHeroUpkeep,
+  calculateSaltPreservationNeed,
+  calculateSoldierUpkeepPreview,
+  getWarehouseStatus,
   getTaxGoldMultiplier,
   getTaxLoyaltyDelta,
   normalizeDomesticPolicy,
@@ -15,6 +24,11 @@ const HUD_STOCK_RESOURCE_KEYS = Object.freeze([
   RESOURCE_KEYS.RICE,
   RESOURCE_KEYS.BARLEY,
   RESOURCE_KEYS.SEAFOOD,
+  RESOURCE_KEYS.WOOD,
+  RESOURCE_KEYS.IRON,
+  RESOURCE_KEYS.HORSES,
+  RESOURCE_KEYS.SILK,
+  RESOURCE_KEYS.SALT,
   RESOURCE_KEYS.GOLD,
 ]);
 
@@ -38,6 +52,47 @@ function formatResourceStock(resources) {
   return HUD_STOCK_RESOURCE_KEYS
     .map((resourceKey) => `${RESOURCE_LABELS[resourceKey]} ${getResourceAmount(resources, resourceKey)}`)
     .join(" / ");
+}
+
+function formatResourceCost(cost = {}, resourceKeys = Object.keys(cost)) {
+  const summary = resourceKeys
+    .map((resourceKey) => ({
+      resourceKey,
+      amount: getResourceAmount(cost, resourceKey),
+    }))
+    .filter((entry) => entry.amount > 0)
+    .map((entry) => `${RESOURCE_LABELS[entry.resourceKey]} -${entry.amount}`)
+    .join(" / ");
+
+  return summary || "없음";
+}
+
+function formatShortage(shortageEntries = []) {
+  const summary = shortageEntries
+    .filter((entry) => entry.amount > 0)
+    .map((entry) => `${RESOURCE_LABELS[entry.resource]} ${entry.amount}`)
+    .join(", ");
+
+  return summary ? `유지비 부족: ${summary}` : "유지비 정상";
+}
+
+function renderWarehouseRows(resources) {
+  const warehouseStatus = getWarehouseStatus(resources);
+
+  return HUD_STOCK_RESOURCE_KEYS
+    .map((resourceKey) => {
+      const entry = warehouseStatus[resourceKey];
+      const capacityLabel = entry.capacity > 0 ? ` / ${entry.capacity}` : "";
+
+      return `
+        <span class="warehouse-row">
+          <span>${RESOURCE_LABELS[resourceKey]}</span>
+          <strong>${entry.amount}${capacityLabel}</strong>
+          <em>${entry.status}</em>
+        </span>
+      `;
+    })
+    .join("");
 }
 
 function formatIncomeSummary(incomeResult) {
@@ -82,7 +137,74 @@ function formatTaxEffect(tax) {
     return "";
   }
 
-  return `세금 효과: 생산물 차등과세 적용, 충성도 ${formatSignedValue(tax.loyaltyDelta)}`;
+  return `세금 효과: 인구·상업세 적용, 충성도 ${formatSignedValue(tax.loyaltyDelta)}`;
+}
+
+function renderChancellorPolicyControl(chancellorPolicy) {
+  const options = Object.values(CHANCELLOR_POLICY_KEYS)
+    .map((policyKey) => `
+      <option value="${policyKey}" ${policyKey === chancellorPolicy ? "selected" : ""}>
+        ${CHANCELLOR_POLICY_LABELS[policyKey]}
+      </option>
+    `)
+    .join("");
+
+  return `
+    <label class="policy-control">
+      <span class="policy-control-header">
+        <span>재상 정책</span>
+        <strong>${CHANCELLOR_POLICY_LABELS[chancellorPolicy]}</strong>
+      </span>
+      <select class="policy-select" data-chancellor-policy="true" aria-label="재상 정책">
+        ${options}
+      </select>
+      <span class="policy-control-copy">${CHANCELLOR_POLICY_DESCRIPTIONS[chancellorPolicy]}</span>
+    </label>
+  `;
+}
+
+function formatChancellorPolicySummary(incomeResult, chancellorPolicy) {
+  const policy = incomeResult?.chancellorPolicy?.policy ?? chancellorPolicy;
+
+  return `재상 정책: ${CHANCELLOR_POLICY_LABELS[policy]}`;
+}
+
+function renderWarehousePanel(appState) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const domesticPolicy = normalizeDomesticPolicy(appState?.domesticPolicy);
+  const lastUpkeep = appState?.world?.lastUpkeepResult?.player;
+  const heroUpkeep = lastUpkeep?.upkeep
+    ?? applyChancellorPolicyToHeroUpkeep(
+      calculateHeroUpkeep(appState?.world?.heroes, playerFactionId),
+      domesticPolicy.chancellorPolicy,
+    );
+  const soldierPreview = appState?.world?.lastUpkeepResult?.soldierPreview?.player
+    ?? applyChancellorPolicyToSoldierUpkeepPreview(
+      calculateSoldierUpkeepPreview(appState, playerFactionId),
+      domesticPolicy.chancellorPolicy,
+    );
+  const saltPreservation = calculateSaltPreservationNeed(appState?.resources, domesticPolicy.chancellorPolicy);
+
+  return `
+    <div class="warehouse-panel">
+      <strong class="warehouse-title">국가 창고</strong>
+      <div class="warehouse-grid">
+        ${renderWarehouseRows(appState?.resources)}
+      </div>
+      <span class="warehouse-note">영웅 유지비: ${formatResourceCost(heroUpkeep.cost, [
+        RESOURCE_KEYS.RICE,
+        RESOURCE_KEYS.SEAFOOD,
+        RESOURCE_KEYS.SILK,
+      ])}</span>
+      <span class="warehouse-note">병사 유지비 preview: ${formatResourceCost(soldierPreview.cost, [
+        RESOURCE_KEYS.RICE,
+        RESOURCE_KEYS.BARLEY,
+        RESOURCE_KEYS.SEAFOOD,
+      ])} (${soldierPreview.troopCount}명 기준, 미차감)</span>
+      <span class="warehouse-note">보존 소금: 필요 ${saltPreservation.needed} / 보유 ${saltPreservation.currentSalt} / ${saltPreservation.status}</span>
+      <span class="warehouse-note">${formatShortage(lastUpkeep?.shortageEntries ?? [])}</span>
+    </div>
+  `;
 }
 
 export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
@@ -91,12 +213,14 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
   const calendarLabel = formatCalendarLabel(deriveCalendarFromTurn(meta.turn));
   const domesticPolicy = normalizeDomesticPolicy(appState.domesticPolicy);
   const taxLevel = domesticPolicy.taxLevel;
+  const chancellorPolicy = domesticPolicy.chancellorPolicy;
   const currentTax = {
     goldMultiplier: getTaxGoldMultiplier(taxLevel),
     loyaltyDelta: getTaxLoyaltyDelta(taxLevel),
   };
   const incomeSummary = formatIncomeSummary(world.lastIncomeResult);
   const taxEffect = formatTaxEffect(world.lastIncomeResult?.tax ?? currentTax);
+  const chancellorPolicySummary = formatChancellorPolicySummary(world.lastIncomeResult, chancellorPolicy);
 
   return `
     <aside class="left-hud-stack" aria-label="World overview">
@@ -138,8 +262,11 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
           >
           <span class="tax-control-copy">${getTaxDescription(taxLevel)}</span>
         </label>
+        ${renderChancellorPolicyControl(chancellorPolicy)}
         <span class="turn-stock">보유 자원: ${formatResourceStock(appState.resources)}</span>
+        ${renderWarehousePanel(appState)}
         ${incomeSummary ? `<span class="turn-income">${incomeSummary}</span>` : ""}
+        <span class="turn-policy-effect">${chancellorPolicySummary}</span>
         ${taxEffect ? `<span class="turn-tax-effect">${taxEffect}</span>` : ""}
         <span class="turn-copy">${unified ? "천하통일 달성" : meta.status}</span>
         ${canEndTurn ? `
