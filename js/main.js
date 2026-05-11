@@ -6,6 +6,7 @@ import {
   retreatFromBattle,
   returnFromBattle,
   selectCity,
+  setTaxLevel,
   startBattle,
   cancelHeroDeployment,
   cancelHeroTransfer,
@@ -981,6 +982,16 @@ function rerender() {
       clearBattleTempoTimers();
       clearAutoBattleTimer();
       updateAppState((state) => endWorldTurn(state));
+      rerender();
+    },
+    onTaxLevelChange: (taxLevel) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => setTaxLevel(state, taxLevel));
       rerender();
     },
     onConfirmEnemyTurnResult: () => {

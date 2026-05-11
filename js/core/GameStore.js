@@ -1,16 +1,19 @@
+import { normalizeDomesticPolicy, normalizeResourceStock } from "./domestic_income.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function syncCalendar(state) {
+function syncDerivedState(state) {
   if (!isObject(state) || !isObject(state.meta)) {
     return state;
   }
 
   return {
     ...state,
+    domesticPolicy: normalizeDomesticPolicy(state.domesticPolicy),
+    resources: normalizeResourceStock(state.resources),
     meta: {
       ...state.meta,
       calendar: deriveCalendarFromTurn(state.meta.turn),
@@ -19,7 +22,7 @@ function syncCalendar(state) {
 }
 
 function createGameStore(initialState = null) {
-  let state = syncCalendar(initialState);
+  let state = syncDerivedState(initialState);
   const listeners = new Set();
 
   function notify(nextState, previousState) {
@@ -42,7 +45,7 @@ function createGameStore(initialState = null) {
       ? { ...previousState, ...patch }
       : patch;
 
-    state = syncCalendar(nextState);
+    state = syncDerivedState(nextState);
     notify(state, previousState);
     return state;
   }
@@ -59,7 +62,7 @@ function createGameStore(initialState = null) {
       return state;
     }
 
-    state = syncCalendar(nextState);
+    state = syncDerivedState(nextState);
     notify(state, previousState);
     return state;
   }

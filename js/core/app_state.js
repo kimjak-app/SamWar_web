@@ -4,6 +4,13 @@ import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
 import { LOYALTY_KEYS } from "../constants.js";
 import { createInitialBattleState } from "./battle_state.js";
+import {
+  applyPlayerTurnIncome,
+  applyTaxLoyaltyEffect,
+  createInitialDomesticPolicy,
+  createInitialResourceStock,
+  normalizeTaxLevel,
+} from "./domestic_income.js";
 import { createInitialCalendar, deriveCalendarFromTurn } from "./world_calendar.js";
 import {
   ENEMY_INVASION_CHANCE,
@@ -54,6 +61,8 @@ export function createInitialAppState() {
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
     pendingHeroTransfer: null,
+    domesticPolicy: createInitialDomesticPolicy(),
+    resources: createInitialResourceStock(),
     world: {
       cities: initializeCityDomesticData(cities),
       factions,
@@ -62,6 +71,16 @@ export function createInitialAppState() {
       turnOwner: "player",
       pendingEnemyTurnResult: null,
       lastRecruitmentResult: null,
+    },
+  };
+}
+
+export function setTaxLevel(appState, taxLevel) {
+  return {
+    ...appState,
+    domesticPolicy: {
+      ...(appState.domesticPolicy ?? {}),
+      taxLevel: normalizeTaxLevel(taxLevel),
     },
   };
 }
@@ -635,18 +654,20 @@ export function endWorldTurn(appState) {
     return appState;
   }
 
+  const incomeAppliedState = applyPlayerTurnIncome(appState);
+  const taxAppliedState = applyTaxLoyaltyEffect(incomeAppliedState);
   const invasionCandidate = rollEnemyInvasion(appState.world.cities, ENEMY_INVASION_CHANCE);
 
   if (invasionCandidate) {
     return {
-      ...appState,
+      ...taxAppliedState,
       selection: {
-        ...appState.selection,
+        ...taxAppliedState.selection,
         cityId: invasionCandidate.defenderCityId,
       },
       pendingBattleChoice: buildDefenseBattleChoice(appState, invasionCandidate),
       world: {
-        ...appState.world,
+        ...taxAppliedState.world,
         turnOwner: "enemy",
         pendingEnemyTurnResult: null,
       },
@@ -654,9 +675,9 @@ export function endWorldTurn(appState) {
   }
 
   return {
-    ...appState,
+    ...taxAppliedState,
     world: {
-      ...appState.world,
+      ...taxAppliedState.world,
       turnOwner: "enemy",
       pendingEnemyTurnResult: {
         type: "no_invasion",

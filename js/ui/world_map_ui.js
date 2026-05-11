@@ -15,6 +15,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onHeroTransferConfirm,
     onHeroTransferCancel,
     onEndWorldTurn,
+    onTaxLevelChange,
     onConfirmEnemyTurnResult,
   } = handlers;
   const { pendingHeroDeployment, pendingHeroTransfer } = appState;
@@ -147,6 +148,12 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   if (onEndWorldTurn) {
     rootElement.querySelector("[data-end-world-turn='true']")?.addEventListener("click", () => {
       onEndWorldTurn();
+    });
+  }
+
+  if (onTaxLevelChange) {
+    rootElement.querySelector("[data-tax-level]")?.addEventListener("input", (event) => {
+      onTaxLevelChange(event.currentTarget.value);
     });
   }
 
