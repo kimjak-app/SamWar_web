@@ -4,6 +4,7 @@ import {
   CITY_TYPES,
   DOMESTIC_STAT_KEYS,
   FACTION_IDS,
+  GOVERNOR_POLICY_KEYS,
   RESOURCE_KEYS,
   YIELD_KEYS,
 } from "../constants.js";
@@ -41,6 +42,12 @@ const defaultCityYields = {
   [YIELD_KEYS.SEAFOOD_PER_TURN]: 20,
   [YIELD_KEYS.COMMERCE_INCOME]: 100,
   [YIELD_KEYS.SPECIALTY_INCOME]: 400,
+};
+
+export const defaultCityMilitary = {
+  recruitableTroops: 0,
+  foodStatus: "준비 중",
+  securityStatus: "병력 기반 계산 예정",
 };
 
 export function isPlayerCity(city) {
@@ -122,6 +129,8 @@ export function initializeCityDomesticData(cities) {
     type: city.type ?? CITY_TYPES.PRODUCTION_CITY,
     commerceRating: city.commerceRating ?? 3,
     cityLoyalty: city.cityLoyalty ?? 75,
+    governorHeroId: city.governorHeroId ?? null,
+    governorPolicy: city.governorPolicy ?? GOVERNOR_POLICY_KEYS.FOLLOW_CHANCELLOR,
     domestic: {
       ...defaultCityDomestic,
       ...(city.domestic ?? {}),
@@ -136,6 +145,10 @@ export function initializeCityDomesticData(cities) {
     yields: {
       ...defaultCityYields,
       ...(city.yields ?? {}),
+    },
+    military: {
+      ...defaultCityMilitary,
+      ...(city.military ?? {}),
     },
   }));
 }

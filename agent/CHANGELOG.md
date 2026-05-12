@@ -1,5 +1,112 @@
 # Changelog
 
+## v0.5-2d Enemy Invasion Defense Choice Center Modal
+- Minor UI placement patch on top of `v0.5-2c Stable`.
+- Moved `pendingBattleChoice.type === "defense"` from the right Selected City HUD stack to a centered modal.
+- Preserved defense choice content:
+  - `Enemy Invasion`
+  - `적군이 침공했습니다!`
+  - 침공 도시
+  - 방어 도시
+  - 방어 방식 안내
+  - 직접 방어 / 자동 방어 buttons
+- Preserved existing battle choice data attributes and handlers.
+- Attack pending battle choice can still use the existing right-side flow.
+- No enemy invasion chance, AI, defense result handling, Phaser Scene, battle logic, or window compatibility changes.
+- `node --check` passed for `js/ui/ui_render.js` and `js/ui/world_map_ui.js`.
+
+## v0.5-2c Stable Governor UI Polish + Turn Action UX Unification + Governor Policy Scaffold
+- Closed the current baseline as `v0.5-2c Stable`.
+- Minor UI/UX patch on top of `v0.5-2b`.
+- Unified World Turn action buttons:
+  - player turn: `아군 턴 종료`
+  - enemy no-invasion confirmation: `적군 턴 종료`
+- Removed enemy turn result explanation text from the HUD.
+- Improved assigned governor UI to reuse chancellor-style card presentation:
+  - portrait
+  - name
+  - primary type + aptitude
+  - secondary type + aptitude
+- Reused `hero.chancellorProfile` only as a temporary administrative aptitude display profile for governors.
+- Removed assigned-state `관리: 태수 관리`.
+- Unassigned governor state now shows `관리: 재상 통제 관리`.
+- Removed unnecessary Selected City bottom combat guidance text.
+- Added governor policy scaffold:
+  - `GOVERNOR_POLICY_KEYS`
+  - `GOVERNOR_POLICY_LABELS`
+  - `city.governorPolicy`
+  - `setCityGovernorPolicy(appState, cityId, governorPolicy)`
+- Governor policy options:
+  - `재상 정책 수행`
+  - `농업 중심`
+  - `상업 중심`
+  - `군사 중심`
+- Governor policy is stored only and has no effect.
+- No chancellor/gov person-stat calculations, no governor policy effects, no domestic formulas, no Phaser Scene changes, no battle logic changes, and no window compatibility reintroduction.
+- `node --check` passed for requested and modified JS files.
+- Browser manual QA passed:
+  - turn action buttons unified
+  - enemy turn result explanation removed
+  - governor card portrait/primary/secondary display confirmed
+  - governor unassigned management text confirmed
+  - governor policy save-only behavior confirmed
+  - Selected City bottom guidance removal confirmed
+  - tax/chancellor/warehouse/city selection/hero transfer/attack-deployment-battle regressions passed
+  - no console errors
+
+## v0.5-2b Governor Appointment MVP + Loyalty Gauge UI + Enemy Turn Result HUD Unification
+- Minor patch on top of `v0.5-2 Selected City Panel Reorganization + Governor/Military Scaffold`.
+- Added governor appointment MVP for player-owned selected cities.
+- Governor candidates are restricted to player-side heroes stationed in the selected city.
+- Added `setCityGovernorHeroId(appState, cityId, governorHeroId)`.
+  - validates city existence
+  - validates player ownership
+  - allows empty value as `null`
+  - validates selected governor is a player-side hero stationed in that city
+  - updates `world.cities` immutably
+- Governor assignment only writes `city.governorHeroId`.
+- No governor effects, governor policy, stat formula, income change, security change, or city-loyalty automation.
+- Added `js/ui/loyalty_ui.js`.
+- National loyalty and city loyalty now render as horizontal gauges with four tiers:
+  - green / `매우 안정`
+  - blue / `안정`
+  - yellow / `주의`
+  - red / `위험`
+- Moved `pendingEnemyTurnResult` display into the left World Turn HUD.
+- Removed the right-side Selected City stack enemy-turn result card.
+- Preserved `data-enemy-turn-result="confirm"` for the confirm button.
+- No Phaser Scene changes, no battle changes, no window compatibility reintroduction, and no large CSS redesign.
+- `node --check` passed for requested and newly added JS files.
+
+## v0.5-2 Selected City Panel Reorganization + Governor/Military Scaffold
+- Reorganized the Selected City panel for the new domestic-management direction.
+- Removed the old domestic 5-stat panel from Selected City by cutting the `renderDomesticPanel()` call.
+- Preserved `js/ui/domestic_ui.js` for future direct-rule or city-detail reuse.
+- Kept city type and city loyalty display in the city profile.
+- Added governor/management display scaffold:
+  - `city.governorHeroId` defaults to `null`.
+  - no governor appointment, dismissal, select UI, or governor policy implementation.
+  - ruler city without a governor displays `왕 직할 통치`.
+  - other no-governor cities display `재상 대리 관리`.
+- Added ruler location scaffold:
+  - `appState.ruler.currentCityId`
+  - initial value: `hanseong`
+- Added military status display scaffold:
+  - total troops sums stationed hero troops for now.
+  - `city.military.recruitableTroops`
+  - `city.military.foodStatus`
+  - `city.military.securityStatus`
+  - no recruitment, troop type, upkeep deduction, or security-loyalty automation.
+- Reorganized city resource display:
+  - food resources: 쌀 / 보리 / 수산물
+  - strategic resources: 목재 / 철 / 말
+  - specialty resources: 비단 / 소금
+  - commerce rating remains visible
+  - trade information is placeholder-only.
+- Added small CSS support for governor/military panels and a minor national-loyalty text adjustment.
+- No Phaser Scene changes, no window compatibility reintroduction, and no large UI redesign.
+- `node --check` passed for requested and newly added JS files.
+
 ## v0.5-0a Stable Domestic Stats & Resource Display Scaffold + World Map HUD Polish
 - Closed the current baseline as `v0.5-0a Stable`.
 - Added a replaceable domestic affairs scaffold for city-level values.

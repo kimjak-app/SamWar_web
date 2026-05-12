@@ -18,6 +18,8 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onTaxLevelChange,
     onChancellorHeroChange,
     onChancellorPolicyChange,
+    onGovernorHeroChange,
+    onGovernorPolicyChange,
     onConfirmEnemyTurnResult,
   } = handlers;
   const { pendingHeroDeployment, pendingHeroTransfer } = appState;
@@ -168,6 +170,32 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   if (onChancellorHeroChange) {
     rootElement.querySelector("[data-chancellor-hero-id]")?.addEventListener("change", (event) => {
       onChancellorHeroChange(event.currentTarget.value);
+    });
+  }
+
+  if (onGovernorHeroChange) {
+    rootElement.querySelector("[data-governor-hero-id]")?.addEventListener("change", (event) => {
+      const cityId = event.currentTarget.getAttribute("data-governor-city-id");
+
+      if (cityId) {
+        onGovernorHeroChange({
+          cityId,
+          governorHeroId: event.currentTarget.value,
+        });
+      }
+    });
+  }
+
+  if (onGovernorPolicyChange) {
+    rootElement.querySelector("[data-governor-policy]")?.addEventListener("change", (event) => {
+      const cityId = event.currentTarget.getAttribute("data-governor-policy-city-id");
+
+      if (cityId) {
+        onGovernorPolicyChange({
+          cityId,
+          governorPolicy: event.currentTarget.value,
+        });
+      }
     });
   }
 

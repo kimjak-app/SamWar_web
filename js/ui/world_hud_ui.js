@@ -21,6 +21,7 @@ import {
   normalizeDomesticPolicy,
 } from "../core/domestic_income.js";
 import { deriveCalendarFromTurn, formatCalendarLabel } from "../core/world_calendar.js";
+import { renderLoyaltyGauge } from "./loyalty_ui.js";
 
 const HUD_STOCK_RESOURCE_KEYS = Object.freeze([
   RESOURCE_KEYS.RICE,
@@ -285,6 +286,22 @@ function renderWarehousePanel(appState) {
   `;
 }
 
+function renderTurnAction({ canEndTurn, pendingEnemyTurnResult }) {
+  if (!pendingEnemyTurnResult) {
+    return canEndTurn ? `
+      <button class="attack-button world-turn-button" type="button" data-end-world-turn="true">
+        아군 턴 종료
+      </button>
+    ` : "";
+  }
+
+  return `
+    <button class="attack-button world-turn-button" type="button" data-enemy-turn-result="confirm">
+      적군 턴 종료
+    </button>
+  `;
+}
+
 export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
   const { meta, world } = appState;
   const nationalLoyalty = meta?.[LOYALTY_KEYS.NATIONAL] ?? appState.nation?.loyalty ?? 75;
@@ -307,7 +324,9 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
         <strong class="turn-value">제 ${meta.turn}턴</strong>
         <span class="turn-calendar">${calendarLabel}</span>
         <strong class="turn-owner">${getWorldTurnOwnerLabel(world.turnOwner)}</strong>
-        <span class="turn-loyalty">${LOYALTY_LABELS[LOYALTY_KEYS.NATIONAL]} ${nationalLoyalty}</span>
+        ${renderLoyaltyGauge(LOYALTY_LABELS[LOYALTY_KEYS.NATIONAL], nationalLoyalty, {
+          className: "turn-loyalty",
+        })}
         <label class="tax-control">
           <span class="tax-control-header">
             <span>세금 수준</span>
@@ -333,11 +352,7 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
         <span class="turn-policy-effect">${chancellorPolicySummary}</span>
         ${taxEffect ? `<span class="turn-tax-effect">${taxEffect}</span>` : ""}
         ${unified ? '<span class="turn-tax-effect">천하통일 달성</span>' : ""}
-        ${canEndTurn ? `
-          <button class="attack-button world-turn-button" type="button" data-end-world-turn="true">
-            턴 종료
-          </button>
-        ` : ""}
+        ${renderTurnAction({ canEndTurn, pendingEnemyTurnResult: world.pendingEnemyTurnResult })}
       </section>
     </aside>
   `;

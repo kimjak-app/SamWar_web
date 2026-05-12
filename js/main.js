@@ -6,6 +6,8 @@ import {
   retreatFromBattle,
   returnFromBattle,
   selectCity,
+  setCityGovernorHeroId,
+  setCityGovernorPolicy,
   setChancellorHeroId,
   setChancellorPolicy,
   setTaxLevel,
@@ -1014,6 +1016,26 @@ function rerender() {
       }
 
       updateAppState((state) => setChancellorHeroId(state, chancellorHeroId));
+      rerender();
+    },
+    onGovernorHeroChange: ({ cityId, governorHeroId }) => {
+      getAppState();
+
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
+      updateAppState((state) => setCityGovernorHeroId(state, cityId, governorHeroId));
+      rerender();
+    },
+    onGovernorPolicyChange: ({ cityId, governorPolicy }) => {
+      getAppState();
+
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
+      updateAppState((state) => setCityGovernorPolicy(state, cityId, governorPolicy));
       rerender();
     },
     onConfirmEnemyTurnResult: () => {

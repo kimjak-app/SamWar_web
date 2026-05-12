@@ -1,7 +1,9 @@
 import { CITY_TYPE_LABELS, LOYALTY_LABELS, LOYALTY_KEYS } from "../constants.js";
 import { canAttackCity, isEnemyCity, isPlayerCity, isWorldUnified } from "../core/world_rules.js";
-import { renderDomesticPanel } from "./domestic_ui.js";
 import { renderGarrisonPanel } from "./garrison_ui.js";
+import { renderCityGovernorPanel } from "./governor_ui.js";
+import { renderLoyaltyGauge } from "./loyalty_ui.js";
+import { renderCityMilitaryPanel } from "./military_ui.js";
 import { renderResourcePanel } from "./resource_ui.js";
 
 function getStatusText(cities, selectedCity) {
@@ -24,10 +26,21 @@ function getStatusText(cities, selectedCity) {
   return "전투 시스템은 다음 버전에서 구현 예정입니다.";
 }
 
+function renderAttackAction(selectedCity, canOpenAttackChoice) {
+  if (!canOpenAttackChoice) {
+    return "";
+  }
+
+  return `
+    <button class="attack-button" type="button" data-attack-city-id="${selectedCity.id}">
+      공격
+    </button>
+  `;
+}
+
 function renderCityDomesticPanel(selectedCity) {
   return `
     <div class="city-domestic-panel">
-      ${renderDomesticPanel(selectedCity)}
       ${renderResourcePanel(selectedCity)}
     </div>
   `;
@@ -39,8 +52,11 @@ function renderCityProfile(selectedCity) {
 
   return `
     <p class="city-detail-meta city-detail-submeta">
-      유형: ${cityTypeLabel} · ${LOYALTY_LABELS[LOYALTY_KEYS.CITY]} ${cityLoyalty}
+      유형: ${cityTypeLabel}
     </p>
+    ${renderLoyaltyGauge(LOYALTY_LABELS[LOYALTY_KEYS.CITY], cityLoyalty, {
+      className: "city-loyalty-gauge",
+    })}
   `;
 }
 
@@ -63,6 +79,7 @@ export function renderSelectedCityPanel({
         ${selectedCity.region} · ${selectedFaction?.name ?? "중립"}
       </p>
       ${renderCityProfile(selectedCity)}
+      ${renderCityGovernorPanel(selectedCity, appState, stationedHeroes)}
       <p class="city-detail-copy">${getStatusText(world.cities, selectedCity)}</p>
       ${renderGarrisonPanel(stationedHeroes)}
       ${
@@ -80,23 +97,9 @@ export function renderSelectedCityPanel({
           `
           : ""
       }
+      ${renderCityMilitaryPanel(selectedCity, stationedHeroes)}
       ${renderCityDomesticPanel(selectedCity)}
-      ${
-        canOpenAttackChoice
-          ? `
-            <button class="attack-button" type="button" data-attack-city-id="${selectedCity.id}">
-              공격
-            </button>
-            <p class="attack-note">공격을 누르면 출전 무장을 선택한 뒤 전투를 시작합니다.</p>
-          `
-          : `
-            <p class="attack-note">${
-              world.turnOwner === "enemy"
-                ? "적군 턴에는 턴 결과를 확인하거나 방어 방식을 선택해야 합니다."
-                : "전투 화면은 공격 가능한 적 도시를 선택했을 때만 진입합니다."
-            }</p>
-          `
-      }
+      ${renderAttackAction(selectedCity, canOpenAttackChoice)}
     </section>
   `;
 }

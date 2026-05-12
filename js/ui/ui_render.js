@@ -143,24 +143,31 @@ function renderBattleChoicePanel(pendingBattleChoice) {
   `;
 }
 
-function renderEnemyTurnResultPanel(pendingEnemyTurnResult) {
-  if (!pendingEnemyTurnResult) {
+function renderDefenseChoiceModal(pendingBattleChoice) {
+  if (pendingBattleChoice?.type !== "defense") {
     return "";
   }
 
   return `
-    <section class="detail-card hud-panel battle-choice-card" aria-live="polite">
-      <p class="eyebrow">Enemy Turn</p>
-      <h3 class="detail-heading">적군 턴 결과</h3>
-      <div class="battle-choice-summary">
-        <p class="battle-choice-line battle-choice-copy">${pendingEnemyTurnResult.message}</p>
-      </div>
-      <div class="battle-choice-actions">
-        <button class="attack-button battle-choice-button battle-choice-button-auto" type="button" data-enemy-turn-result="confirm">
-          확인
-        </button>
-      </div>
-    </section>
+    <div class="defense-choice-overlay" aria-live="polite">
+      <section class="detail-card hud-panel battle-choice-card defense-choice-modal">
+        <p class="eyebrow">${pendingBattleChoice.eyebrow ?? "Enemy Invasion"}</p>
+        <h3 class="detail-heading">${pendingBattleChoice.title ?? "적군이 침공했습니다!"}</h3>
+        <div class="battle-choice-summary">
+          <p class="battle-choice-line">침공 도시: ${pendingBattleChoice.originCityName}</p>
+          <p class="battle-choice-line">방어 도시: ${pendingBattleChoice.targetCityName}</p>
+          ${pendingBattleChoice.description ? `<p class="battle-choice-line battle-choice-copy">${pendingBattleChoice.description}</p>` : ""}
+        </div>
+        <div class="battle-choice-actions">
+          <button class="attack-button battle-choice-button" type="button" data-battle-choice="manual" data-battle-choice-city-id="${pendingBattleChoice.targetCityId}">
+            ${pendingBattleChoice.confirmManualLabel ?? "직접 방어"}
+          </button>
+          <button class="attack-button battle-choice-button battle-choice-button-auto" type="button" data-battle-choice="auto" data-battle-choice-city-id="${pendingBattleChoice.targetCityId}">
+            ${pendingBattleChoice.confirmAutoLabel ?? "자동 방어"}
+          </button>
+        </div>
+      </section>
+    </div>
   `;
 }
 
@@ -181,6 +188,7 @@ export function renderAllWorldUI(appState) {
   const canOpenAttackChoice = canEndTurn && attackable;
   const canOpenHeroTransfer = canEndTurn && isPlayerCity(selectedCity);
   const hasHeroTransferDestination = playerOwnedCityCount > 1;
+  const rightSideBattleChoice = pendingBattleChoice?.type === "defense" ? null : pendingBattleChoice;
 
   return `
     <main class="map-screen">
@@ -203,9 +211,9 @@ export function renderAllWorldUI(appState) {
             canOpenAttackChoice,
           })}
 
-          ${renderBattleChoicePanel(pendingBattleChoice)}
-          ${renderEnemyTurnResultPanel(world.pendingEnemyTurnResult)}
+          ${renderBattleChoicePanel(rightSideBattleChoice)}
         </aside>
+        ${renderDefenseChoiceModal(pendingBattleChoice)}
         ${renderHeroDeploymentPanel(pendingHeroDeployment)}
         ${renderHeroTransferPanel(pendingHeroTransfer)}
       </section>

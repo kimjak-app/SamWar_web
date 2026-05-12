@@ -1,12 +1,18 @@
 import { RESOURCE_KEYS, RESOURCE_LABELS } from "../constants.js";
 
-const CITY_RESOURCE_KEYS = Object.freeze([
+const FOOD_RESOURCE_KEYS = Object.freeze([
   RESOURCE_KEYS.RICE,
   RESOURCE_KEYS.BARLEY,
   RESOURCE_KEYS.SEAFOOD,
+]);
+
+const STRATEGIC_RESOURCE_KEYS = Object.freeze([
   RESOURCE_KEYS.WOOD,
   RESOURCE_KEYS.IRON,
   RESOURCE_KEYS.HORSES,
+]);
+
+const SPECIALTY_RESOURCE_KEYS = Object.freeze([
   RESOURCE_KEYS.SILK,
   RESOURCE_KEYS.SALT,
 ]);
@@ -44,22 +50,37 @@ function renderCommerceRatingRow(value) {
   `;
 }
 
-export function renderResourcePanel(city) {
-  const resources = city.resources ?? {};
-
+function renderResourceSection(title, resourceKeys, resources) {
   return `
     <div class="city-domestic-section">
-      <p class="city-domestic-heading">자원 생산력</p>
-      ${CITY_RESOURCE_KEYS
+      <p class="city-domestic-heading">${title}</p>
+      ${resourceKeys
         .map((resourceKey) => renderResourceRow(
           RESOURCE_LABELS[resourceKey],
           getResourceValue(resources, resourceKey),
         ))
         .join("")}
     </div>
+  `;
+}
+
+export function renderResourcePanel(city) {
+  const resources = city.resources ?? {};
+
+  return `
+    ${renderResourceSection("식량 자원", FOOD_RESOURCE_KEYS, resources)}
+    ${renderResourceSection("전략 자원", STRATEGIC_RESOURCE_KEYS, resources)}
+    ${renderResourceSection("특산 자원", SPECIALTY_RESOURCE_KEYS, resources)}
     <div class="city-domestic-section">
       <p class="city-domestic-heading">상업</p>
       ${renderCommerceRatingRow(city.commerceRating ?? 0)}
+    </div>
+    <div class="city-domestic-section">
+      <p class="city-domestic-heading">무역 정보</p>
+      <div class="domestic-yield-row">
+        <span>교역 잠재력</span>
+        <strong>준비 중</strong>
+      </div>
     </div>
   `;
 }

@@ -182,6 +182,20 @@ export const CHANCELLOR_POLICY_LABELS = Object.freeze({
   [CHANCELLOR_POLICY_KEYS.MILITARY]: "군사 중심",
 });
 
+export const GOVERNOR_POLICY_KEYS = Object.freeze({
+  FOLLOW_CHANCELLOR: "follow_chancellor",
+  AGRICULTURE: "agriculture",
+  COMMERCE: "commerce",
+  MILITARY: "military",
+});
+
+export const GOVERNOR_POLICY_LABELS = Object.freeze({
+  [GOVERNOR_POLICY_KEYS.FOLLOW_CHANCELLOR]: "재상 정책 수행",
+  [GOVERNOR_POLICY_KEYS.AGRICULTURE]: "농업 중심",
+  [GOVERNOR_POLICY_KEYS.COMMERCE]: "상업 중심",
+  [GOVERNOR_POLICY_KEYS.MILITARY]: "군사 중심",
+});
+
 export const CHANCELLOR_POLICY_DESCRIPTIONS = Object.freeze({
   [CHANCELLOR_POLICY_KEYS.BALANCED]: "보정 없음",
   [CHANCELLOR_POLICY_KEYS.AGRICULTURE]: "쌀/보리 수입 증가, 금전 소폭 감소",

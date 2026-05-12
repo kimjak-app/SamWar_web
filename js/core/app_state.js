@@ -2,7 +2,7 @@ import { cities } from "../../data/cities.js";
 import { factions } from "../../data/factions.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
-import { LOYALTY_KEYS } from "../constants.js";
+import { GOVERNOR_POLICY_KEYS, LOYALTY_KEYS } from "../constants.js";
 import { createInitialBattleState } from "./battle_state.js";
 import {
   applyPlayerTurnIncome,
@@ -33,6 +33,7 @@ import {
 } from "./world_rules.js";
 
 const DEFAULT_SELECTED_CITY_ID = "hanseong";
+const GOVERNOR_POLICY_VALUES = new Set(Object.values(GOVERNOR_POLICY_KEYS));
 
 function withCalendarMeta(meta) {
   const turn = meta?.turn ?? 1;
@@ -65,6 +66,9 @@ export function createInitialAppState() {
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
     pendingHeroTransfer: null,
+    ruler: {
+      currentCityId: DEFAULT_SELECTED_CITY_ID,
+    },
     domesticPolicy: createInitialDomesticPolicy(),
     resources: createInitialResourceStock(),
     enemyResources: createInitialEnemyResourceStock(),
@@ -110,6 +114,64 @@ export function setChancellorHeroId(appState, chancellorHeroId) {
         appState?.world?.heroes,
         appState?.meta?.playerFactionId,
       ),
+    },
+  };
+}
+
+export function setCityGovernorHeroId(appState, cityId, governorHeroId) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const normalizedGovernorHeroId = governorHeroId || null;
+  const city = appState?.world?.cities.find((entry) => entry.id === cityId) ?? null;
+
+  if (!city || city.ownerFactionId !== playerFactionId) {
+    return appState;
+  }
+
+  if (normalizedGovernorHeroId) {
+    const candidate = appState.world.heroes.find((hero) => hero.id === normalizedGovernorHeroId) ?? null;
+
+    if (
+      !candidate
+      || candidate.side !== playerFactionId
+      || candidate.locationCityId !== city.id
+    ) {
+      return appState;
+    }
+  }
+
+  return {
+    ...appState,
+    world: {
+      ...appState.world,
+      cities: appState.world.cities.map((entry) => (
+        entry.id === city.id
+          ? { ...entry, governorHeroId: normalizedGovernorHeroId }
+          : entry
+      )),
+    },
+  };
+}
+
+export function setCityGovernorPolicy(appState, cityId, governorPolicy) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const city = appState?.world?.cities.find((entry) => entry.id === cityId) ?? null;
+  const normalizedGovernorPolicy = GOVERNOR_POLICY_VALUES.has(governorPolicy)
+    ? governorPolicy
+    : GOVERNOR_POLICY_KEYS.FOLLOW_CHANCELLOR;
+
+  if (!city || city.ownerFactionId !== playerFactionId) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    world: {
+      ...appState.world,
+      cities: appState.world.cities.map((entry) => (
+        entry.id === city.id
+          ? { ...entry, governorPolicy: normalizedGovernorPolicy }
+          : entry
+      )),
     },
   };
 }

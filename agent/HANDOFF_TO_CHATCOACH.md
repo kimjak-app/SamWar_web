@@ -1,72 +1,45 @@
-# SamWar_web Handoff - After v0.4-0b
+# SamWar_web Handoff
 
-Current stable baseline: `v0.4-0b Enemy Move-Then-Act AI Fix`.
+Current working version: `v0.5-2d Enemy Invasion Defense Choice Center Modal`.
+Baseline: `v0.5-2c Stable - Governor UI Polish + Turn Action UX Unification + Governor Policy Scaffold`.
 
-The 4-city / 8-hero PC web MVP loop is stable at the data and presentation level:
-world map -> battle -> victory/defeat result -> world map return.
+v0.5-2c browser manual QA passed with no console errors. v0.5-2d still needs browser QA.
 
-## Current 4-City MVP
-- Hanseong: player, `이순신`, `정도전`
-- Luoyang: enemy, `관우`, `장비`
-- Pyongyang: enemy, `광개토대왕`, `도림`
-- Kyoto: enemy, `노부나가`, `겐신`
+## What Changed In v0.5-2d
+- Enemy invasion defense choice now appears as a centered modal.
+- Defense choice is no longer shown under the right Selected City HUD.
+- Direct defense / auto defense button attributes and handlers are unchanged.
+- No invasion logic, battle logic, Phaser Scene, or window compatibility changes.
 
-## Completed Since v0.3-5a
-- Pyongyang heroes, roster, skills, and visual assets are wired.
-- `영락대업` and `흑백이간` are implemented.
-- Auto battle no longer stalls with support/strategy units.
-- Unique-skill AI priority now favors high-value skills without returning to range-kiting stalls.
-- Ally and enemy cut-ins use the same activation path.
-- Yi Sun-sin `학익진 포격` no longer becomes a no-op wait in auto battle.
-- Battlefield status icons and a bottom legend are implemented.
-- Defense state now shows `◆`.
-- Victory/defeat result text overlays are DOM-rendered over the result images.
-- Unique skill cut-ins show title, quote, and effect text as removable UI overlay.
-- Unique skill cut-in duration is now `2200ms`.
-- Battle coordinate adapter prep completed and manual QA passed.
-- grid-to-screen conversion centralized.
-- Direct coordinate math reduced in battle rendering.
-- Battle render layer prep completed and manual QA passed.
-- Terrain data scaffold completed and manual QA passed.
-- `data/battle_terrain.js` added.
-- Default plain `terrainMap` attached to battle state.
-- Terrain remains inactive with no gameplay or visual effect.
-- Action presentation helper review completed and manual QA passed.
-- `renderFloatingEffects()` now uses presentation-facing helper methods.
-- Current immediate floating effect behavior and duplicate-prevention were preserved.
-- v0.3-7e Presentation Effects Mini Pass completed and manual QA passed.
-- v0.3-7f Hit Knockback Reaction completed and manual QA passed.
-- Floating battle feedback is clearer.
-- Damage effects now trigger subtle render-only knockback.
-- Hit knockback does not change `unit.x` / `unit.y`.
-- Knockback returns units to original rendered position.
-- v0.4-0 Hero Deployment Flow MVP completed and manual QA passed.
-- v0.4-0a Hero Deployment Center Modal Layout completed and manual QA passed.
-- v0.4-0b Enemy Move-Then-Act AI Fix completed and manual QA passed.
-- Attack flow now uses centered hero deployment before battle.
-- Player attacker roster is `selectedHeroIds`-based.
-- Enemy AI can now move then act in the same enemy turn.
+## What Changed In v0.5-2c
+- Unified World Turn action buttons:
+  - `아군 턴 종료`
+  - `적군 턴 종료`
+- Removed enemy turn result explanation text.
+- Improved assigned governor display to match chancellor-style cards:
+  - portrait
+  - name
+  - primary aptitude line
+  - secondary aptitude line
+- Removed assigned-state `관리: 태수 관리`.
+- Unassigned governor state now shows `관리: 재상 통제 관리`.
+- Removed unnecessary Selected City bottom combat guidance text.
+- Added governor policy scaffold with city-level `governorPolicy`.
+- Governor policy is saved only and has no effect.
 
-## Presentation Rules To Preserve
-- Do not bake text into cut-in/result image assets.
-- Unique skill cut-ins are DOM overlay driven.
-- Skill title uses Gothic/sans-serif.
-- Skill quote uses `궁서` / brush-style.
-- Skill effect text uses smaller Gothic/sans-serif.
-- Quote appears around the image center, slightly below center.
-- Skill title and effect text remain lower-center.
-- Result overlay text remains separate from image assets.
+## What Was Not Implemented
+- No chancellor person-stat calculation.
+- No governor person-stat calculation.
+- No governor policy effects.
+- No income/security/city-loyalty/resource/troop changes from governors.
+- No recruitment, troop types, or real soldier upkeep.
+- No direct-rule button.
+- No enemy domestic automation.
+- No intelligence, real trade, diplomacy, or talent recruitment.
+- No Phaser Scene changes.
+- No battle logic changes.
+- No window compatibility reintroduction.
 
-## Important Current Data Fields
-- `skill.name`: cut-in title
-- `skill.cutinQuote`: dramatic quote
-- `skill.cutinEffectText`: short functional line
-- `skill.cutinDurationMs`: currently `2200` for all 8 unique skills
-
-## Next Recommended Start
-1. v0.4-1 Troop Allocation MVP.
-2. Keep troop allocation simple with percentage presets first.
-3. Do not implement persistent troop losses unless explicitly requested.
-4. Keep hero recruitment/relocation/garrison management as later patches.
-5. Keep terrain rules inactive until a dedicated terrain rules patch.
-6. Do not begin 10-city / 20-hero expansion yet.
+## QA Focus
+- v0.5-2c QA is complete.
+- Next work should start from the stable baseline and avoid adding effects to governor policy without a dedicated domestic-engine design pass.
