@@ -34,6 +34,25 @@ import {
 
 const DEFAULT_SELECTED_CITY_ID = "hanseong";
 const GOVERNOR_POLICY_VALUES = new Set(Object.values(GOVERNOR_POLICY_KEYS));
+const initialHeroSnapshots = heroes.map((hero) => ({
+  ...hero,
+  chancellorProfile: hero.chancellorProfile ? { ...hero.chancellorProfile } : hero.chancellorProfile,
+}));
+
+function resetHeroesToInitialState() {
+  for (const initialHero of initialHeroSnapshots) {
+    const hero = heroes.find((entry) => entry.id === initialHero.id);
+
+    if (hero) {
+      Object.assign(hero, {
+        ...initialHero,
+        chancellorProfile: initialHero.chancellorProfile
+          ? { ...initialHero.chancellorProfile }
+          : initialHero.chancellorProfile,
+      });
+    }
+  }
+}
 
 function withCalendarMeta(meta) {
   const turn = meta?.turn ?? 1;
@@ -45,6 +64,7 @@ function withCalendarMeta(meta) {
 }
 
 export function createInitialAppState() {
+  resetHeroesToInitialState();
   initializeHeroLocationsFromRosters();
 
   return {
@@ -66,6 +86,9 @@ export function createInitialAppState() {
     pendingBattleChoice: null,
     pendingHeroDeployment: null,
     pendingHeroTransfer: null,
+    ui: {
+      saveMessage: "",
+    },
     ruler: {
       currentCityId: DEFAULT_SELECTED_CITY_ID,
     },

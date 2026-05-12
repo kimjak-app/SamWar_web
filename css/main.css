@@ -423,6 +423,50 @@ button {
   background: linear-gradient(180deg, rgba(52, 72, 104, 0.96), rgba(22, 34, 53, 0.96));
 }
 
+.save-control-panel {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(248, 215, 152, 0.14);
+}
+
+.save-control-title {
+  color: var(--accent-strong);
+  font-size: 0.86rem;
+}
+
+.save-control-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.save-control-button {
+  min-height: 30px;
+  border: 1px solid rgba(209, 176, 117, 0.24);
+  border-radius: 8px;
+  background: rgba(12, 24, 38, 0.72);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.save-control-button-danger {
+  color: #f4c5b4;
+}
+
+.save-control-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.save-control-note {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .hero-transfer-inline-button {
   width: auto;
   min-height: 0;

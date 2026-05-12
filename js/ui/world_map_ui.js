@@ -21,6 +21,9 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onGovernorHeroChange,
     onGovernorPolicyChange,
     onConfirmEnemyTurnResult,
+    onSaveGame,
+    onLoadGame,
+    onResetGame,
   } = handlers;
   const { pendingHeroDeployment, pendingHeroTransfer } = appState;
 
@@ -202,6 +205,24 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   if (onConfirmEnemyTurnResult) {
     rootElement.querySelector("[data-enemy-turn-result='confirm']")?.addEventListener("click", () => {
       onConfirmEnemyTurnResult();
+    });
+  }
+
+  if (onSaveGame) {
+    rootElement.querySelector("[data-save-game='true']")?.addEventListener("click", () => {
+      onSaveGame();
+    });
+  }
+
+  if (onLoadGame) {
+    rootElement.querySelector("[data-load-game='true']")?.addEventListener("click", () => {
+      onLoadGame();
+    });
+  }
+
+  if (onResetGame) {
+    rootElement.querySelector("[data-reset-game='true']")?.addEventListener("click", () => {
+      onResetGame();
     });
   }
 }

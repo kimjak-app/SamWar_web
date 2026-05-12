@@ -1,11 +1,38 @@
 # Current State
 
 ## Status
-- Current stable version: `v0.5-3a Stable`.
-- Stable baseline name: `Domestic Effect Engine MVP`.
-- Baseline before this patch: `v0.5-2d Enemy Invasion Defense Choice Center Modal Fix`.
+- Current working version: `v0.5-3b Save / Load UI MVP`.
+- Baseline before this patch: `v0.5-3a Stable - Domestic Effect Engine MVP`.
 - v0.5-3a is the first real domestic-effect MVP. It connects chancellor/governor aptitude and policy choices to actual domestic results through a central engine.
 - Browser manual QA passed with no console errors.
+
+## v0.5-3b Save / Load UI MVP
+- Added localStorage-based one-slot save/load/reset UI in the World Turn HUD.
+- Save controls are available only in world mode.
+- Battle state is not saved.
+- Load always returns to safe world mode.
+- Reset clears local save data and starts a fresh game.
+- Save message feedback is shown in the World Turn HUD.
+- Save version is `v0.5-3b`.
+- Legacy key lookup keeps older local save slots from hard-failing.
+- Missing loaded fields are normalized with current defaults.
+
+## Save Scope
+- Saved:
+  - turn/calendar/meta
+  - selection city/origin
+  - ruler current city
+  - domestic policy
+  - resources/enemy resources
+  - city ownership, loyalty, governor, governor policy, military/domestic/resource/yield scaffolds
+  - hero side/location/troops/maxTroops and active/dead/retired-like fields through hero snapshots
+  - world last income/upkeep/tax result summaries
+- Not saved:
+  - battle state
+  - pending battle choice
+  - pending hero deployment
+  - pending hero transfer
+  - pending enemy turn result
 
 ## v0.5-3a Domestic Effect Engine
 - Added `js/core/domestic_effects.js` as the central domestic effect engine.

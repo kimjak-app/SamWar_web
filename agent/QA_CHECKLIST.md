@@ -1,5 +1,28 @@
 # QA Checklist
 
+## v0.5-3b Save / Load UI MVP
+- [ ] World Turn HUD shows `저장`, `불러오기`, `초기화`.
+- [ ] Save controls are compact and visually distinct from the turn-end button.
+- [ ] Fresh load has no console errors.
+- [ ] Saving after tax/chancellor/governor/policy/turn/resource changes shows `저장 완료`.
+- [ ] Loading restores turn, tax, chancellor, governor, governor policy, resources, loyalty, and hero locations.
+- [ ] Loading with no save shows `저장 데이터 없음` and does not break the app.
+- [ ] Reset clears saved data and returns to fresh game state.
+- [ ] Fresh reset state has Hanseong player-owned and Luoyang/Pyongyang/Kyoto enemy-owned.
+- [ ] Fresh reset state has Yi Sun-sin and Jeong Do-jeon stationed in Hanseong.
+- [ ] Save after refresh can be loaded.
+- [ ] Hero transfer persists through save/load.
+- [ ] City conquest ownership and recruited hero side/location persist through save/load.
+- [ ] Battle state is not saved.
+- [ ] Pending battle/deployment/transfer/enemy-result state is cleared after load.
+- [ ] Save/load controls are unavailable or disabled outside world mode.
+- [ ] Attack -> deployment -> battle entry still works.
+- [ ] Battle return to world map still works.
+- [ ] Enemy invasion center modal still works.
+- [ ] Player/enemy turn buttons still work.
+- [ ] Domestic effect engine still works after save/load.
+- [ ] No console errors.
+
 ## v0.5-3a Domestic Effect Engine MVP
 - [x] Fresh load has no console errors.
 - [x] Hanseong selection works.

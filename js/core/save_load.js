@@ -1,6 +1,9 @@
 import { gameStore } from "./GameStore.js";
 import { heroes as canonicalHeroes } from "../../data/heroes.js";
 import {
+  createInitialDomesticPolicy,
+  createInitialEnemyResourceStock,
+  createInitialResourceStock,
   normalizeDomesticPolicy,
   normalizeEnemyResourceStock,
   normalizeResourceStock,
@@ -8,8 +11,9 @@ import {
 import { initializeCityDomesticData } from "./world_rules.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
-const SAVE_KEY = "samwar.save.v0.5-1h";
-const SAVE_VERSION = "0.5-1h";
+const SAVE_KEY = "samwar.save.v0.5-3b";
+const LEGACY_SAVE_KEYS = Object.freeze(["samwar.save.v0.5-1h"]);
+const SAVE_VERSION = "v0.5-3b";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {
@@ -17,6 +21,10 @@ function getStorage() {
   }
 
   return window.localStorage;
+}
+
+function getSaveKeys() {
+  return [SAVE_KEY, ...LEGACY_SAVE_KEYS];
 }
 
 function hydrateCanonicalHeroes(savedHeroes) {
@@ -35,73 +43,137 @@ function hydrateCanonicalHeroes(savedHeroes) {
   return canonicalHeroes;
 }
 
-function hydrateLoadedState(state) {
-  if (!state?.world) {
-    return state;
+function getFallbackSelectedCityId(cities = [], selection = {}) {
+  if (cities.some((city) => city.id === selection?.cityId)) {
+    return selection.cityId;
   }
 
+  return cities.find((city) => city.ownerFactionId === "player")?.id
+    ?? cities[0]?.id
+    ?? "hanseong";
+}
+
+function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
+  const fallbackWorld = fallbackState.world ?? {};
+  const savedWorld = savedState.world ?? {};
+  const cities = initializeCityDomesticData(savedWorld.cities ?? fallbackWorld.cities ?? []);
+  const heroes = hydrateCanonicalHeroes(savedWorld.heroes ?? fallbackWorld.heroes ?? []);
+  const playerFactionId = savedState.meta?.playerFactionId
+    ?? fallbackState.meta?.playerFactionId
+    ?? "player";
+  const selectedCityId = getFallbackSelectedCityId(cities, savedState.selection ?? fallbackState.selection);
+  const originCityId = cities.some((city) => city.id === savedState.selection?.originCityId)
+    ? savedState.selection.originCityId
+    : selectedCityId;
+  const turn = savedState.meta?.turn ?? fallbackState.meta?.turn ?? 1;
+  const turnOwner = savedWorld.turnOwner === "player" ? "player" : "player";
+
   return {
-    ...state,
-    domesticPolicy: normalizeDomesticPolicy(
-      state.domesticPolicy,
-      state.world.heroes,
-      state.meta?.playerFactionId,
-    ),
-    resources: normalizeResourceStock(state.resources),
-    enemyResources: normalizeEnemyResourceStock(state.enemyResources),
-    meta: {
-      ...(state.meta ?? {}),
-      calendar: deriveCalendarFromTurn(state.meta?.turn),
+    ...fallbackState,
+    ...savedState,
+    mode: "world",
+    battle: null,
+    pendingBattleChoice: null,
+    pendingHeroDeployment: null,
+    pendingHeroTransfer: null,
+    ui: {
+      ...(fallbackState.ui ?? {}),
+      saveMessage: "",
     },
+    meta: {
+      ...(fallbackState.meta ?? {}),
+      ...(savedState.meta ?? {}),
+      playerFactionId,
+      turn,
+      calendar: deriveCalendarFromTurn(turn),
+    },
+    selection: {
+      ...(fallbackState.selection ?? {}),
+      ...(savedState.selection ?? {}),
+      cityId: selectedCityId,
+      originCityId,
+    },
+    ruler: {
+      currentCityId: savedState.ruler?.currentCityId
+        ?? fallbackState.ruler?.currentCityId
+        ?? "hanseong",
+    },
+    domesticPolicy: normalizeDomesticPolicy(
+      savedState.domesticPolicy ?? createInitialDomesticPolicy(),
+      heroes,
+      playerFactionId,
+    ),
+    resources: normalizeResourceStock(savedState.resources ?? createInitialResourceStock()),
+    enemyResources: normalizeEnemyResourceStock(savedState.enemyResources ?? createInitialEnemyResourceStock()),
     world: {
-      ...state.world,
-      cities: initializeCityDomesticData(state.world.cities ?? []),
-      heroes: hydrateCanonicalHeroes(state.world.heroes),
+      ...fallbackWorld,
+      ...savedWorld,
+      cities,
+      heroes,
+      factions: savedWorld.factions ?? fallbackWorld.factions ?? [],
+      skills: savedWorld.skills ?? fallbackWorld.skills ?? [],
+      turnOwner,
+      pendingEnemyTurnResult: null,
+      lastIncomeResult: savedWorld.lastIncomeResult ?? null,
+      lastUpkeepResult: savedWorld.lastUpkeepResult ?? null,
+      lastTaxResult: savedWorld.lastTaxResult ?? null,
+      lastRecruitmentResult: savedWorld.lastRecruitmentResult ?? null,
     },
   };
 }
 
 export function createSaveSnapshot(state = gameStore.getState()) {
-  const selectedHeroId = state?.pendingHeroTransfer?.selectedHeroId
-    ?? state?.pendingHeroDeployment?.selectedHeroIds?.[0]
-    ?? state?.battle?.selectedUnitId
-    ?? null;
+  const world = state?.world ?? {};
 
   return {
     saveVersion: SAVE_VERSION,
     savedAt: new Date().toISOString(),
     worldTurn: state?.meta?.turn ?? null,
     calendar: deriveCalendarFromTurn(state?.meta?.turn),
-    currentPhase: state?.mode ?? null,
-    nationalLoyalty: state?.meta?.nationalLoyalty ?? null,
-    domesticPolicy: normalizeDomesticPolicy(
-      state?.domesticPolicy,
-      state?.world?.heroes,
-      state?.meta?.playerFactionId,
-    ),
-    taxLevel: normalizeDomesticPolicy(
-      state?.domesticPolicy,
-      state?.world?.heroes,
-      state?.meta?.playerFactionId,
-    ).taxLevel,
-    resources: normalizeResourceStock(state?.resources),
-    enemyResources: normalizeEnemyResourceStock(state?.enemyResources),
-    selectedCityId: state?.selection?.cityId ?? null,
-    selectedHeroId,
-    cities: state?.world?.cities ?? [],
-    heroes: state?.world?.heroes ?? [],
-    state,
+    state: {
+      meta: {
+        ...(state?.meta ?? {}),
+        calendar: deriveCalendarFromTurn(state?.meta?.turn),
+      },
+      mode: "world",
+      selection: {
+        cityId: state?.selection?.cityId ?? "hanseong",
+        originCityId: state?.selection?.originCityId ?? state?.selection?.cityId ?? "hanseong",
+      },
+      ruler: {
+        currentCityId: state?.ruler?.currentCityId ?? "hanseong",
+      },
+      domesticPolicy: state?.domesticPolicy ?? createInitialDomesticPolicy(),
+      resources: normalizeResourceStock(state?.resources),
+      enemyResources: normalizeEnemyResourceStock(state?.enemyResources),
+      world: {
+        cities: world.cities ?? [],
+        factions: world.factions ?? [],
+        heroes: world.heroes ?? [],
+        skills: world.skills ?? [],
+        turnOwner: world.turnOwner === "player" ? "player" : "player",
+        pendingEnemyTurnResult: null,
+        lastIncomeResult: world.lastIncomeResult ?? null,
+        lastUpkeepResult: world.lastUpkeepResult ?? null,
+        lastTaxResult: world.lastTaxResult ?? null,
+        lastRecruitmentResult: world.lastRecruitmentResult ?? null,
+      },
+    },
   };
 }
 
-export function saveGame() {
+export function saveGame(state = gameStore.getState()) {
   const storage = getStorage();
 
   if (!storage) {
     return { ok: false, reason: "storage_unavailable" };
   }
 
-  const snapshot = createSaveSnapshot();
+  if (state?.mode !== "world" || state?.battle) {
+    return { ok: false, reason: "not_world_mode" };
+  }
+
+  const snapshot = createSaveSnapshot(state);
   storage.setItem(SAVE_KEY, JSON.stringify(snapshot));
 
   return {
@@ -111,31 +183,33 @@ export function saveGame() {
   };
 }
 
-export function loadGame() {
+export function loadGame(fallbackState = gameStore.getState()) {
   const storage = getStorage();
 
   if (!storage) {
     return { ok: false, reason: "storage_unavailable" };
   }
 
-  const rawSave = storage.getItem(SAVE_KEY);
+  const saveKey = getSaveKeys().find((key) => storage.getItem(key));
 
-  if (!rawSave) {
+  if (!saveKey) {
     return { ok: false, reason: "missing_save" };
   }
 
   try {
-    const snapshot = JSON.parse(rawSave);
+    const snapshot = JSON.parse(storage.getItem(saveKey));
+    const savedState = snapshot?.state ?? snapshot;
 
-    if (!snapshot || snapshot.saveVersion !== SAVE_VERSION || !snapshot.state) {
+    if (!savedState?.world) {
       return { ok: false, reason: "invalid_save", snapshot };
     }
 
-    const loadedState = hydrateLoadedState(snapshot.state);
+    const loadedState = normalizeWorldOnlyState(savedState, fallbackState);
     gameStore.update(() => loadedState);
 
     return {
       ok: true,
+      saveKey,
       snapshot: {
         ...snapshot,
         state: loadedState,
@@ -157,7 +231,10 @@ export function clearSave() {
     return { ok: false, reason: "storage_unavailable" };
   }
 
-  storage.removeItem(SAVE_KEY);
+  for (const key of getSaveKeys()) {
+    storage.removeItem(key);
+  }
+
   return { ok: true };
 }
 

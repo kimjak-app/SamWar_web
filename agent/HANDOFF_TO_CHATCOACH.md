@@ -1,8 +1,26 @@
 # SamWar_web Handoff
 
-Current stable version: `v0.5-3a Stable - Domestic Effect Engine MVP`.
+Current working version: `v0.5-3b Save / Load UI MVP`.
+Baseline: `v0.5-3a Stable - Domestic Effect Engine MVP`.
 
-Browser manual QA passed with no console errors.
+v0.5-3a browser manual QA passed with no console errors. v0.5-3b still needs browser QA.
+
+## What Changed In v0.5-3b
+- Added World Turn HUD save/load/reset controls.
+- Added localStorage one-slot save version `v0.5-3b`.
+- Save is world-only and excludes battle/pending interaction state.
+- Load normalizes missing fields and returns safely to world mode.
+- Reset clears local saves and starts fresh.
+- Added compact save result messages.
+
+## v0.5-3b Not Implemented
+- No server save.
+- No account save.
+- No multi-slot save.
+- No auto-save.
+- No battle save/load.
+- No battle logic or Phaser Scene changes.
+- No domestic formula changes.
 
 ## What Changed In v0.5-3a
 - Added central domestic effect engine: `js/core/domestic_effects.js`.

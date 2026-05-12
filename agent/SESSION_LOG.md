@@ -2,6 +2,28 @@
 
 ## 2026-05-12
 
+### v0.5-3b Save / Load UI MVP
+- Added World Turn HUD Save / Load / Reset controls.
+- Added localStorage one-slot save version `v0.5-3b`.
+- Reworked save snapshots to store world-only state.
+- Excluded battle, pending battle choice, pending hero deployment, pending hero transfer, and pending enemy result from saves.
+- Load normalizes city, hero, ruler, resources, domestic policy, governor, and military scaffold data.
+- Load returns to safe world mode.
+- Reset clears local saves and creates a fresh initial game.
+- Added compact save feedback messages in HUD.
+- Fixed reset path so canonical hero runtime state returns to initial data before roster initialization.
+- Confirmed module-level save/load smoke test restores turn, tax, chancellor, governor, governor policy, resources, and safe world state.
+- Confirmed no server save, account save, multi-slot save, auto-save, battle save/load, battle logic edit, Phaser Scene edit, domestic formula edit, or window compatibility reintroduction was added.
+- `node --check` passed for:
+  - `js/core/save_load.js`
+  - `js/core/app_state.js`
+  - `js/main.js`
+  - `js/ui/world_hud_ui.js`
+  - `js/ui/world_map_ui.js`
+  - `js/core/world_rules.js`
+  - `js/ui/ui_render.js`
+  - `js/constants.js`
+
 ### v0.5-3a Domestic Effect Engine MVP
 - Closed as `v0.5-3a Stable` after browser manual QA passed.
 - Added `js/core/domestic_effects.js` as the central domestic effect engine.

@@ -59,7 +59,6 @@ import { gameStore } from "./core/GameStore.js";
 import { getSkillById } from "./core/battle_skills.js";
 import {
   clearSave,
-  createSaveSnapshot,
   loadGame,
   saveGame,
 } from "./core/save_load.js";
@@ -123,6 +122,16 @@ function updateAppState(updaterFn) {
 
   gameStore.update((state) => updaterFn(state ?? appState));
   return syncCompatibilityState();
+}
+
+function withSaveMessage(state, saveMessage) {
+  return {
+    ...state,
+    ui: {
+      ...(state.ui ?? {}),
+      saveMessage,
+    },
+  };
 }
 
 function getSelectedCityId() {
@@ -1048,6 +1057,62 @@ function rerender() {
       clearBattleTempoTimers();
       clearAutoBattleTimer();
       updateAppState((state) => confirmEnemyTurnResult(state));
+      rerender();
+    },
+    onSaveGame: () => {
+      getAppState();
+
+      if (appState.mode !== "world" || appState.battle) {
+        updateAppState((state) => withSaveMessage(state, "전투 중에는 저장할 수 없습니다."));
+        rerender();
+        return;
+      }
+
+      const result = saveGame(appState);
+      updateAppState((state) => withSaveMessage(
+        state,
+        result.ok ? "저장 완료" : "저장 실패",
+      ));
+      rerender();
+    },
+    onLoadGame: () => {
+      getAppState();
+
+      if (appState.mode !== "world" || appState.battle) {
+        updateAppState((state) => withSaveMessage(state, "전투 중에는 불러올 수 없습니다."));
+        rerender();
+        return;
+      }
+
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
+      const result = loadGame(appState);
+
+      if (result.ok) {
+        syncCompatibilityState(result.snapshot.state);
+        updateAppState((state) => withSaveMessage(state, "불러오기 완료"));
+      } else {
+        updateAppState((state) => withSaveMessage(
+          state,
+          result.reason === "missing_save" ? "저장 데이터 없음" : "불러오기 실패",
+        ));
+      }
+
+      rerender();
+    },
+    onResetGame: () => {
+      getAppState();
+
+      if (appState.mode !== "world" || appState.battle) {
+        updateAppState((state) => withSaveMessage(state, "전투 중에는 초기화할 수 없습니다."));
+        rerender();
+        return;
+      }
+
+      clearBattleTempoTimers();
+      clearAutoBattleTimer();
+      clearSave();
+      commitAppState(withSaveMessage(createInitialAppState(), "초기화 완료"));
       rerender();
     },
     onBattleSelectUnit: (unitId) => {

@@ -319,6 +319,24 @@ function renderTurnAction({ canEndTurn, pendingEnemyTurnResult }) {
   `;
 }
 
+function renderSaveControlPanel(appState) {
+  const disabled = appState?.mode !== "world" || Boolean(appState?.battle);
+  const disabledAttribute = disabled ? "disabled" : "";
+  const saveMessage = appState?.ui?.saveMessage ?? "";
+
+  return `
+    <div class="save-control-panel">
+      <strong class="save-control-title">저장 관리</strong>
+      <div class="save-control-actions">
+        <button class="save-control-button" type="button" data-save-game="true" ${disabledAttribute}>저장</button>
+        <button class="save-control-button" type="button" data-load-game="true" ${disabledAttribute}>불러오기</button>
+        <button class="save-control-button save-control-button-danger" type="button" data-reset-game="true" ${disabledAttribute}>초기화</button>
+      </div>
+      ${saveMessage ? `<span class="save-control-note">${saveMessage}</span>` : ""}
+    </div>
+  `;
+}
+
 export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
   const { meta, world } = appState;
   const nationalLoyalty = meta?.[LOYALTY_KEYS.NATIONAL] ?? appState.nation?.loyalty ?? 75;
@@ -370,6 +388,7 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
         ${taxEffect ? `<span class="turn-tax-effect">${taxEffect}</span>` : ""}
         ${unified ? '<span class="turn-tax-effect">천하통일 달성</span>' : ""}
         ${renderTurnAction({ canEndTurn, pendingEnemyTurnResult: world.pendingEnemyTurnResult })}
+        ${renderSaveControlPanel(appState)}
       </section>
     </aside>
   `;
