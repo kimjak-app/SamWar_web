@@ -1,6 +1,27 @@
 # Changelog
 
-## v0.5-3b Save / Load UI MVP
+## v0.5-3c City Loyalty + Security/Economy Drift
+- Added city loyalty drift to the turn-end domestic flow.
+- City loyalty now changes from:
+  - tax pressure
+  - security scaffold
+  - economy scaffold
+  - governor/chancellor control effects
+- Security scaffold uses stationed hero `troops` totals:
+  - `200+`: 안정
+  - `100+`: 주의
+  - below `100`: 불안
+- Economy scaffold uses city `commerceRating`, `populationRating`, current gold income, and city domestic effect multipliers.
+- Final per-turn city loyalty delta is clamped to `-2..+2`.
+- City loyalty remains clamped to `0..100`.
+- Stored turn result in `world.lastCityLoyaltyResult`.
+- Selected City now shows a compact city status summary for security, economy, and last/expected city-loyalty drift.
+- Military security status now shares the same security scaffold.
+- Save version advanced to `v0.5-3c` and preserves `v0.5-3b` as a legacy load key.
+- No recruitment, troop type additions, actual soldier increase/decrease, city garrison system, rebellion, diplomacy, intelligence, real trade, direct rule, Phaser Scene changes, battle logic changes, or window compatibility reintroduction.
+- `node --check` passed for requested and modified JS files.
+
+## v0.5-3b Stable Save / Load UI MVP
 - Added World Turn HUD save controls:
   - `저장`
   - `불러오기`

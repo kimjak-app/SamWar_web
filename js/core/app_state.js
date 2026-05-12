@@ -103,6 +103,7 @@ export function createInitialAppState() {
       turnOwner: "player",
       pendingEnemyTurnResult: null,
       lastRecruitmentResult: null,
+      lastCityLoyaltyResult: null,
     },
   };
 }

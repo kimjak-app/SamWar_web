@@ -1,9 +1,30 @@
 # SamWar_web Handoff
 
-Current working version: `v0.5-3b Save / Load UI MVP`.
-Baseline: `v0.5-3a Stable - Domestic Effect Engine MVP`.
+Current working version: `v0.5-3c City Loyalty + Security/Economy Drift`.
+Baseline: `v0.5-3b Stable - Save / Load UI MVP`.
 
-v0.5-3a browser manual QA passed with no console errors. v0.5-3b still needs browser QA.
+v0.5-3a and v0.5-3b browser manual QA passed with no console errors. v0.5-3c still needs browser QA.
+
+## What Changed In v0.5-3c
+- City loyalty now drifts every player turn for player-owned cities.
+- Drift inputs are tax pressure, security, economy, and governor/chancellor control effects.
+- Security is scaffold-only and derived from stationed hero `troops` totals.
+- Economy is scaffold-only and derived from `commerceRating`, `populationRating`, current gold income, and city domestic multipliers.
+- Final city loyalty delta is clamped to `-2..+2`.
+- Results are stored in `world.lastCityLoyaltyResult`.
+- Selected City displays security/economy/loyalty-drift summary.
+- Military security status uses the same scaffold.
+- Save version is now `v0.5-3c`; `v0.5-3b` remains legacy-loadable.
+
+## v0.5-3c Not Implemented
+- No recruitment.
+- No troop types.
+- No actual soldier increase/decrease.
+- No city garrison system.
+- No rebellion/riot events.
+- No diplomacy/intelligence/real trade systems.
+- No direct rule.
+- No battle logic or Phaser Scene changes.
 
 ## What Changed In v0.5-3b
 - Added World Turn HUD save/load/reset controls.
@@ -78,6 +99,6 @@ v0.5-3a browser manual QA passed with no console errors. v0.5-3b still needs bro
 - No window compatibility reintroduction.
 
 ## QA Focus
-- v0.5-3a QA is complete.
-- Next work should start from `v0.5-3a Stable`.
+- v0.5-3a and v0.5-3b QA are complete.
+- v0.5-3c needs browser manual QA and regression-only fixes.
 - Keep new domestic formulas centralized in `js/core/domestic_effects.js`.

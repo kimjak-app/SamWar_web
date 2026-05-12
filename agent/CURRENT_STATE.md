@@ -1,10 +1,33 @@
 # Current State
 
 ## Status
-- Current working version: `v0.5-3b Save / Load UI MVP`.
-- Baseline before this patch: `v0.5-3a Stable - Domestic Effect Engine MVP`.
+- Current working version: `v0.5-3c City Loyalty + Security/Economy Drift`.
+- Baseline before this patch: `v0.5-3b Stable - Save / Load UI MVP`.
 - v0.5-3a is the first real domestic-effect MVP. It connects chancellor/governor aptitude and policy choices to actual domestic results through a central engine.
 - Browser manual QA passed with no console errors.
+
+## v0.5-3c City Loyalty + Security/Economy Drift
+- City loyalty now changes every player turn for player-owned cities.
+- Drift inputs:
+  - tax pressure
+  - city security
+  - city economy
+  - governor/chancellor control effects
+- Security is a scaffold derived from stationed hero `troops` totals:
+  - `200+`: 안정
+  - `100+`: 주의
+  - below `100`: 불안
+- Economy is a derived scaffold from `commerceRating`, `populationRating`, current gold income, and city policy/effect multipliers.
+- Final city loyalty delta is clamped to `-2..+2` per turn.
+- City loyalty remains clamped to `0..100`.
+- Turn results are stored in `world.lastCityLoyaltyResult`.
+- Selected City now shows a compact city status summary:
+  - security
+  - economy
+  - last/expected city-loyalty change
+- Military security status now reflects the same security scaffold.
+- Save version advanced to `v0.5-3c`; `v0.5-3b` saves remain legacy-loadable.
+- No actual soldier increase/decrease, recruitment, troop types, rebellion, diplomacy, intelligence, real trade, direct rule, Phaser Scene changes, or battle logic changes were added.
 
 ## v0.5-3b Save / Load UI MVP
 - Added localStorage-based one-slot save/load/reset UI in the World Turn HUD.

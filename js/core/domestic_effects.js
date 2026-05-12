@@ -22,6 +22,10 @@ const CHANCELLOR_PRIMARY_RATE = 0.03;
 const CHANCELLOR_SECONDARY_RATE = 0.015;
 const GOVERNOR_PRIMARY_RATE = 0.025;
 const GOVERNOR_SECONDARY_RATE = 0.0125;
+const SECURITY_STABLE_TROOPS = 200;
+const SECURITY_CAUTION_TROOPS = 100;
+const CITY_LOYALTY_DRIFT_MIN = -2;
+const CITY_LOYALTY_DRIFT_MAX = 2;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -47,6 +51,27 @@ function addEffectTag(effect, tag) {
   if (tag && !effect.summaryTags.includes(tag)) {
     effect.summaryTags.push(tag);
   }
+}
+
+function getStationedTroops(city, heroes = []) {
+  return (heroes ?? [])
+    .filter((hero) => hero?.locationCityId === city?.id)
+    .reduce((total, hero) => total + Math.max(0, Number(hero?.troops) || 0), 0);
+}
+
+function getProfileAptitude(hero, type) {
+  const profile = getHeroDomesticProfile(hero);
+  let aptitude = 0;
+
+  if (profile.primaryType === type) {
+    aptitude += profile.primaryAptitude;
+  }
+
+  if (profile.secondaryType === type) {
+    aptitude += profile.secondaryAptitude * 0.5;
+  }
+
+  return aptitude;
 }
 
 function applyTypeEffect(effect, type, aptitude, rate, scope) {
@@ -272,17 +297,170 @@ export function adjustLoyaltyDelta(baseDelta, lossMultiplier = 1) {
   return Math.min(-1, Math.ceil(baseDelta * lossMultiplier));
 }
 
-export function calculateMilitaryPreview(city, cityEffects = {}) {
+export function calculateMilitaryPreview(city, cityEffects = {}, options = {}) {
   const baseRecruitableTroops = Number.isFinite(city?.military?.recruitableTroops)
     ? city.military.recruitableTroops
     : 0;
   const recruitableTroops = Math.max(0, Math.round(baseRecruitableTroops + (cityEffects.recruitableTroopsBonus ?? 0)));
   const hasMilitaryBonus = recruitableTroops > baseRecruitableTroops;
+  const security = calculateCitySecurityState({
+    city,
+    heroes: options.heroes ?? [],
+    cityEffects,
+  });
 
   return {
     recruitableTroops,
     foodStatus: hasMilitaryBonus ? "안정" : (city?.military?.foodStatus ?? "준비 중"),
-    securityStatus: hasMilitaryBonus ? "안정" : (city?.military?.securityStatus ?? "병력 기반 계산 예정"),
+    securityStatus: security.securityStatus ?? (city?.military?.securityStatus ?? "병력 기반 계산 예정"),
+  };
+}
+
+export function calculateCitySecurityState({ city, heroes = [], cityEffects = {} } = {}) {
+  const troopTotal = getStationedTroops(city, heroes);
+  const effectBonus = Math.min(15, Math.round((cityEffects.recruitableTroopsBonus ?? 0) / 4));
+  let baseScore = 35;
+  let baseDelta = -1;
+
+  if (troopTotal >= SECURITY_STABLE_TROOPS) {
+    baseScore = 85;
+    baseDelta = 1;
+  } else if (troopTotal >= SECURITY_CAUTION_TROOPS) {
+    baseScore = 60;
+    baseDelta = 0;
+  }
+
+  const securityScore = clamp(baseScore + effectBonus, 0, 100);
+  const securityStatus = securityScore >= 75
+    ? "안정"
+    : (securityScore >= 50 ? "주의" : "불안");
+
+  return {
+    troopTotal,
+    securityScore,
+    securityStatus,
+    loyaltyDeltaFromSecurity: securityStatus === "안정"
+      ? 1
+      : (securityStatus === "불안" ? -1 : baseDelta),
+  };
+}
+
+export function calculateCityEconomyState({ city, cityEffects = {}, cityIncome = null } = {}) {
+  const commerceRating = Math.max(1, Number(city?.commerceRating) || 3);
+  const populationRating = Math.max(1, Number(city?.populationRating) || 3);
+  const goldIncome = Number(cityIncome?.[RESOURCE_KEYS.GOLD] ?? cityIncome?.tax?.gold ?? 0) || 0;
+  const goldIncomeScore = goldIncome > 0 ? Math.min(20, Math.round(goldIncome / 2)) : 10;
+  const effectScore = Math.round(((cityEffects.goldMultiplier ?? 1) - 1) * 80);
+  const economyScore = clamp(
+    (commerceRating * 10) + (populationRating * 8) + goldIncomeScore + effectScore,
+    0,
+    100,
+  );
+  const economyStatus = economyScore >= 75
+    ? "활황"
+    : (economyScore >= 50 ? "안정" : "침체");
+
+  return {
+    economyScore,
+    economyStatus,
+    loyaltyDeltaFromEconomy: economyStatus === "활황"
+      ? 1
+      : (economyStatus === "침체" ? -1 : 0),
+  };
+}
+
+function calculateControlAdjustment({
+  preliminaryDelta,
+  governorHero,
+  chancellorHero,
+} = {}) {
+  if (preliminaryDelta >= 0) {
+    return { controlDelta: 0, reason: null };
+  }
+
+  if (
+    governorHero
+    && (
+      getProfileAptitude(governorHero, CHANCELLOR_STAT_KEYS.ADMINISTRATIVE) >= 3
+      || getProfileAptitude(governorHero, CHANCELLOR_STAT_KEYS.POLITICAL) >= 3
+    )
+  ) {
+    return { controlDelta: 1, reason: "태수 보정" };
+  }
+
+  if (
+    !governorHero
+    && chancellorHero
+    && preliminaryDelta <= -2
+    && (
+      getProfileAptitude(chancellorHero, CHANCELLOR_STAT_KEYS.ADMINISTRATIVE) >= 3
+      || getProfileAptitude(chancellorHero, CHANCELLOR_STAT_KEYS.POLITICAL) >= 4
+    )
+  ) {
+    return { controlDelta: 1, reason: "재상 통제 관리" };
+  }
+
+  return { controlDelta: 0, reason: null };
+}
+
+function formatSignedDelta(delta) {
+  return delta > 0 ? `+${delta}` : `${delta}`;
+}
+
+export function calculateCityLoyaltyDrift({
+  city,
+  heroes = [],
+  taxLoyaltyDelta = 0,
+  cityEffects = {},
+  cityIncome = null,
+  governorHero = null,
+  chancellorHero = null,
+} = {}) {
+  const taxDelta = adjustLoyaltyDelta(taxLoyaltyDelta, cityEffects.cityLoyaltyLossMultiplier);
+  const security = calculateCitySecurityState({ city, heroes, cityEffects });
+  const economy = calculateCityEconomyState({ city, cityEffects, cityIncome });
+  const preliminaryDelta = taxDelta
+    + security.loyaltyDeltaFromSecurity
+    + economy.loyaltyDeltaFromEconomy;
+  const control = calculateControlAdjustment({
+    preliminaryDelta,
+    governorHero,
+    chancellorHero,
+  });
+  const delta = clamp(
+    preliminaryDelta + control.controlDelta,
+    CITY_LOYALTY_DRIFT_MIN,
+    CITY_LOYALTY_DRIFT_MAX,
+  );
+  const reasons = [];
+
+  if (taxDelta < 0) {
+    reasons.push("세금 부담");
+  } else if (taxDelta > 0) {
+    reasons.push("저세율 안정");
+  }
+
+  reasons.push(`치안 ${security.securityStatus}`);
+  reasons.push(`경제 ${economy.economyStatus}`);
+
+  if (taxLoyaltyDelta < 0 && taxDelta > taxLoyaltyDelta) {
+    reasons.push(governorHero ? "태수 세금 완화" : "재상 세금 완화");
+  }
+
+  if (control.reason) {
+    reasons.push(control.reason);
+  }
+
+  return {
+    cityId: city?.id ?? null,
+    cityName: city?.name ?? "",
+    delta,
+    taxDelta,
+    security,
+    economy,
+    controlDelta: control.controlDelta,
+    reasons,
+    summary: `성충성도 ${formatSignedDelta(delta)} · 치안 ${security.securityStatus} · 경제 ${economy.economyStatus}`,
   };
 }
 

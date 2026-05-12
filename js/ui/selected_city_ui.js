@@ -1,4 +1,10 @@
 import { CITY_TYPE_LABELS, LOYALTY_LABELS, LOYALTY_KEYS } from "../constants.js";
+import {
+  calculateCityDomesticEffects,
+  calculateCityLoyaltyDrift,
+  getActiveChancellorHero,
+  getActiveGovernorHero,
+} from "../core/domestic_effects.js";
 import { canAttackCity, isEnemyCity, isPlayerCity, isWorldUnified } from "../core/world_rules.js";
 import { renderGarrisonPanel } from "./garrison_ui.js";
 import { renderCityGovernorPanel } from "./governor_ui.js";
@@ -60,6 +66,76 @@ function renderCityProfile(selectedCity) {
   `;
 }
 
+function formatSignedValue(value) {
+  return value > 0 ? `+${value}` : `${value}`;
+}
+
+function getLastCityLoyaltyResult(appState, cityId) {
+  return appState?.world?.lastCityLoyaltyResult?.cityResults
+    ?.find((entry) => entry.cityId === cityId) ?? null;
+}
+
+function calculateCurrentCityStatus(selectedCity, appState) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const isOwnedByPlayer = selectedCity?.ownerFactionId === playerFactionId;
+  const chancellorHero = isOwnedByPlayer
+    ? getActiveChancellorHero(appState?.world?.heroes, appState?.domesticPolicy, playerFactionId)
+    : null;
+  const governorHero = isOwnedByPlayer
+    ? getActiveGovernorHero(selectedCity, appState?.world?.heroes, playerFactionId)
+    : null;
+  const cityEffects = isOwnedByPlayer
+    ? calculateCityDomesticEffects({
+      city: selectedCity,
+      governorHero,
+      chancellorHero,
+      domesticPolicy: appState?.domesticPolicy,
+    })
+    : {};
+  const cityIncome = appState?.world?.lastIncomeResult?.cityIncomes
+    ?.find((entry) => entry.cityId === selectedCity.id)
+    ?.income ?? null;
+
+  return calculateCityLoyaltyDrift({
+    city: selectedCity,
+    heroes: appState?.world?.heroes,
+    taxLoyaltyDelta: 0,
+    cityEffects,
+    cityIncome,
+    governorHero,
+    chancellorHero,
+  });
+}
+
+function renderCityStatusPanel(selectedCity, appState) {
+  const lastResult = getLastCityLoyaltyResult(appState, selectedCity.id);
+  const currentStatus = lastResult ?? calculateCurrentCityStatus(selectedCity, appState);
+  const delta = lastResult ? currentStatus.delta : currentStatus.delta;
+  const securityStatus = lastResult
+    ? currentStatus.securityStatus
+    : currentStatus.security.securityStatus;
+  const economyStatus = lastResult
+    ? currentStatus.economyStatus
+    : currentStatus.economy.economyStatus;
+  const label = lastResult ? "지난 턴 성충성도" : "예상 성충성도 변화";
+
+  return `
+    <div class="city-status-panel city-domestic-section">
+      <p class="city-domestic-heading">도시 상태</p>
+      <div class="city-status-summary">
+        <span>치안: <strong>${securityStatus}</strong></span>
+        <span>경제: <strong>${economyStatus}</strong></span>
+        <span>${label}: <strong>${formatSignedValue(delta)}</strong></span>
+      </div>
+      ${
+        lastResult?.reasons?.length
+          ? `<span class="city-status-note">${lastResult.reasons.slice(0, 4).join(" · ")}</span>`
+          : ""
+      }
+    </div>
+  `;
+}
+
 export function renderSelectedCityPanel({
   appState,
   selectedCity,
@@ -79,6 +155,7 @@ export function renderSelectedCityPanel({
         ${selectedCity.region} · ${selectedFaction?.name ?? "중립"}
       </p>
       ${renderCityProfile(selectedCity)}
+      ${renderCityStatusPanel(selectedCity, appState)}
       ${renderCityGovernorPanel(selectedCity, appState, stationedHeroes)}
       <p class="city-detail-copy">${getStatusText(world.cities, selectedCity)}</p>
       ${renderGarrisonPanel(stationedHeroes)}

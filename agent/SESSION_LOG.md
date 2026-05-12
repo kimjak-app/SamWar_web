@@ -2,6 +2,32 @@
 
 ## 2026-05-12
 
+### v0.5-3c City Loyalty + Security/Economy Drift
+- Added city loyalty drift to `js/core/domestic_effects.js` and connected it through `applyTaxLoyaltyEffect()`.
+- City loyalty drift combines tax pressure, security, economy, and governor/chancellor control effects.
+- Security scaffold derives from stationed hero `troops` totals and does not change actual soldiers.
+- Economy scaffold derives from city commerce/population ratings, current gold income, and city domestic effect multipliers.
+- Final city loyalty delta is clamped to `-2..+2`; city loyalty remains clamped to `0..100`.
+- Added `world.lastCityLoyaltyResult` for turn-result UI and save/load compatibility.
+- Selected City now displays a compact city status summary under the loyalty gauge.
+- Military security status now reflects the same security scaffold.
+- Save version advanced to `v0.5-3c`; `v0.5-3b` remains legacy-loadable.
+- Confirmed module-level smoke test:
+  - high-tax Hanseong produced `세금 부담`, `치안 안정`, `경제 활황`
+  - final city loyalty delta stayed within range
+  - actual hero troop counts were unchanged
+- Confirmed no recruitment, troop types, actual soldier increase/decrease, city garrison system, rebellion, diplomacy, intelligence, real trade, direct rule, Phaser Scene edit, battle logic edit, or window compatibility reintroduction was added.
+- `node --check` passed for:
+  - `js/core/domestic_effects.js`
+  - `js/core/domestic_income.js`
+  - `js/core/app_state.js`
+  - `js/core/world_rules.js`
+  - `js/ui/selected_city_ui.js`
+  - `js/ui/military_ui.js`
+  - `js/ui/world_hud_ui.js`
+  - `js/main.js`
+  - `js/core/save_load.js`
+
 ### v0.5-3b Save / Load UI MVP
 - Added World Turn HUD Save / Load / Reset controls.
 - Added localStorage one-slot save version `v0.5-3b`.

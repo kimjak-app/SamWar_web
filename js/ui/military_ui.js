@@ -43,7 +43,9 @@ function getCityMilitaryPreview(selectedCity, appState) {
     domesticPolicy: appState?.domesticPolicy,
   });
 
-  return calculateMilitaryPreview(selectedCity, cityEffects);
+  return calculateMilitaryPreview(selectedCity, cityEffects, {
+    heroes: appState?.world?.heroes,
+  });
 }
 
 export function renderCityMilitaryPanel(selectedCity, stationedHeroes = [], appState = null) {

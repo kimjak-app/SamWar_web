@@ -1,27 +1,59 @@
 # QA Checklist
 
-## v0.5-3b Save / Load UI MVP
-- [ ] World Turn HUD shows `저장`, `불러오기`, `초기화`.
-- [ ] Save controls are compact and visually distinct from the turn-end button.
+## v0.5-3c City Loyalty + Security/Economy Drift
 - [ ] Fresh load has no console errors.
-- [ ] Saving after tax/chancellor/governor/policy/turn/resource changes shows `저장 완료`.
-- [ ] Loading restores turn, tax, chancellor, governor, governor policy, resources, loyalty, and hero locations.
-- [ ] Loading with no save shows `저장 데이터 없음` and does not break the app.
-- [ ] Reset clears saved data and returns to fresh game state.
-- [ ] Fresh reset state has Hanseong player-owned and Luoyang/Pyongyang/Kyoto enemy-owned.
-- [ ] Fresh reset state has Yi Sun-sin and Jeong Do-jeon stationed in Hanseong.
-- [ ] Save after refresh can be loaded.
-- [ ] Hero transfer persists through save/load.
-- [ ] City conquest ownership and recruited hero side/location persist through save/load.
-- [ ] Battle state is not saved.
-- [ ] Pending battle/deployment/transfer/enemy-result state is cleared after load.
-- [ ] Save/load controls are unavailable or disabled outside world mode.
-- [ ] Attack -> deployment -> battle entry still works.
-- [ ] Battle return to world map still works.
-- [ ] Enemy invasion center modal still works.
-- [ ] Player/enemy turn buttons still work.
-- [ ] Domestic effect engine still works after save/load.
+- [ ] Hanseong selection works.
+- [ ] City loyalty gauge renders normally.
+- [ ] Selected City shows city status/security/economy summary.
+- [ ] Hanseong stationed Yi Sun-sin/Jeong Do-jeon produce stable or caution-level security.
+- [ ] Hero movement can change a city's security status.
+- [ ] Actual soldier counts do not change from security/economy drift.
+- [ ] Hanseong/Luoyang/Pyongyang/Kyoto economy status displays without breaking city selection.
+- [ ] Higher commerce/population cities are economically favored.
+- [ ] Governor commerce policy can improve economy/next-turn result.
+- [ ] Tax level 30 does not create excessive city-loyalty changes.
+- [ ] Higher tax creates city-loyalty pressure.
+- [ ] Stable security/economy can offset or improve city-loyalty drift.
+- [ ] Political/administrative governor or chancellor control improves negative city-loyalty drift.
+- [ ] Final per-city loyalty delta stays within `-2..+2`.
+- [ ] City loyalty remains clamped between `0..100`.
+- [ ] Turn-end `world.lastCityLoyaltyResult` is reflected in Selected City UI.
+- [ ] City-loyalty result reasons remain short.
+- [ ] National loyalty tax flow still works.
+- [ ] Save/load restores city loyalty and city status summary safely.
+- [ ] Tax slider works.
+- [ ] Chancellor appointment and policy work.
+- [ ] Governor appointment and policy work.
+- [ ] Save/load/reset work.
+- [ ] Hero transfer works.
+- [ ] Enemy invasion center modal works.
+- [ ] Player/enemy turn buttons work.
+- [ ] Attack -> deployment -> battle entry works.
+- [ ] Battle return to world map works.
 - [ ] No console errors.
+
+## v0.5-3b Save / Load UI MVP
+- [x] World Turn HUD shows `저장`, `불러오기`, `초기화`.
+- [x] Save controls are compact and visually distinct from the turn-end button.
+- [x] Fresh load has no console errors.
+- [x] Saving after tax/chancellor/governor/policy/turn/resource changes shows `저장 완료`.
+- [x] Loading restores turn, tax, chancellor, governor, governor policy, resources, loyalty, and hero locations.
+- [x] Loading with no save shows `저장 데이터 없음` and does not break the app.
+- [x] Reset clears saved data and returns to fresh game state.
+- [x] Fresh reset state has Hanseong player-owned and Luoyang/Pyongyang/Kyoto enemy-owned.
+- [x] Fresh reset state has Yi Sun-sin and Jeong Do-jeon stationed in Hanseong.
+- [x] Save after refresh can be loaded.
+- [x] Hero transfer persists through save/load.
+- [x] City conquest ownership and recruited hero side/location persist through save/load.
+- [x] Battle state is not saved.
+- [x] Pending battle/deployment/transfer/enemy-result state is cleared after load.
+- [x] Save/load controls are unavailable or disabled outside world mode.
+- [x] Attack -> deployment -> battle entry still works.
+- [x] Battle return to world map still works.
+- [x] Enemy invasion center modal still works.
+- [x] Player/enemy turn buttons still work.
+- [x] Domestic effect engine still works after save/load.
+- [x] No console errors.
 
 ## v0.5-3a Domestic Effect Engine MVP
 - [x] Fresh load has no console errors.

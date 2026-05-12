@@ -4,6 +4,7 @@ import {
   buildChancellorEffectSummary,
   buildGovernorEffectSummary,
   calculateCityDomesticEffects,
+  calculateCityLoyaltyDrift,
   calculateMilitaryPreview,
   calculateNationalDomesticEffects,
   getActiveChancellorHero,
@@ -531,22 +532,8 @@ export function applyTaxLoyaltyEffect(state) {
     nationalEffects.nationalLoyaltyLossMultiplier,
   );
 
-  if (loyaltyDelta === 0) {
-    return {
-      ...state,
-      world: {
-        ...state.world,
-        lastTaxResult: {
-          taxLevel: domesticPolicy.taxLevel,
-          loyaltyDelta,
-          nationalLoyaltyDelta,
-          cityLoyaltyDeltas: {},
-        },
-      },
-    };
-  }
-
   const cityLoyaltyDeltas = {};
+  const cityResults = [];
   const nextCities = (state?.world?.cities ?? []).map((city) => {
     if (city.ownerFactionId !== playerFactionId) {
       return city;
@@ -559,15 +546,47 @@ export function applyTaxLoyaltyEffect(state) {
       chancellorHero,
       domesticPolicy,
     });
-    const cityLoyaltyDelta = adjustLoyaltyDelta(
-      loyaltyDelta,
-      cityEffects.cityLoyaltyLossMultiplier,
-    );
+    const cityIncome = state?.world?.lastIncomeResult?.cityIncomes
+      ?.find((entry) => entry.cityId === city.id)
+      ?.income ?? null;
+    const drift = calculateCityLoyaltyDrift({
+      city,
+      heroes: state?.world?.heroes,
+      taxLoyaltyDelta: loyaltyDelta,
+      cityEffects,
+      cityIncome,
+      governorHero,
+      chancellorHero,
+    });
+    const beforeLoyalty = city[LOYALTY_KEYS.CITY] ?? city.loyalty ?? 75;
+    const afterLoyalty = clamp(beforeLoyalty + drift.delta, 0, 100);
+    const cityLoyaltyDelta = afterLoyalty - beforeLoyalty;
     cityLoyaltyDeltas[city.id] = cityLoyaltyDelta;
+    cityResults.push({
+      cityId: city.id,
+      cityName: city.name,
+      beforeLoyalty,
+      afterLoyalty,
+      delta: cityLoyaltyDelta,
+      taxDelta: drift.taxDelta,
+      securityStatus: drift.security.securityStatus,
+      securityScore: drift.security.securityScore,
+      stationedTroops: drift.security.troopTotal,
+      economyStatus: drift.economy.economyStatus,
+      economyScore: drift.economy.economyScore,
+      controlDelta: drift.controlDelta,
+      reasons: drift.reasons,
+      summary: drift.summary,
+    });
 
     return {
       ...city,
-      [LOYALTY_KEYS.CITY]: clamp((city[LOYALTY_KEYS.CITY] ?? city.loyalty ?? 75) + cityLoyaltyDelta, 0, 100),
+      [LOYALTY_KEYS.CITY]: afterLoyalty,
+      economyStatus: drift.economy.economyStatus,
+      military: {
+        ...(city.military ?? {}),
+        securityStatus: drift.security.securityStatus,
+      },
     };
   });
 
@@ -589,6 +608,11 @@ export function applyTaxLoyaltyEffect(state) {
         loyaltyDelta,
         nationalLoyaltyDelta,
         cityLoyaltyDeltas,
+      },
+      lastCityLoyaltyResult: {
+        turn: state?.meta?.turn ?? 1,
+        taxLevel: domesticPolicy.taxLevel,
+        cityResults,
       },
     },
   };

@@ -1,23 +1,25 @@
 # Next Tasks
 
-Current working version: `v0.5-3b Save / Load UI MVP`.
-Baseline: `v0.5-3a Stable - Domestic Effect Engine MVP`.
+Current working version: `v0.5-3c City Loyalty + Security/Economy Drift`.
+Baseline: `v0.5-3b Stable - Save / Load UI MVP`.
 
 ## QA Status
 - v0.5-3a browser manual QA passed.
+- v0.5-3b browser manual QA passed.
 - No console errors were reported.
 - Confirmed: effect summaries, income changes, loyalty-loss mitigation, upkeep/salt changes, military preview changes, actual soldier count unchanged, save/load compatibility, tax/chancellor/governor/transfer/battle/invasion modal regressions.
 
 ## Immediate QA
-- Verify World Turn HUD save/load/reset controls.
-- Verify save/load restores tax, chancellor, governor, governor policy, resources, loyalty, hero location, and conquered city ownership.
-- Verify reset returns to fresh initial state.
-- Verify missing save data does not break the app.
-- Verify battle state is not saved and world mode is restored safely.
+- Verify city status summary appears under the city loyalty gauge.
+- Verify Hanseong security/economy status is shown and changes after hero movement where applicable.
+- Verify turn-end city loyalty results are stored and displayed.
+- Verify high tax produces city-loyalty pressure but final per-turn delta stays within `-2..+2`.
+- Verify governor/chancellor control effects improve city-loyalty drift without changing actual troop counts.
+- Verify save/load restores city loyalty and last city-loyalty result safely.
 
 ## Recommended Next Order
-1. Browser QA and regression-only fixes for v0.5-3b.
-2. Balance review of domestic effect multipliers after more playtesting.
+1. Browser QA and regression-only fixes for v0.5-3c.
+2. Balance review of city loyalty drift thresholds after playtesting.
 3. City garrison/troop-pool design only, before recruitment or upkeep.
 4. Save/load version bump review when the save schema is intentionally advanced.
 5. Trade/diplomacy/intelligence design later as separate milestones.

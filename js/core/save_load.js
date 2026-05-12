@@ -11,9 +11,9 @@ import {
 import { initializeCityDomesticData } from "./world_rules.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
-const SAVE_KEY = "samwar.save.v0.5-3b";
-const LEGACY_SAVE_KEYS = Object.freeze(["samwar.save.v0.5-1h"]);
-const SAVE_VERSION = "v0.5-3b";
+const SAVE_KEY = "samwar.save.v0.5-3c";
+const LEGACY_SAVE_KEYS = Object.freeze(["samwar.save.v0.5-3b", "samwar.save.v0.5-1h"]);
+const SAVE_VERSION = "v0.5-3c";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {
@@ -117,6 +117,7 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
       lastIncomeResult: savedWorld.lastIncomeResult ?? null,
       lastUpkeepResult: savedWorld.lastUpkeepResult ?? null,
       lastTaxResult: savedWorld.lastTaxResult ?? null,
+      lastCityLoyaltyResult: savedWorld.lastCityLoyaltyResult ?? null,
       lastRecruitmentResult: savedWorld.lastRecruitmentResult ?? null,
     },
   };
@@ -156,6 +157,7 @@ export function createSaveSnapshot(state = gameStore.getState()) {
         lastIncomeResult: world.lastIncomeResult ?? null,
         lastUpkeepResult: world.lastUpkeepResult ?? null,
         lastTaxResult: world.lastTaxResult ?? null,
+        lastCityLoyaltyResult: world.lastCityLoyaltyResult ?? null,
         lastRecruitmentResult: world.lastRecruitmentResult ?? null,
       },
     },
