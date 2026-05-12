@@ -1,10 +1,27 @@
 # Current State
 
 ## Status
-- Current working version: `v0.5-2d Enemy Invasion Defense Choice Center Modal`.
-- Baseline before this minor patch: `v0.5-2c Stable - Governor UI Polish + Turn Action UX Unification + Governor Policy Scaffold`.
-- Stable baseline before v0.5-2d: `v0.5-2c Stable`.
-- v0.5-2d is a minor UI placement patch. It does not modify invasion logic, battle logic, Phaser Scene, or domestic systems.
+- Current stable version: `v0.5-3a Stable`.
+- Stable baseline name: `Domestic Effect Engine MVP`.
+- Baseline before this patch: `v0.5-2d Enemy Invasion Defense Choice Center Modal Fix`.
+- v0.5-3a is the first real domestic-effect MVP. It connects chancellor/governor aptitude and policy choices to actual domestic results through a central engine.
+- Browser manual QA passed with no console errors.
+
+## v0.5-3a Domestic Effect Engine
+- Added `js/core/domestic_effects.js` as the central domestic effect engine.
+- Chancellor hero aptitude now affects national domestic results.
+- Governor hero aptitude now affects selected city domestic results.
+- Chancellor policy and governor policy are both included in final domestic effects.
+- Applied result areas:
+  - rice/barley/seafood/gold income
+  - hero upkeep
+  - soldier upkeep preview
+  - salt preservation need
+  - tax loyalty-loss mitigation
+  - city military preview status
+- UI now shows short effect summaries for chancellor and governor.
+- Governor military/admin effects update preview/scaffold values only.
+- No actual soldier count changes are made.
 
 ## v0.5-2d Defense Choice Placement
 - Enemy invasion defense choices now render as a centered modal.
@@ -52,7 +69,7 @@
   - `상업 중심`
   - `군사 중심`
 - `setCityGovernorPolicy(appState, cityId, governorPolicy)` validates player ownership and normalizes invalid values to `follow_chancellor`.
-- Governor policy is stored only. It does not affect income, security, city loyalty, resources, troops, or upkeep.
+- Governor policy now affects city domestic results through `domestic_effects.js`.
 
 ## Selected City
 - The old domestic 5-stat panel is still not called from Selected City.
@@ -62,14 +79,24 @@
 - Attackable enemy cities still show the `공격` button.
 
 ## Explicit Non-Goals Preserved
-- No chancellor person-stat calculation.
-- No governor person-stat calculation.
-- No governor policy effects.
-- No income, security, city loyalty, resource, or troop changes from governors.
-- No recruitment, troop types, or real soldier upkeep deduction.
+- No soldier recruitment.
+- No troop type additions.
+- No actual soldier increase/decrease.
+- No rebellion or riot events.
+- No diplomacy system.
+- No intelligence system.
+- No real trade system.
 - No direct-rule button.
-- No enemy domestic automation.
-- No intelligence, real trade, diplomacy, or talent recruitment.
+- No combat power changes from domestic effects.
 - No Phaser Scene changes.
 - No battle logic changes.
 - No window compatibility reintroduction.
+- No large CSS/UI redesign.
+ 
+## Deferred Beyond v0.5-3a
+- Full domestic-engine balance pass.
+- Real city garrison and recruitment system.
+- Real trade/diplomacy/intelligence systems.
+- Direct rule and ruler-location gameplay.
+- Rebellion, unrest, or public-order events.
+- Battle-facing effects from domestic systems.

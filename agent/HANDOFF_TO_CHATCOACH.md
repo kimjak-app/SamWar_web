@@ -1,9 +1,32 @@
 # SamWar_web Handoff
 
-Current working version: `v0.5-2d Enemy Invasion Defense Choice Center Modal`.
-Baseline: `v0.5-2c Stable - Governor UI Polish + Turn Action UX Unification + Governor Policy Scaffold`.
+Current stable version: `v0.5-3a Stable - Domestic Effect Engine MVP`.
 
-v0.5-2c browser manual QA passed with no console errors. v0.5-2d still needs browser QA.
+Browser manual QA passed with no console errors.
+
+## What Changed In v0.5-3a
+- Added central domestic effect engine: `js/core/domestic_effects.js`.
+- Chancellor and governor hero aptitude now affects real domestic results.
+- Chancellor and governor policy choices now affect real domestic results.
+- Applied effect areas:
+  - income
+  - hero upkeep
+  - soldier upkeep preview
+  - salt preservation
+  - loyalty-loss mitigation
+  - military preview/scaffold
+- UI shows short chancellor and governor effect summaries.
+- Military effects are preview-only and do not change actual soldier counts.
+
+## v0.5-3a Not Implemented
+- No recruitment.
+- No troop types.
+- No actual soldier increase/decrease.
+- No rebellion/riot events.
+- No diplomacy/intelligence/real trade systems.
+- No direct rule.
+- No combat/battle effects.
+- No Phaser Scene or battle logic changes.
 
 ## What Changed In v0.5-2d
 - Enemy invasion defense choice now appears as a centered modal.
@@ -25,13 +48,9 @@ v0.5-2c browser manual QA passed with no console errors. v0.5-2d still needs bro
 - Unassigned governor state now shows `관리: 재상 통제 관리`.
 - Removed unnecessary Selected City bottom combat guidance text.
 - Added governor policy scaffold with city-level `governorPolicy`.
-- Governor policy is saved only and has no effect.
+- Historical note: governor policy was save-only in v0.5-2c, then became active through `domestic_effects.js` in v0.5-3a.
 
 ## What Was Not Implemented
-- No chancellor person-stat calculation.
-- No governor person-stat calculation.
-- No governor policy effects.
-- No income/security/city-loyalty/resource/troop changes from governors.
 - No recruitment, troop types, or real soldier upkeep.
 - No direct-rule button.
 - No enemy domestic automation.
@@ -41,5 +60,6 @@ v0.5-2c browser manual QA passed with no console errors. v0.5-2d still needs bro
 - No window compatibility reintroduction.
 
 ## QA Focus
-- v0.5-2c QA is complete.
-- Next work should start from the stable baseline and avoid adding effects to governor policy without a dedicated domestic-engine design pass.
+- v0.5-3a QA is complete.
+- Next work should start from `v0.5-3a Stable`.
+- Keep new domestic formulas centralized in `js/core/domestic_effects.js`.

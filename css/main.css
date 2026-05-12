@@ -348,6 +348,12 @@ button {
   line-height: 1.35;
 }
 
+.domestic-effect-summary {
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
 .chancellor-panel {
   display: grid;
   gap: 8px;

@@ -2,6 +2,49 @@
 
 ## 2026-05-12
 
+### v0.5-3a Domestic Effect Engine MVP
+- Closed as `v0.5-3a Stable` after browser manual QA passed.
+- Added `js/core/domestic_effects.js` as the central domestic effect engine.
+- Connected chancellor aptitude effects to national domestic results.
+- Connected governor aptitude effects to city domestic results.
+- Connected governor policy effects to city income and military preview.
+- Existing chancellor policy effects remain active and now combine with chancellor aptitude effects.
+- Applied effects to:
+  - turn income
+  - hero upkeep
+  - soldier upkeep preview
+  - salt preservation
+  - tax loyalty-loss mitigation
+  - military scaffold preview
+- Added chancellor and governor effect summaries to UI.
+- Added save/load city normalization for governor/military policy defaults.
+- Confirmed via module-level checks that effects change income, loyalty deltas, upkeep, and military preview without changing battle state or actual soldier counts.
+- Confirmed no recruitment, troop type additions, actual soldier increase/decrease, rebellion, diplomacy, intelligence, real trade, direct rule, Phaser Scene edit, battle logic edit, or window compatibility reintroduction was added.
+- `node --check` passed for:
+  - `js/core/domestic_effects.js`
+  - `js/core/domestic_income.js`
+  - `js/core/app_state.js`
+  - `js/core/world_rules.js`
+  - `js/constants.js`
+  - `js/ui/world_hud_ui.js`
+  - `js/ui/selected_city_ui.js`
+  - `js/ui/governor_ui.js`
+  - `js/ui/military_ui.js`
+  - `js/main.js`
+  - `js/core/save_load.js`
+  - `js/ui/world_map_ui.js`
+  - `js/ui/ui_render.js`
+- Browser manual QA confirmed:
+  - 재상/태수 효과 요약 정상
+  - 재상/태수 정책 변경 후 다음 턴 수입 변화 정상
+  - 세금 충성도 하락 완화 정상
+  - 영웅 유지비/소금 보존 변화 정상
+  - 군대 상태 preview 변화 정상
+  - 실제 병사 수 불변 정상
+  - save/load 호환성 정상
+  - 세금/재상/태수/무장 이동/전투/침공 모달 회귀 이상 없음
+  - 콘솔 에러 없음
+
 ### v0.5-2d Enemy Invasion Defense Choice Center Modal
 - Moved enemy invasion defense choice UI to a centered modal.
 - Defense choice no longer renders under the right Selected City HUD.

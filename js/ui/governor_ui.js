@@ -3,6 +3,11 @@ import {
   GOVERNOR_POLICY_KEYS,
   GOVERNOR_POLICY_LABELS,
 } from "../constants.js";
+import {
+  buildGovernorEffectSummary,
+  calculateCityDomesticEffects,
+  getActiveChancellorHero,
+} from "../core/domestic_effects.js";
 
 function isPlayerCity(selectedCity, appState) {
   return selectedCity?.ownerFactionId === (appState?.meta?.playerFactionId ?? "player");
@@ -141,9 +146,34 @@ function renderGovernorPolicySelect(selectedCity, appState) {
       >
         ${options}
       </select>
-      <span class="policy-control-copy">효과 없음 · 도시 운영 방향 지정 MVP</span>
+      <span class="policy-control-copy">도시 운영 효과 적용</span>
     </label>
   `;
+}
+
+function renderGovernorEffectSummary(selectedCity, appState, governorHero) {
+  if (!isPlayerCity(selectedCity, appState)) {
+    return "";
+  }
+
+  if (!governorHero) {
+    return '<span class="domestic-effect-summary">태수 효과 없음</span>';
+  }
+
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const chancellorHero = getActiveChancellorHero(
+    appState?.world?.heroes,
+    appState?.domesticPolicy,
+    playerFactionId,
+  );
+  const cityEffects = calculateCityDomesticEffects({
+    city: selectedCity,
+    governorHero,
+    chancellorHero,
+    domesticPolicy: appState?.domesticPolicy,
+  });
+
+  return `<span class="domestic-effect-summary">${buildGovernorEffectSummary(governorHero, cityEffects)}</span>`;
 }
 
 export function renderCityGovernorPanel(selectedCity, appState, stationedHeroes = []) {
@@ -153,6 +183,7 @@ export function renderCityGovernorPanel(selectedCity, appState, stationedHeroes 
     <div class="city-governor-panel city-domestic-section">
       <p class="city-domestic-heading">태수</p>
       ${renderGovernorCard(governorHero)}
+      ${renderGovernorEffectSummary(selectedCity, appState, governorHero)}
       ${renderGovernorSelect(selectedCity, appState, stationedHeroes)}
       ${renderGovernorPolicySelect(selectedCity, appState)}
     </div>

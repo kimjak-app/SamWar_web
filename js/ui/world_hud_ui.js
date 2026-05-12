@@ -9,6 +9,11 @@ import {
   RESOURCE_LABELS,
 } from "../constants.js";
 import {
+  buildChancellorEffectSummary,
+  calculateNationalDomesticEffects,
+  getActiveChancellorHero,
+} from "../core/domestic_effects.js";
+import {
   applyChancellorPolicyToHeroUpkeep,
   applyChancellorPolicyToSoldierUpkeepPreview,
   calculateHeroUpkeep,
@@ -211,6 +216,10 @@ function renderChancellorCard(appState) {
           ${options}
         </select>
       </label>
+      <span class="domestic-effect-summary">${buildChancellorEffectSummary(
+        currentChancellor,
+        calculateNationalDomesticEffects({ chancellorHero: currentChancellor, domesticPolicy }),
+      )}</span>
     </section>
   `;
 }
@@ -251,18 +260,26 @@ function renderWarehousePanel(appState) {
     appState?.world?.heroes,
     playerFactionId,
   );
+  const chancellorHero = getActiveChancellorHero(appState?.world?.heroes, domesticPolicy, playerFactionId);
+  const nationalEffects = calculateNationalDomesticEffects({ chancellorHero, domesticPolicy });
   const lastUpkeep = appState?.world?.lastUpkeepResult?.player;
   const heroUpkeep = lastUpkeep?.upkeep
     ?? applyChancellorPolicyToHeroUpkeep(
       calculateHeroUpkeep(appState?.world?.heroes, playerFactionId),
       domesticPolicy.chancellorPolicy,
+      nationalEffects,
     );
   const soldierPreview = appState?.world?.lastUpkeepResult?.soldierPreview?.player
     ?? applyChancellorPolicyToSoldierUpkeepPreview(
       calculateSoldierUpkeepPreview(appState, playerFactionId),
       domesticPolicy.chancellorPolicy,
+      nationalEffects,
     );
-  const saltPreservation = calculateSaltPreservationNeed(appState?.resources, domesticPolicy.chancellorPolicy);
+  const saltPreservation = calculateSaltPreservationNeed(
+    appState?.resources,
+    domesticPolicy.chancellorPolicy,
+    nationalEffects,
+  );
 
   return `
     <div class="warehouse-panel">

@@ -97,7 +97,7 @@ export function renderSelectedCityPanel({
           `
           : ""
       }
-      ${renderCityMilitaryPanel(selectedCity, stationedHeroes)}
+      ${renderCityMilitaryPanel(selectedCity, stationedHeroes, appState)}
       ${renderCityDomesticPanel(selectedCity)}
       ${renderAttackAction(selectedCity, canOpenAttackChoice)}
     </section>

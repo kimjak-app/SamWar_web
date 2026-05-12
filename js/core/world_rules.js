@@ -50,6 +50,12 @@ export const defaultCityMilitary = {
   securityStatus: "병력 기반 계산 예정",
 };
 
+function normalizeGovernorPolicy(policy) {
+  return Object.values(GOVERNOR_POLICY_KEYS).includes(policy)
+    ? policy
+    : GOVERNOR_POLICY_KEYS.FOLLOW_CHANCELLOR;
+}
+
 export function isPlayerCity(city) {
   return city?.ownerFactionId === FACTION_IDS.PLAYER;
 }
@@ -130,7 +136,7 @@ export function initializeCityDomesticData(cities) {
     commerceRating: city.commerceRating ?? 3,
     cityLoyalty: city.cityLoyalty ?? 75,
     governorHeroId: city.governorHeroId ?? null,
-    governorPolicy: city.governorPolicy ?? GOVERNOR_POLICY_KEYS.FOLLOW_CHANCELLOR,
+    governorPolicy: normalizeGovernorPolicy(city.governorPolicy),
     domestic: {
       ...defaultCityDomestic,
       ...(city.domestic ?? {}),

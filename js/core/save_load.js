@@ -5,6 +5,7 @@ import {
   normalizeEnemyResourceStock,
   normalizeResourceStock,
 } from "./domestic_income.js";
+import { initializeCityDomesticData } from "./world_rules.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
 const SAVE_KEY = "samwar.save.v0.5-1h";
@@ -54,6 +55,7 @@ function hydrateLoadedState(state) {
     },
     world: {
       ...state.world,
+      cities: initializeCityDomesticData(state.world.cities ?? []),
       heroes: hydrateCanonicalHeroes(state.world.heroes),
     },
   };

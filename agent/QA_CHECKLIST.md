@@ -1,15 +1,57 @@
 # QA Checklist
 
+## v0.5-3a Domestic Effect Engine MVP
+- [x] Fresh load has no console errors.
+- [x] Hanseong selection works.
+- [x] World HUD renders normally.
+- [x] Selected City HUD renders normally.
+- [x] Chancellor unassigned state shows no chancellor effect.
+- [x] Assigning Jeong Do-jeon shows a chancellor effect summary.
+- [x] Chancellor policy changes affect next-turn income/upkeep preview.
+- [x] Chancellor aptitude affects income/upkeep/salt/loyalty-loss mitigation as applicable.
+- [x] Governor unassigned state shows no governor effect or chancellor-controlled management.
+- [x] Assigning Yi Sun-sin as Hanseong governor shows a governor effect summary.
+- [x] Assigning Jeong Do-jeon as Hanseong governor changes the governor effect summary.
+- [x] Governor policy changes affect next-turn city income or military preview.
+- [x] Governor effects apply only when the governor is player-side and stationed in the city.
+- [x] Turn-end income still displays rice/barley/seafood/gold results.
+- [x] Income changes are noticeable but not excessive.
+- [x] High taxes reduce loyalty.
+- [x] Political chancellor/governor effects mitigate loyalty loss.
+- [x] Loyalty remains clamped between 0 and 100.
+- [x] Loyalty gauges render normally.
+- [x] Hero upkeep display remains normal.
+- [x] Administrative chancellor effects reduce hero upkeep.
+- [x] Military chancellor effects reduce soldier upkeep preview.
+- [x] Soldier upkeep remains preview-only.
+- [x] Salt preservation status remains normal.
+- [x] Administrative effects reduce salt preservation need.
+- [x] Governor military/admin effects improve recruitable preview/status.
+- [x] Actual soldier counts do not change from governor or policy effects.
+- [x] Save/load compatibility works.
+- [x] Tax slider works.
+- [x] Chancellor appointment works.
+- [x] Chancellor policy works.
+- [x] Governor appointment works.
+- [x] Governor policy works.
+- [x] City selection works.
+- [x] Hero transfer works.
+- [x] Enemy invasion center modal still works.
+- [x] Player/enemy turn action buttons work.
+- [x] Attack -> deployment -> battle entry works.
+- [x] Battle return to world map works.
+- [x] No console errors.
+
 ## v0.5-2d Defense Choice Center Modal
-- [ ] Enemy invasion defense choice appears in the center of the screen.
-- [ ] Defense choice does not appear under the right Selected City HUD.
-- [ ] Invasion city and defense city labels remain visible.
-- [ ] Direct defense button enters battle through the existing flow.
-- [ ] Auto defense button enters auto battle through the existing flow.
-- [ ] No-invasion enemy turn end button flow remains unchanged.
-- [ ] Normal attack/deployment flow remains unchanged.
-- [ ] City selection, governor, chancellor, and tax UI remain unchanged.
-- [ ] No console errors.
+- [x] Enemy invasion defense choice appears in the center of the screen.
+- [x] Defense choice does not appear under the right Selected City HUD.
+- [x] Invasion city and defense city labels remain visible.
+- [x] Direct defense button enters battle through the existing flow.
+- [x] Auto defense button enters auto battle through the existing flow.
+- [x] No-invasion enemy turn end button flow remains unchanged.
+- [x] Normal attack/deployment flow remains unchanged.
+- [x] City selection, governor, chancellor, and tax UI remain unchanged.
+- [x] No console errors.
 
 ## v0.5-2c Turn Action UX
 - [x] Player turn button says `아군 턴 종료`.

@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.5-3a Stable Domestic Effect Engine MVP
+- Closed the current baseline as `v0.5-3a Stable`.
+- Added central domestic effect engine: `js/core/domestic_effects.js`.
+- Chancellor and governor aptitude now affect real domestic results.
+- Chancellor and governor policies now participate in final domestic effects.
+- Applied effects:
+  - rice/barley/seafood/gold income multipliers
+  - hero upkeep reduction
+  - soldier upkeep preview reduction
+  - salt preservation need reduction
+  - national and city loyalty-loss mitigation from tax pressure
+  - city military preview values/status
+- Chancellor effects are national.
+- Governor effects are city-specific and apply only when the governor hero is valid, player-side, and stationed in the city.
+- Governor policy is city-specific and affects city income/military preview.
+- Added short effect summaries in World Turn HUD and Selected City governor panel.
+- Save/load hydration now re-runs city domestic initialization so older saves receive governor/military policy defaults.
+- Military preview changes remain preview/scaffold only.
+- No soldier recruitment, troop type additions, actual soldier count changes, rebellion, diplomacy, intelligence, real trade, direct rule, Phaser Scene changes, battle logic changes, or window compatibility reintroduction.
+- `node --check` passed for requested and modified JS files.
+- Browser manual QA passed:
+  - chancellor/governor effect summaries confirmed
+  - chancellor/governor policy income changes confirmed
+  - tax loyalty-loss mitigation confirmed
+  - hero upkeep and salt preservation changes confirmed
+  - military preview changes confirmed
+  - actual soldier count unchanged
+  - save/load compatibility confirmed
+  - tax/chancellor/governor/hero transfer/battle/invasion modal regressions passed
+  - no console errors
+
 ## v0.5-2d Enemy Invasion Defense Choice Center Modal
 - Minor UI placement patch on top of `v0.5-2c Stable`.
 - Moved `pendingBattleChoice.type === "defense"` from the right Selected City HUD stack to a centered modal.

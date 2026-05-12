@@ -1,4 +1,15 @@
 import {
+  adjustLoyaltyDelta,
+  applyIncomeMultipliers,
+  buildChancellorEffectSummary,
+  buildGovernorEffectSummary,
+  calculateCityDomesticEffects,
+  calculateMilitaryPreview,
+  calculateNationalDomesticEffects,
+  getActiveChancellorHero,
+  getActiveGovernorHero,
+} from "./domestic_effects.js";
+import {
   CHANCELLOR_POLICY_EFFECTS,
   CHANCELLOR_POLICY_KEYS,
   COMMERCE_TAX_POINT_PER_RATING,
@@ -48,6 +59,16 @@ function createEmptyIncomeTotals() {
 
 function roundResourceAmount(amount) {
   return Math.max(0, Math.round(amount));
+}
+
+function roundDiscountedAmount(amount, multiplier) {
+  const adjustedAmount = amount * multiplier;
+
+  if (multiplier < 1 && adjustedAmount < amount) {
+    return Math.max(0, Math.floor(adjustedAmount));
+  }
+
+  return roundResourceAmount(adjustedAmount);
 }
 
 function clamp(value, min, max) {
@@ -340,10 +361,29 @@ export function applyChancellorPolicyToIncomeTotals(totals, policy) {
   };
 }
 
-export function calculateCityTurnIncome(city, calendar, taxLevel = DOMESTIC_TAX_RULES.DEFAULT_TAX_LEVEL) {
+function applyCityEffectsToDetails(details, beforeIncome, afterIncome) {
+  return details.map((detail) => {
+    const beforeAmount = beforeIncome[detail.resource] ?? 0;
+    const afterAmount = afterIncome[detail.resource] ?? 0;
+    const ratio = beforeAmount > 0 ? afterAmount / beforeAmount : 1;
+
+    return {
+      ...detail,
+      amount: roundResourceAmount(detail.amount * ratio),
+    };
+  });
+}
+
+export function calculateCityTurnIncome(
+  city,
+  calendar,
+  taxLevel = DOMESTIC_TAX_RULES.DEFAULT_TAX_LEVEL,
+  options = {},
+) {
   const resources = city?.resources ?? {};
   const income = createEmptyIncomeTotals();
   const details = [];
+  const cityEffects = options.cityEffects ?? null;
   const seafoodIncome = getRating(resources, RESOURCE_KEYS.SEAFOOD)
     * DOMESTIC_INCOME_RULES.SEAFOOD_PER_RATING_PER_TURN;
   const goldTaxIncome = calculateCityGoldTaxIncome(city, taxLevel);
@@ -367,10 +407,21 @@ export function calculateCityTurnIncome(city, calendar, taxLevel = DOMESTIC_TAX_
     addDetail(details, RESOURCE_KEYS.RICE, riceIncome, "가을 쌀 수입", city);
   }
 
+  const adjustedIncome = cityEffects ? applyIncomeMultipliers(income, cityEffects) : income;
+  const adjustedDetails = cityEffects
+    ? applyCityEffectsToDetails(details, income, adjustedIncome)
+    : details;
+
   return {
-    ...income,
-    tax: goldTaxIncome,
-    details,
+    ...adjustedIncome,
+    baseIncome: income,
+    cityEffects,
+    tax: {
+      ...goldTaxIncome,
+      baseGold: goldTaxIncome.gold,
+      gold: adjustedIncome[RESOURCE_KEYS.GOLD],
+    },
+    details: adjustedDetails,
   };
 }
 
@@ -380,14 +431,40 @@ export function calculatePlayerTurnIncome(state) {
   const baseTotals = createEmptyIncomeTotals();
   const cityIncomes = [];
   const details = [];
-  const domesticPolicy = normalizeDomesticPolicy(state?.domesticPolicy);
+  const domesticPolicy = normalizeDomesticPolicy(
+    state?.domesticPolicy,
+    state?.world?.heroes,
+    playerFactionId,
+  );
   const ownedCities = (state?.world?.cities ?? []).filter((city) => city.ownerFactionId === playerFactionId);
+  const chancellorHero = getActiveChancellorHero(state?.world?.heroes, domesticPolicy, playerFactionId);
+  const nationalEffects = calculateNationalDomesticEffects({ chancellorHero, domesticPolicy });
+  const cityEffectsById = {};
 
   for (const city of ownedCities) {
-    const cityIncome = calculateCityTurnIncome(city, calendar, domesticPolicy.taxLevel);
+    const governorHero = getActiveGovernorHero(city, state?.world?.heroes, playerFactionId);
+    const cityEffects = calculateCityDomesticEffects({
+      city,
+      governorHero,
+      chancellorHero,
+      domesticPolicy,
+    });
+    const cityIncome = calculateCityTurnIncome(city, calendar, domesticPolicy.taxLevel, {
+      cityEffects,
+    });
+    cityEffectsById[city.id] = {
+      cityId: city.id,
+      cityName: city.name,
+      governorHeroId: governorHero?.id ?? null,
+      governorHeroName: governorHero?.name ?? null,
+      effectSummary: buildGovernorEffectSummary(governorHero, cityEffects),
+      effects: cityEffects,
+    };
     cityIncomes.push({
       cityId: city.id,
       cityName: city.name,
+      governorHeroId: governorHero?.id ?? null,
+      effectSummary: cityEffectsById[city.id].effectSummary,
       income: cityIncome,
     });
 
@@ -401,17 +478,23 @@ export function calculatePlayerTurnIncome(state) {
   const baseTotalsAtNormalTax = {
     ...baseTotals,
     [RESOURCE_KEYS.GOLD]: ownedCities.reduce(
-      (total, city) => total + calculateCityGoldTaxIncome(city, DOMESTIC_TAX_RULES.DEFAULT_TAX_LEVEL).gold,
+      (total, city) => {
+        const normalTaxIncome = calculateCityTurnIncome(city, calendar, DOMESTIC_TAX_RULES.DEFAULT_TAX_LEVEL, {
+          cityEffects: cityEffectsById[city.id]?.effects,
+        });
+        return total + normalTaxIncome[RESOURCE_KEYS.GOLD];
+      },
       0,
     ),
   };
-  const taxedTotals = applyTaxToIncomeTotals(baseTotals, domesticPolicy.taxLevel, ownedCities);
-  const totals = applyChancellorPolicyToIncomeTotals(taxedTotals, domesticPolicy.chancellorPolicy);
+  const taxedTotals = baseTotals;
+  const policyTotals = applyChancellorPolicyToIncomeTotals(taxedTotals, domesticPolicy.chancellorPolicy);
+  const totals = applyIncomeMultipliers(policyTotals, nationalEffects);
   const tax = createTaxEffect(baseTotalsAtNormalTax, taxedTotals, domesticPolicy.taxLevel);
   const chancellorPolicy = createChancellorPolicyEffect(
     domesticPolicy.chancellorPolicy,
     taxedTotals,
-    totals,
+    policyTotals,
   );
 
   return {
@@ -423,13 +506,30 @@ export function calculatePlayerTurnIncome(state) {
     chancellorPolicy,
     cityIncomes,
     details,
+    nationalEffects: {
+      chancellorHeroId: chancellorHero?.id ?? null,
+      chancellorHeroName: chancellorHero?.name ?? null,
+      effectSummary: buildChancellorEffectSummary(chancellorHero, nationalEffects),
+      effects: nationalEffects,
+    },
+    cityEffectsById,
   };
 }
 
 export function applyTaxLoyaltyEffect(state) {
-  const domesticPolicy = normalizeDomesticPolicy(state?.domesticPolicy);
-  const loyaltyDelta = getTaxLoyaltyDelta(domesticPolicy.taxLevel);
   const playerFactionId = state?.meta?.playerFactionId ?? FACTION_IDS.PLAYER;
+  const domesticPolicy = normalizeDomesticPolicy(
+    state?.domesticPolicy,
+    state?.world?.heroes,
+    playerFactionId,
+  );
+  const loyaltyDelta = getTaxLoyaltyDelta(domesticPolicy.taxLevel);
+  const chancellorHero = getActiveChancellorHero(state?.world?.heroes, domesticPolicy, playerFactionId);
+  const nationalEffects = calculateNationalDomesticEffects({ chancellorHero, domesticPolicy });
+  const nationalLoyaltyDelta = adjustLoyaltyDelta(
+    loyaltyDelta,
+    nationalEffects.nationalLoyaltyLossMultiplier,
+  );
 
   if (loyaltyDelta === 0) {
     return {
@@ -439,36 +539,56 @@ export function applyTaxLoyaltyEffect(state) {
         lastTaxResult: {
           taxLevel: domesticPolicy.taxLevel,
           loyaltyDelta,
+          nationalLoyaltyDelta,
+          cityLoyaltyDeltas: {},
         },
       },
     };
   }
+
+  const cityLoyaltyDeltas = {};
+  const nextCities = (state?.world?.cities ?? []).map((city) => {
+    if (city.ownerFactionId !== playerFactionId) {
+      return city;
+    }
+
+    const governorHero = getActiveGovernorHero(city, state?.world?.heroes, playerFactionId);
+    const cityEffects = calculateCityDomesticEffects({
+      city,
+      governorHero,
+      chancellorHero,
+      domesticPolicy,
+    });
+    const cityLoyaltyDelta = adjustLoyaltyDelta(
+      loyaltyDelta,
+      cityEffects.cityLoyaltyLossMultiplier,
+    );
+    cityLoyaltyDeltas[city.id] = cityLoyaltyDelta;
+
+    return {
+      ...city,
+      [LOYALTY_KEYS.CITY]: clamp((city[LOYALTY_KEYS.CITY] ?? city.loyalty ?? 75) + cityLoyaltyDelta, 0, 100),
+    };
+  });
 
   return {
     ...state,
     meta: {
       ...state.meta,
       [LOYALTY_KEYS.NATIONAL]: clamp(
-        (state?.meta?.[LOYALTY_KEYS.NATIONAL] ?? 75) + loyaltyDelta,
+        (state?.meta?.[LOYALTY_KEYS.NATIONAL] ?? 75) + nationalLoyaltyDelta,
         0,
         100,
       ),
     },
     world: {
       ...state.world,
-      cities: (state?.world?.cities ?? []).map((city) => {
-        if (city.ownerFactionId !== playerFactionId) {
-          return city;
-        }
-
-        return {
-          ...city,
-          [LOYALTY_KEYS.CITY]: clamp((city[LOYALTY_KEYS.CITY] ?? city.loyalty ?? 75) + loyaltyDelta, 0, 100),
-        };
-      }),
+      cities: nextCities,
       lastTaxResult: {
         taxLevel: domesticPolicy.taxLevel,
         loyaltyDelta,
+        nationalLoyaltyDelta,
+        cityLoyaltyDeltas,
       },
     },
   };
@@ -497,13 +617,17 @@ export function calculateHeroUpkeep(heroes = [], side = FACTION_IDS.PLAYER) {
   };
 }
 
-export function applyChancellorPolicyToHeroUpkeep(upkeep, policy) {
+export function applyChancellorPolicyToHeroUpkeep(upkeep, policy, nationalEffects = {}) {
   const effect = getChancellorPolicyEffect(policy);
   const cost = Object.fromEntries(
-    Object.entries(upkeep?.cost ?? {}).map(([resourceKey, amount]) => [
-      resourceKey,
-      roundResourceAmount(amount * effect.heroUpkeepMultiplier),
-    ]),
+    Object.entries(upkeep?.cost ?? {}).map(([resourceKey, amount]) => {
+      const multiplier = effect.heroUpkeepMultiplier * (nationalEffects.heroUpkeepMultiplier ?? 1);
+
+      return [
+        resourceKey,
+        roundDiscountedAmount(amount, multiplier),
+      ];
+    }),
   );
 
   return {
@@ -511,13 +635,20 @@ export function applyChancellorPolicyToHeroUpkeep(upkeep, policy) {
     baseCost: upkeep?.cost ?? {},
     cost,
     chancellorPolicy: normalizeChancellorPolicy(policy),
+    nationalEffects,
   };
 }
 
-export function applyHeroUpkeep(resources, heroes = [], side = FACTION_IDS.PLAYER, chancellorPolicy = null) {
+export function applyHeroUpkeep(
+  resources,
+  heroes = [],
+  side = FACTION_IDS.PLAYER,
+  chancellorPolicy = null,
+  nationalEffects = {},
+) {
   const baseUpkeep = calculateHeroUpkeep(heroes, side);
   const upkeep = chancellorPolicy
-    ? applyChancellorPolicyToHeroUpkeep(baseUpkeep, chancellorPolicy)
+    ? applyChancellorPolicyToHeroUpkeep(baseUpkeep, chancellorPolicy, nationalEffects)
     : baseUpkeep;
   const currentResources = side === FACTION_IDS.ENEMY
     ? normalizeEnemyResourceStock(resources)
@@ -567,13 +698,17 @@ export function calculateSoldierUpkeepPreview(state, side = FACTION_IDS.PLAYER) 
   };
 }
 
-export function applyChancellorPolicyToSoldierUpkeepPreview(preview, policy) {
+export function applyChancellorPolicyToSoldierUpkeepPreview(preview, policy, nationalEffects = {}) {
   const effect = getChancellorPolicyEffect(policy);
   const cost = Object.fromEntries(
-    Object.entries(preview?.cost ?? {}).map(([resourceKey, amount]) => [
-      resourceKey,
-      roundResourceAmount(amount * effect.soldierUpkeepPreviewMultiplier),
-    ]),
+    Object.entries(preview?.cost ?? {}).map(([resourceKey, amount]) => {
+      const multiplier = effect.soldierUpkeepPreviewMultiplier * (nationalEffects.soldierUpkeepPreviewMultiplier ?? 1);
+
+      return [
+        resourceKey,
+        roundDiscountedAmount(amount, multiplier),
+      ];
+    }),
   );
 
   return {
@@ -581,10 +716,15 @@ export function applyChancellorPolicyToSoldierUpkeepPreview(preview, policy) {
     baseCost: preview?.cost ?? {},
     cost,
     chancellorPolicy: normalizeChancellorPolicy(policy),
+    nationalEffects,
   };
 }
 
-export function calculateSaltPreservationNeed(resources = {}, policy = CHANCELLOR_POLICY_KEYS.BALANCED) {
+export function calculateSaltPreservationNeed(
+  resources = {},
+  policy = CHANCELLOR_POLICY_KEYS.BALANCED,
+  nationalEffects = {},
+) {
   const stock = normalizeResourceStock(resources);
   const baseNeeded = Math.ceil(
     ((stock[RESOURCE_KEYS.RICE] ?? 0) + (stock[RESOURCE_KEYS.BARLEY] ?? 0))
@@ -594,6 +734,7 @@ export function calculateSaltPreservationNeed(resources = {}, policy = CHANCELLO
   const needed = applyChancellorPolicyToSaltPreservationNeed(
     { needed: baseNeeded, currentSalt: stock[RESOURCE_KEYS.SALT] ?? 0 },
     policy,
+    nationalEffects,
   ).needed;
   const currentSalt = stock[RESOURCE_KEYS.SALT] ?? 0;
 
@@ -604,12 +745,17 @@ export function calculateSaltPreservationNeed(resources = {}, policy = CHANCELLO
     status: currentSalt >= needed ? "안정" : "부족",
     applied: false,
     chancellorPolicy: normalizeChancellorPolicy(policy),
+    nationalEffects,
   };
 }
 
-export function applyChancellorPolicyToSaltPreservationNeed(saltNeed, policy) {
+export function applyChancellorPolicyToSaltPreservationNeed(saltNeed, policy, nationalEffects = {}) {
   const effect = getChancellorPolicyEffect(policy);
-  const needed = Math.max(0, Math.ceil((saltNeed?.needed ?? 0) * effect.saltPreservationMultiplier));
+  const needed = Math.max(0, Math.ceil(
+    (saltNeed?.needed ?? 0)
+    * effect.saltPreservationMultiplier
+    * (nationalEffects.saltPreservationMultiplier ?? 1),
+  ));
   const currentSalt = saltNeed?.currentSalt ?? 0;
 
   return {
@@ -620,6 +766,7 @@ export function applyChancellorPolicyToSaltPreservationNeed(saltNeed, policy) {
     status: currentSalt >= needed ? "안정" : "부족",
     applied: false,
     chancellorPolicy: normalizeChancellorPolicy(policy),
+    nationalEffects,
   };
 }
 
@@ -644,12 +791,19 @@ export function getWarehouseStatus(resources = {}) {
 
 export function applyTurnUpkeep(state) {
   const playerFactionId = state?.meta?.playerFactionId ?? FACTION_IDS.PLAYER;
-  const domesticPolicy = normalizeDomesticPolicy(state?.domesticPolicy);
+  const domesticPolicy = normalizeDomesticPolicy(
+    state?.domesticPolicy,
+    state?.world?.heroes,
+    playerFactionId,
+  );
+  const chancellorHero = getActiveChancellorHero(state?.world?.heroes, domesticPolicy, playerFactionId);
+  const nationalEffects = calculateNationalDomesticEffects({ chancellorHero, domesticPolicy });
   const playerResult = applyHeroUpkeep(
     state?.resources,
     state?.world?.heroes,
     playerFactionId,
     domesticPolicy.chancellorPolicy,
+    nationalEffects,
   );
   const enemyResult = applyHeroUpkeep(state?.enemyResources, state?.world?.heroes, FACTION_IDS.ENEMY);
   const nextState = {
@@ -671,10 +825,21 @@ export function applyTurnUpkeep(state) {
           player: applyChancellorPolicyToSoldierUpkeepPreview(
             calculateSoldierUpkeepPreview(nextState, playerFactionId),
             domesticPolicy.chancellorPolicy,
+            nationalEffects,
           ),
           enemy: calculateSoldierUpkeepPreview(nextState, FACTION_IDS.ENEMY),
         },
-        saltPreservation: calculateSaltPreservationNeed(playerResult.resources, domesticPolicy.chancellorPolicy),
+        saltPreservation: calculateSaltPreservationNeed(
+          playerResult.resources,
+          domesticPolicy.chancellorPolicy,
+          nationalEffects,
+        ),
+        nationalEffects: {
+          chancellorHeroId: chancellorHero?.id ?? null,
+          chancellorHeroName: chancellorHero?.name ?? null,
+          effectSummary: buildChancellorEffectSummary(chancellorHero, nationalEffects),
+          effects: nationalEffects,
+        },
       },
     },
   };
