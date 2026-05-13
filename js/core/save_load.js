@@ -8,12 +8,12 @@ import {
   normalizeEnemyResourceStock,
   normalizeResourceStock,
 } from "./domestic_income.js";
-import { initializeCityDomesticData } from "./world_rules.js";
+import { getDefaultFactionIdForCity, initializeCityDomesticData } from "./world_rules.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
-const SAVE_KEY = "samwar.save.v0.5-3c";
-const LEGACY_SAVE_KEYS = Object.freeze(["samwar.save.v0.5-3b", "samwar.save.v0.5-1h"]);
-const SAVE_VERSION = "v0.5-3c";
+const SAVE_KEY = "samwar.save.v0.5-6";
+const LEGACY_SAVE_KEYS = Object.freeze(["samwar.save.v0.5-5a", "samwar.save.v0.5-5", "samwar.save.v0.5-4c", "samwar.save.v0.5-4b", "samwar.save.v0.5-4", "samwar.save.v0.5-3c", "samwar.save.v0.5-3b", "samwar.save.v0.5-1h"]);
+const SAVE_VERSION = "v0.5-6";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {
@@ -27,6 +27,14 @@ function getSaveKeys() {
   return [SAVE_KEY, ...LEGACY_SAVE_KEYS];
 }
 
+function normalizeLegacyHeroSide(savedHero) {
+  if (savedHero?.side !== "enemy") {
+    return savedHero?.side;
+  }
+
+  return getDefaultFactionIdForCity(savedHero?.locationCityId, "enemy");
+}
+
 function hydrateCanonicalHeroes(savedHeroes) {
   if (!Array.isArray(savedHeroes)) {
     return canonicalHeroes;
@@ -36,7 +44,10 @@ function hydrateCanonicalHeroes(savedHeroes) {
     const canonicalHero = canonicalHeroes.find((hero) => hero.id === savedHero?.id);
 
     if (canonicalHero) {
-      Object.assign(canonicalHero, savedHero);
+      Object.assign(canonicalHero, {
+        ...savedHero,
+        side: normalizeLegacyHeroSide(savedHero),
+      });
     }
   }
 
@@ -118,7 +129,10 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
       lastUpkeepResult: savedWorld.lastUpkeepResult ?? null,
       lastTaxResult: savedWorld.lastTaxResult ?? null,
       lastCityLoyaltyResult: savedWorld.lastCityLoyaltyResult ?? null,
+      lastRecruitmentAction: savedWorld.lastRecruitmentAction ?? null,
       lastRecruitmentResult: savedWorld.lastRecruitmentResult ?? null,
+      lastBattleTroopResult: savedWorld.lastBattleTroopResult ?? null,
+      lastWoundedRecoveryResult: savedWorld.lastWoundedRecoveryResult ?? null,
     },
   };
 }
@@ -158,7 +172,10 @@ export function createSaveSnapshot(state = gameStore.getState()) {
         lastUpkeepResult: world.lastUpkeepResult ?? null,
         lastTaxResult: world.lastTaxResult ?? null,
         lastCityLoyaltyResult: world.lastCityLoyaltyResult ?? null,
+        lastRecruitmentAction: world.lastRecruitmentAction ?? null,
         lastRecruitmentResult: world.lastRecruitmentResult ?? null,
+        lastBattleTroopResult: world.lastBattleTroopResult ?? null,
+        lastWoundedRecoveryResult: world.lastWoundedRecoveryResult ?? null,
       },
     },
   };

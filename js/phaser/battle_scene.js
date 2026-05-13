@@ -73,6 +73,25 @@ function formatStatusList(unit) {
   return statuses.length > 0 ? statuses.join(" · ") : "상태 이상 없음";
 }
 
+function getDisplayTroops(unit) {
+  const initialAllocatedTroops = Math.max(0, Number(unit?.initialAllocatedTroops ?? unit?.allocatedTroops) || 0);
+
+  if (initialAllocatedTroops <= 0) {
+    return {
+      current: Math.max(0, Number(unit?.troops) || 0),
+      max: Math.max(0, Number(unit?.maxTroops) || 0),
+    };
+  }
+
+  const maxHp = Math.max(1, Number(unit?.maxHp) || 1);
+  const hpRatio = Math.max(0, Math.min(1, (Number(unit?.hp) || 0) / maxHp));
+
+  return {
+    current: Math.floor(initialAllocatedTroops * hpRatio),
+    max: initialAllocatedTroops,
+  };
+}
+
 const STATUS_ICON_CONVENTION = {
   attackBuff: "▲",
   attackDebuff: "▼",
@@ -264,6 +283,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       }
 
       this.battleState.units.forEach((unit) => {
+        const displayTroops = getDisplayTroops(unit);
         const portraitPath = this.getBattlefieldPortraitPath(unit);
 
         if (!portraitPath) {
@@ -727,6 +747,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         }
 
         const unitPoint = this.getUnitPoint(unit);
+        const displayTroops = getDisplayTroops(unit);
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
         unitGroup.setDepth(200 + this.getDepthForGridPosition(unit.x, unit.y));
@@ -742,7 +763,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           stroke: "#081018",
           strokeThickness: 3,
         }).setOrigin(0.5, 0.5);
-        const hpText = this.add.text(0, 54, `${unit.troops} / ${unit.maxTroops}`, {
+        const hpText = this.add.text(0, 54, `${displayTroops.current} / ${displayTroops.max}`, {
           color: "#eef5ff",
           fontFamily: "Segoe UI, sans-serif",
           fontSize: "15px",
@@ -752,7 +773,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           strokeThickness: 3,
         }).setOrigin(0.5, 0.5);
         const hpBarTrack = this.add.rectangle(0, 40, 90, 5, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
-        const hpRatio = unit.maxTroops > 0 ? Math.max(0, unit.troops) / unit.maxTroops : 0;
+        const hpRatio = displayTroops.max > 0 ? Math.max(0, displayTroops.current) / displayTroops.max : 0;
         const hpBarFill = this.add.rectangle(
           -45 + (90 * hpRatio) / 2,
           40,
@@ -967,7 +988,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       const selectedUnit = this.battleState.units.find((unit) => unit.id === this.battleState.selectedUnitId) ?? null;
       const selectedSkill = selectedUnit ? getSkillById(this.battleState.skills, selectedUnit.skillId) : null;
       const summaryLine = selectedUnit
-        ? `${selectedUnit.name} | 병력 ${selectedUnit.troops}/${selectedUnit.maxTroops} | 공격 ${Math.round(getEffectiveAttack(selectedUnit))} | 방어 ${Math.round(getEffectiveDefense(selectedUnit))} | 지력 ${selectedUnit.intelligence} | 방향 ${getDirectionLabel(selectedUnit.facing)}`
+        ? `${selectedUnit.name} | 병력 ${getDisplayTroops(selectedUnit).current}/${getDisplayTroops(selectedUnit).max} | 공격 ${Math.round(getEffectiveAttack(selectedUnit))} | 방어 ${Math.round(getEffectiveDefense(selectedUnit))} | 지력 ${selectedUnit.intelligence} | 방향 ${getDirectionLabel(selectedUnit.facing)}`
         : "유닛을 선택하세요";
       const summaryHelp = !selectedUnit
         ? "이동 · 공격 · 특기 · 책략 · 방어 · 대기"

@@ -1,7 +1,23 @@
 export const FACTION_IDS = Object.freeze({
   PLAYER: "player",
-  ENEMY: "enemy",
+  ENEMY: "enemy", // legacy aggregate id for old saves / enemy-wide UI summaries
+  LUOYANG: "luoyang_faction",
+  PYEONGYANG: "pyeongyang_faction",
+  KYOTO: "kyoto_faction",
 });
+
+export const FACTION_HOME_CITY_IDS = Object.freeze({
+  [FACTION_IDS.PLAYER]: "hanseong",
+  [FACTION_IDS.LUOYANG]: "luoyang",
+  [FACTION_IDS.PYEONGYANG]: "pyeongyang",
+  [FACTION_IDS.KYOTO]: "kyoto",
+});
+
+export const LEGACY_ENEMY_FACTION_IDS = Object.freeze([
+  FACTION_IDS.LUOYANG,
+  FACTION_IDS.PYEONGYANG,
+  FACTION_IDS.KYOTO,
+]);
 
 export const DOMESTIC_STAT_KEYS = Object.freeze({
   PUBLIC_SUPPORT: "publicSupport",
@@ -123,7 +139,7 @@ export const INITIAL_RESOURCE_STOCK = Object.freeze({
   [RESOURCE_KEYS.HORSES]: 30,
   [RESOURCE_KEYS.SILK]: 30,
   [RESOURCE_KEYS.SALT]: 50,
-  [RESOURCE_KEYS.GOLD]: 200,
+  [RESOURCE_KEYS.GOLD]: 500,
 });
 
 export const INITIAL_ENEMY_RESOURCE_STOCK = Object.freeze({
@@ -287,4 +303,25 @@ export const CHANCELLOR_TYPE_DESCRIPTIONS = Object.freeze({
   [CHANCELLOR_STAT_KEYS.ADMINISTRATIVE]: "창고·유지비·분배·실행 효율에 강한 재상",
   [CHANCELLOR_STAT_KEYS.DIPLOMATIC]: "무역·화친·협상·외부 거래에 강한 재상",
   [CHANCELLOR_STAT_KEYS.MILITARY_ADMIN]: "군량·병력 운용·영웅/병사 유지·군사 동원에 강한 재상",
+});
+
+export const COMMAND_RANK_KEYS = Object.freeze({
+  GOVERNOR: "governor",
+  GENERAL: "general",
+  LIEUTENANT: "lieutenant",
+  OFFICER: "officer",
+});
+
+export const COMMAND_RANK_LABELS = Object.freeze({
+  [COMMAND_RANK_KEYS.GOVERNOR]: "태수",
+  [COMMAND_RANK_KEYS.GENERAL]: "장군",
+  [COMMAND_RANK_KEYS.LIEUTENANT]: "부장",
+  [COMMAND_RANK_KEYS.OFFICER]: "군관",
+});
+
+export const COMMAND_RANK_LIMITS = Object.freeze({
+  [COMMAND_RANK_KEYS.GOVERNOR]: 10000,
+  [COMMAND_RANK_KEYS.GENERAL]: 8000,
+  [COMMAND_RANK_KEYS.LIEUTENANT]: 6000,
+  [COMMAND_RANK_KEYS.OFFICER]: 5000,
 });

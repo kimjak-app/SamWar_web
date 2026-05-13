@@ -3,6 +3,7 @@ import { heroes } from "../../data/heroes.js";
 import {
   CITY_TYPES,
   DOMESTIC_STAT_KEYS,
+  FACTION_HOME_CITY_IDS,
   FACTION_IDS,
   GOVERNOR_POLICY_KEYS,
   RESOURCE_KEYS,
@@ -11,6 +12,32 @@ import {
 
 export function getFactionById(factions, factionId) {
   return factions.find((faction) => faction.id === factionId) ?? null;
+}
+
+export function isPlayerFactionId(factionId, playerFactionId = FACTION_IDS.PLAYER) {
+  return factionId === playerFactionId;
+}
+
+export function isEnemyFactionId(factionId, playerFactionId = FACTION_IDS.PLAYER) {
+  return Boolean(factionId) && factionId !== playerFactionId;
+}
+
+export function getDefaultFactionIdForCity(cityId, fallbackFactionId = FACTION_IDS.PLAYER) {
+  if (!cityId) {
+    return fallbackFactionId;
+  }
+
+  return Object.entries(FACTION_HOME_CITY_IDS)
+    .find(([, homeCityId]) => homeCityId === cityId)?.[0]
+    ?? fallbackFactionId;
+}
+
+export function normalizeCityOwnerFactionId(city) {
+  if (city?.ownerFactionId === FACTION_IDS.ENEMY) {
+    return getDefaultFactionIdForCity(city.id, FACTION_IDS.ENEMY);
+  }
+
+  return city?.ownerFactionId ?? getDefaultFactionIdForCity(city?.id, FACTION_IDS.PLAYER);
 }
 
 export const ENEMY_INVASION_CHANCE = 0.45;
@@ -45,9 +72,72 @@ const defaultCityYields = {
 };
 
 export const defaultCityMilitary = {
+  garrisonTroops: 0,
   recruitableTroops: 0,
   foodStatus: "준비 중",
   securityStatus: "병력 기반 계산 예정",
+  defenseRating: 0,
+  securityRequiredTroops: 500,
+  optimalTroopRatio: 0.30,
+  maxTroopRatio: 0.50,
+  woundedQueue: [],
+};
+
+const cityPopulationPresets = {
+  hanseong: 50000,
+  luoyang: 80000,
+  pyeongyang: 42000,
+  kyoto: 45000,
+};
+
+
+const cityGovernorPresets = {
+  luoyang: "guan_yu",
+  pyeongyang: "gwanggaeto",
+  kyoto: "nobunaga",
+};
+
+const cityMilitaryPresets = {
+  hanseong: {
+    garrisonTroops: 300,
+    recruitableTroops: 120,
+    foodStatus: "안정",
+    securityStatus: "안정",
+    defenseRating: 3,
+    securityRequiredTroops: 500,
+    optimalTroopRatio: 0.30,
+    maxTroopRatio: 0.50,
+  },
+  luoyang: {
+    garrisonTroops: 420,
+    recruitableTroops: 180,
+    foodStatus: "안정",
+    securityStatus: "안정",
+    defenseRating: 4,
+    securityRequiredTroops: 1000,
+    optimalTroopRatio: 0.30,
+    maxTroopRatio: 0.50,
+  },
+  pyeongyang: {
+    garrisonTroops: 280,
+    recruitableTroops: 140,
+    foodStatus: "안정",
+    securityStatus: "안정",
+    defenseRating: 3,
+    securityRequiredTroops: 500,
+    optimalTroopRatio: 0.30,
+    maxTroopRatio: 0.50,
+  },
+  kyoto: {
+    garrisonTroops: 240,
+    recruitableTroops: 130,
+    foodStatus: "안정",
+    securityStatus: "안정",
+    defenseRating: 3,
+    securityRequiredTroops: 500,
+    optimalTroopRatio: 0.30,
+    maxTroopRatio: 0.50,
+  },
 };
 
 function normalizeGovernorPolicy(policy) {
@@ -61,7 +151,7 @@ export function isPlayerCity(city) {
 }
 
 export function isEnemyCity(city) {
-  return city?.ownerFactionId === FACTION_IDS.ENEMY;
+  return isEnemyFactionId(city?.ownerFactionId);
 }
 
 export function canAttackCity(cities, targetCity) {
@@ -132,10 +222,12 @@ export function occupyCity(cities, cityId, ownerFactionId = FACTION_IDS.PLAYER) 
 export function initializeCityDomesticData(cities) {
   return cities.map((city) => ({
     ...city,
+    ownerFactionId: normalizeCityOwnerFactionId(city),
     type: city.type ?? CITY_TYPES.PRODUCTION_CITY,
+    population: Number.isFinite(city.population) ? city.population : (cityPopulationPresets[city.id] ?? 30000),
     commerceRating: city.commerceRating ?? 3,
     cityLoyalty: city.cityLoyalty ?? 75,
-    governorHeroId: city.governorHeroId ?? null,
+    governorHeroId: city.governorHeroId ?? (normalizeCityOwnerFactionId(city) === FACTION_IDS.PLAYER ? null : (cityGovernorPresets[city.id] ?? null)),
     governorPolicy: normalizeGovernorPolicy(city.governorPolicy),
     domestic: {
       ...defaultCityDomestic,
@@ -154,7 +246,9 @@ export function initializeCityDomesticData(cities) {
     },
     military: {
       ...defaultCityMilitary,
+      ...(cityMilitaryPresets[city.id] ?? {}),
       ...(city.military ?? {}),
+      woundedQueue: Array.isArray(city.military?.woundedQueue) ? city.military.woundedQueue : [],
     },
   }));
 }
@@ -184,12 +278,22 @@ export function initializeHeroLocationsFromRosters() {
 
 export function getHeroIdsBySideAndLocation(cityId, factionId) {
   return heroes
-    .filter((hero) => hero.side === factionId && hero.locationCityId === cityId)
+    .filter((hero) => {
+      const matchesFaction = factionId === FACTION_IDS.ENEMY
+        ? isEnemyFactionId(hero.side)
+        : hero.side === factionId;
+      return matchesFaction && hero.locationCityId === cityId;
+    })
     .map((hero) => hero.id);
 }
 
 export function getTransferableHeroesFromCity(cityId, factionId = FACTION_IDS.PLAYER) {
-  return heroes.filter((hero) => hero.side === factionId && hero.locationCityId === cityId);
+  return heroes.filter((hero) => {
+    const matchesFaction = factionId === FACTION_IDS.ENEMY
+      ? isEnemyFactionId(hero.side)
+      : hero.side === factionId;
+    return matchesFaction && hero.locationCityId === cityId;
+  });
 }
 
 export function getFactionOwnedDestinationCities(cities, factionId = FACTION_IDS.PLAYER, excludeCityId = null) {

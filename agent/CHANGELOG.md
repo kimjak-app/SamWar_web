@@ -1,5 +1,143 @@
 # Changelog
 
+## v0.5-6-final - Handoff Document Cleanup
+- Marked `v0.5-6 Faction Identity Scaffold` as the current handoff baseline.
+- Clarified that faction-color/button-color differentiation is deferred to a later world map visual update.
+- Added `v0.5-7 Trade Route MVP` as the next major target.
+- Trade MVP scope is internal same-faction city trade first; diplomacy/external treaties/espionage remain out of scope.
+- Refreshed handoff, current state, next tasks, QA checklist, changelog, and session log for the next chat.
+
+
+## v0.5-5a Troop Allocation Stabilization Patch
+- Stabilized troop allocation around `allocatedTroops` as battle troop truth.
+- Removed `hero.troops` from default deployment allocation.
+- Default allocation now uses source city garrison and command limits.
+- Direct defense now opens the defense deployment/allocation modal instead of entering battle immediately.
+- Auto defense still skips manual UI but uses defender city garrison for automatic allocation.
+- Enemy units now receive source-city garrison based allocations.
+- Enemy source garrison is deducted at battle start for allocated enemy troops.
+- Battle UI and Phaser display current/max troop labels from allocated troops:
+  - `current = floor(initialAllocatedTroops * hp / maxHp)`
+  - `max = initialAllocatedTroops`
+- Tactical `hp/maxHp` remains on the existing battle scale.
+- Recruitment batch increased from 50 to 500.
+- 500 recruits cost 금전 300 / 보리 200 / 쌀 150.
+- Military UI removed stationed hero troop total.
+- Military UI removed the obsolete "city garrison is not used in battle yet" note.
+- Wounded UI now shows wounded total only.
+- Save version advanced to `v0.5-5a`.
+- No troop types, troop-type UI, Phaser Scene overhaul, battle map/skill/AI overhaul, diplomacy/intelligence/trade, direct rule, rebellion/riot, `hero.troops` removal, or hard save break.
+
+## v0.5-5 Troop Allocation + Casualty + Wounded Recovery MVP
+- Added command rank constants:
+  - 태수 10,000
+  - 장군 8,000
+  - 부장 6,000
+  - 군관 5,000
+- Added `hero.commandRank` to hero data.
+- Governors are treated as 태수 dynamically for the selected/source city.
+- Added troop allocation sliders to the deployment modal.
+- Deployment now tracks source garrison, allocated troops, and remaining garrison.
+- Battle start deducts allocated troops from source city `garrisonTroops`.
+- Battle state now records `troopAllocation`.
+- Battle units now carry `allocatedTroops` and `initialAllocatedTroops`.
+- Existing battle `hp/maxHp` scale remains unchanged.
+- Added survivor calculation from battle HP ratio.
+- Victory handling:
+  - survivors return immediately
+  - 30% of losses become wounded
+  - remaining losses are dead/missing
+- Defeat handling:
+  - no immediate survivor return
+  - 50% of allocated sortie troops become wounded
+  - remaining troops are dead/missing
+- Added `city.military.woundedQueue`.
+- Added 3-turn wounded recovery into player turn-end flow.
+- Military UI now shows wounded total and recovery horizon.
+- Save version advanced to `v0.5-5` and preserves `v0.5-4c`, `v0.5-4b`, `v0.5-4`, `v0.5-3c`, `v0.5-3b`, and `v0.5-1h` as legacy load keys.
+- No troop types, troop-type UI, Phaser Scene overhaul, battle map/skill/AI overhaul, diplomacy/intelligence/trade, direct rule, rebellion/riot, or window compatibility reintroduction.
+
+## v0.5-4c Population-Based Recruitment Ratio Refactor
+- Added explicit city population values:
+  - Hanseong: 50,000
+  - Luoyang: 80,000
+  - Pyongyang: 42,000
+  - Kyoto: 45,000
+- Kept `populationRating` as the existing tax/economy abstraction.
+- Added city military fields:
+  - `securityRequiredTroops`
+  - `optimalTroopRatio`
+  - `maxTroopRatio`
+- Added recruitment ratio calculation:
+  - `garrisonTroops / population`
+- Added recruitment ratio UI bar.
+- Added recruitment ratio tiers:
+  - `0..30%`: 균형
+  - `30..35%`: 확장
+  - `35..40%`: 부담
+  - `40..45%`: 위험
+  - `45..50%`: 한계
+  - `50%+`: 모집 불가
+- Mobilizable population is intentionally not displayed in UI.
+- Recruitment availability now centers on population cap:
+  - `floor(population * maxTroopRatio) - garrisonTroops`
+- `recruitableTroops` remains for legacy/save compatibility but is no longer the core UI/cap source.
+- Security now uses each city's `securityRequiredTroops` threshold.
+- Military burden/overcrowding now affects next-turn city-loyalty drift reasons and delta only.
+- Recruitment still does not directly change city loyalty.
+- Save version advanced to `v0.5-4c` and preserves `v0.5-4b`, `v0.5-4`, `v0.5-3c`, `v0.5-3b`, and `v0.5-1h` as legacy load keys.
+- Explicitly deferred v0.5-5 Troop Allocation + Casualty + Wounded Recovery MVP:
+  - add role-based command limits: 태수 10,000 / 장군 8,000 / 부장 6,000 / 군관 5,000
+  - allocate city garrison troops to sortie heroes
+  - use horizontal bars/sliders for per-hero troop assignment
+  - create battle units from allocated troops
+  - return surviving troops after battle
+  - convert 30% of losses to wounded soldiers on victory
+  - convert 50% of sortie troops to wounded soldiers on defeat
+  - return wounded soldiers to city garrison after roughly 3 turns/months
+- No sortie troop allocation, battle unit structure change, hero troop removal, post-battle troop return, troop types, defense formula changes, Phaser Scene changes, battle logic changes, diplomacy/intelligence/real trade, direct rule, or window compatibility reintroduction.
+
+## v0.5-4b Recruitment MVP
+- Added city soldier recruitment MVP.
+- Recruitment increases `city.military.garrisonTroops`.
+- Recruitment decreases `city.military.recruitableTroops`.
+- Recruitment spends player resources.
+- Added fixed MVP recruitment button:
+  - historical initial button was `병사 50 모집`
+  - superseded by v0.5-5a `병사 500 모집`
+- Recruitment cost scales by amount from the 50-soldier base:
+  - 금전 30
+  - 보리 20
+  - 쌀 15
+- Added immutable state transition `recruitCityTroops(appState, cityId, amount)`.
+- Added UI event wiring through `world_map_ui.js` and `main.js`.
+- Added compact success/failure messages through the existing HUD message field.
+- Added `world.lastRecruitmentAction` and mirrored the action to `world.lastRecruitmentResult`.
+- Save version advanced to `v0.5-4b` and preserves `v0.5-4`, `v0.5-3c`, `v0.5-3b`, and `v0.5-1h` as legacy load keys.
+- Recruitment has no direct city-loyalty change.
+- Recruitment can indirectly improve later security/city-loyalty drift by increasing garrison troops.
+- No `hero.troops` increase, `hero.maxTroops` increase, battle-unit troop reflection, garrison battle participation, troop types, troop-type UI, battle logic changes, Phaser Scene changes, defense formula changes, rebellion, diplomacy, intelligence, real trade, direct rule, or window compatibility reintroduction.
+
+## v0.5-4 Military Model Scaffold
+- Added `city.military.garrisonTroops`.
+- Added `city.military.defenseRating`.
+- Added four-city MVP military presets in `data/cities.js`.
+- Extended city military normalization so old saves and old city data receive missing military fields safely.
+- Separated responsibilities:
+  - `hero.troops` / `hero.maxTroops`: battle-participating hero troops, unchanged.
+  - `city.military.garrisonTroops`: city garrison for security/defense preview, not battle.
+  - `city.military.recruitableTroops`: recruitment preview pool, no recruitment UI or spending.
+- Changed security calculation from stationed hero troop total to city-garrison-centered scoring:
+  - `garrisonTroops + stationedHeroTroops * 0.3`
+  - stable/caution/unstable thresholds are `250 / 120 / below`.
+- Stationed hero troops now support security but no longer define it alone.
+- City loyalty drift continues to consume the shared security result.
+- Military UI now displays city garrison, stationed hero troops, recruitable troops, food status, security status, and defense rating separately.
+- Soldier upkeep preview now includes `heroTroopCount`, `garrisonTroopCount`, and combined `troopCount`.
+- World HUD soldier upkeep preview now labels the hero troop plus city garrison basis and remains 미차감.
+- Save version advanced to `v0.5-4` and preserves `v0.5-3c`, `v0.5-3b`, and `v0.5-1h` as legacy load keys.
+- No soldier recruitment, recruitment button, troop types, actual soldier increase/decrease, garrison battle participation, battle troop persistence, Phaser Scene changes, battle logic changes, rebellion, diplomacy, intelligence, real trade, direct rule, or window compatibility reintroduction.
+
 ## v0.5-3c City Loyalty + Security/Economy Drift
 - Added city loyalty drift to the turn-end domestic flow.
 - City loyalty now changes from:
@@ -547,3 +685,19 @@
 - Skill title and effect text use Gothic/sans-serif.
 - Increased all unique skill cut-in durations from `1400ms` to `2200ms`.
 - Added central unique skill fallback duration of `2200ms`.
+
+## v0.5-5b - Attack/Defense Empty Battlefield Common Battle Unit Render Fix
+- Fixed a common Phaser render regression where attack/defense battles entered an empty battlefield after v0.5-5a.
+- Root cause: `renderUnits()` used `displayTroops` without defining it after the allocatedTroops display refactor.
+- Restored unit rendering by deriving `displayTroops = getDisplayTroops(unit)` inside each unit render loop.
+- Confirmed attack/defense battle units are generated with allocatedTroops while hp/maxHp remain legacy battle-balance values.
+
+
+## v0.5-6 - Faction Identity Scaffold
+- Added explicit faction ids for 낙양/평양/교토 instead of treating every opponent city as one generic `enemy`.
+- Updated initial city ownership and enemy hero side values to native faction ids.
+- Kept battle side compatibility by mapping all non-player factions to battle-side `enemy` during battle unit creation.
+- Updated enemy attack allocation to use the source city owner faction.
+- Updated occupation paths so enemy conquests preserve the actual conquering faction id.
+- Added scaffold chancellor/governor metadata for enemy factions/cities without implementing full enemy domestic AI.
+- Updated save/load version and legacy normalization for old generic `enemy` saves.

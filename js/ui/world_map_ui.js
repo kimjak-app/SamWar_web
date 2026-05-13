@@ -7,6 +7,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onBattleChoiceConfirm,
     onBattleChoiceCancel,
     onHeroDeploymentToggle,
+    onHeroDeploymentTroopsChange,
     onHeroDeploymentStart,
     onHeroDeploymentCancel,
     onHeroTransferOpen,
@@ -20,6 +21,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onChancellorPolicyChange,
     onGovernorHeroChange,
     onGovernorPolicyChange,
+    onRecruitTroops,
     onConfirmEnemyTurnResult,
     onSaveGame,
     onLoadGame,
@@ -86,6 +88,17 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     });
   }
 
+  if (onHeroDeploymentTroopsChange) {
+    rootElement.querySelectorAll("[data-deployment-troops-hero-id]").forEach((element) => {
+      element.addEventListener("input", (event) => {
+        onHeroDeploymentTroopsChange({
+          heroId: event.currentTarget.getAttribute("data-deployment-troops-hero-id"),
+          amount: event.currentTarget.value,
+        });
+      });
+    });
+  }
+
   if (onHeroDeploymentStart) {
     rootElement.querySelector("[data-deployment-start-city-id]")?.addEventListener("click", (event) => {
       const cityId = event.currentTarget.getAttribute("data-deployment-start-city-id");
@@ -97,6 +110,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
       onHeroDeploymentStart({
         cityId,
         selectedHeroIds: pendingHeroDeployment.selectedHeroIds,
+        troopAllocations: pendingHeroDeployment.troopAllocations,
       });
     });
   }
@@ -199,6 +213,19 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
           governorPolicy: event.currentTarget.value,
         });
       }
+    });
+  }
+
+  if (onRecruitTroops) {
+    rootElement.querySelectorAll("[data-recruit-city-id]").forEach((element) => {
+      element.addEventListener("click", () => {
+        const cityId = element.getAttribute("data-recruit-city-id");
+        const amount = Number(element.getAttribute("data-recruit-amount"));
+
+        if (cityId) {
+          onRecruitTroops({ cityId, amount });
+        }
+      });
     });
   }
 

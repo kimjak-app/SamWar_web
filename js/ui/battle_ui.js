@@ -106,6 +106,25 @@ function renderUnitPortrait(unit, { large = false } = {}) {
   return `<div class="${fallbackClass}" aria-hidden="true">?</div>`;
 }
 
+function getDisplayTroops(unit) {
+  const initialAllocatedTroops = Math.max(0, Number(unit?.initialAllocatedTroops ?? unit?.allocatedTroops) || 0);
+
+  if (initialAllocatedTroops <= 0) {
+    return {
+      current: Math.max(0, Number(unit?.troops) || 0),
+      max: Math.max(0, Number(unit?.maxTroops) || 0),
+    };
+  }
+
+  const maxHp = Math.max(1, Number(unit?.maxHp) || 1);
+  const hpRatio = Math.max(0, Math.min(1, (Number(unit?.hp) || 0) / maxHp));
+
+  return {
+    current: Math.floor(initialAllocatedTroops * hpRatio),
+    max: initialAllocatedTroops,
+  };
+}
+
 function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = false } = {}) {
   const statusParts = [];
 
@@ -126,6 +145,7 @@ function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = fals
   const selectionAttributes = selectable
     ? ` data-battle-roster-unit-id="${unit.id}" role="button" tabindex="0" aria-label="${unit.name} 선택"`
     : "";
+  const displayTroops = getDisplayTroops(unit);
 
   return `
     <div class="battle-unit-card battle-unit-card-${unit.side} ${isSelected ? "is-selected" : ""}"${selectionAttributes}>
@@ -137,7 +157,7 @@ function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = fals
             ${isSelected ? '<span class="battle-unit-selected-chip">선택 중</span>' : ""}
           </div>
           <strong class="battle-unit-name">${unit.name}</strong>
-          <span class="battle-unit-hp">병력 ${unit.troops} / ${unit.maxTroops} · 전열 ${unit.hp} / ${unit.maxHp}</span>
+          <span class="battle-unit-hp">병력 ${displayTroops.current} / ${displayTroops.max} · 전열 ${unit.hp} / ${unit.maxHp}</span>
           <span class="battle-unit-hp">공 ${Math.round(getEffectiveAttack(unit))} · 방 ${Math.round(getEffectiveDefense(unit))} · 지력 ${unit.intelligence}</span>
           <span class="battle-unit-cooldown">방향 ${getDirectionLabel(unit.facing)}</span>
           <span class="battle-unit-buff">${statusParts.join(" · ")}</span>
@@ -233,6 +253,7 @@ function renderSelectedUnitSummary(selectedUnit, selectedSkill) {
       </div>
     `;
   }
+  const displayTroops = getDisplayTroops(selectedUnit);
 
   return `
     <div class="battle-selected-card">
@@ -240,7 +261,7 @@ function renderSelectedUnitSummary(selectedUnit, selectedSkill) {
         ${renderUnitPortrait(selectedUnit, { large: true })}
         <div class="battle-selected-copy">
           <strong class="battle-unit-name">${selectedUnit.name}</strong>
-          <span class="battle-unit-hp">병력 ${selectedUnit.troops} / ${selectedUnit.maxTroops} · 전열 ${selectedUnit.hp} / ${selectedUnit.maxHp}</span>
+          <span class="battle-unit-hp">병력 ${displayTroops.current} / ${displayTroops.max} · 전열 ${selectedUnit.hp} / ${selectedUnit.maxHp}</span>
           <span class="battle-unit-cooldown">방향 ${getDirectionLabel(selectedUnit.facing)} · 지력 ${selectedUnit.intelligence}</span>
           <span class="battle-unit-buff">${formatStatusList(selectedUnit)}</span>
         </div>

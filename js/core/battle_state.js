@@ -48,23 +48,30 @@ function getSpawnSlot(side, index) {
   return slots[index] ?? slots[slots.length - 1];
 }
 
-function buildBattleUnit(heroId, spawnPosition, facing) {
+function buildBattleUnit(heroId, spawnPosition, facing, allocatedTroops = null, battleSide = null) {
   const hero = heroes.find((entry) => entry.id === heroId);
 
   if (!hero || !spawnPosition || !facing) {
     return null;
   }
 
+  const safeAllocatedTroops = Math.max(0, Number(allocatedTroops) || 0);
+  const fallbackTroops = Math.max(0, Number(hero.troops) || 0);
+  const battleTroops = safeAllocatedTroops > 0 ? safeAllocatedTroops : fallbackTroops;
+
   return {
     id: `${hero.id}-unit`,
     heroId: hero.id,
-    side: hero.side,
+    side: battleSide ?? (hero.side === "player" ? "player" : "enemy"),
+    factionId: hero.side,
     name: hero.name,
     role: hero.role,
     hp: hero.maxHp,
     maxHp: hero.maxHp,
-    troops: hero.troops,
-    maxTroops: hero.maxTroops,
+    troops: battleTroops,
+    maxTroops: battleTroops,
+    allocatedTroops: safeAllocatedTroops,
+    initialAllocatedTroops: safeAllocatedTroops,
     power: hero.power,
     intelligence: hero.intelligence,
     attack: hero.attack,
@@ -118,7 +125,7 @@ function getPlayerRoster(attackerCity, defenderCity, battleContext, attackerHero
 
 function getEnemyRoster(attackerCity, defenderCity, battleContext) {
   const rosterCity = battleContext?.type === "defense" ? attackerCity : defenderCity;
-  return getHeroIdsBySideAndLocation(rosterCity?.id, "enemy");
+  return getHeroIdsBySideAndLocation(rosterCity?.id, rosterCity?.ownerFactionId ?? "enemy");
 }
 
 export function createInitialBattleState({
@@ -127,6 +134,7 @@ export function createInitialBattleState({
   autoBattleEnabled = false,
   battleContext = null,
   attackerHeroIds = null,
+  troopAllocation = null,
 }) {
   battleSequence += 1;
   initializeHeroLocationsFromRosters();
@@ -154,11 +162,15 @@ export function createInitialBattleState({
       heroId,
       getSpawnSlot(attackerSide, index),
       getFacingForBattleSide(attackerSide),
+      troopAllocation?.unitAllocations?.[heroId] ?? troopAllocation?.allocations?.[heroId] ?? null,
+      "player",
     )),
     ...defenderRosterUnitIds.map((heroId, index) => buildBattleUnit(
       heroId,
       getSpawnSlot(defenderSide, index),
       getFacingForBattleSide(defenderSide),
+      troopAllocation?.unitAllocations?.[heroId] ?? troopAllocation?.allocations?.[heroId] ?? null,
+      "enemy",
     )),
   ].filter(Boolean);
   const openingLog = resolvedBattleContext.type === "defense"
@@ -176,6 +188,7 @@ export function createInitialBattleState({
     defenderCityId: defenderCity.id,
     defenderCityName: defenderCity.name,
     battleContext: resolvedBattleContext,
+    troopAllocation,
     status: "active",
     turnOwner: "player",
     selectedUnitId: null,

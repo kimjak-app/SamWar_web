@@ -2,8 +2,16 @@ import { cities } from "../../data/cities.js";
 import { factions } from "../../data/factions.js";
 import { heroes } from "../../data/heroes.js";
 import { skills } from "../../data/skills.js";
-import { GOVERNOR_POLICY_KEYS, LOYALTY_KEYS } from "../constants.js";
+import {
+  COMMAND_RANK_KEYS,
+  COMMAND_RANK_LABELS,
+  COMMAND_RANK_LIMITS,
+  GOVERNOR_POLICY_KEYS,
+  LOYALTY_KEYS,
+  RESOURCE_KEYS,
+} from "../constants.js";
 import { createInitialBattleState } from "./battle_state.js";
+import { calculateRecruitmentRatioState } from "./domestic_effects.js";
 import {
   applyPlayerTurnIncome,
   applyTaxLoyaltyEffect,
@@ -34,6 +42,13 @@ import {
 
 const DEFAULT_SELECTED_CITY_ID = "hanseong";
 const GOVERNOR_POLICY_VALUES = new Set(Object.values(GOVERNOR_POLICY_KEYS));
+export const RECRUIT_TROOP_BATCH_SIZE = 500;
+const RECRUITMENT_COST_UNIT_SIZE = 50;
+const RECRUITMENT_BASE_COST = Object.freeze({
+  [RESOURCE_KEYS.GOLD]: 30,
+  [RESOURCE_KEYS.BARLEY]: 20,
+  [RESOURCE_KEYS.RICE]: 15,
+});
 const initialHeroSnapshots = heroes.map((hero) => ({
   ...hero,
   chancellorProfile: hero.chancellorProfile ? { ...hero.chancellorProfile } : hero.chancellorProfile,
@@ -60,6 +75,292 @@ function withCalendarMeta(meta) {
   return {
     ...meta,
     calendar: deriveCalendarFromTurn(turn),
+  };
+}
+
+function hasPendingWorldInteraction(appState) {
+  return Boolean(
+    appState?.pendingBattleChoice
+    || appState?.pendingHeroDeployment
+    || appState?.pendingHeroTransfer
+    || appState?.world?.pendingEnemyTurnResult
+  );
+}
+
+function hasEnoughResources(resources = {}, cost = {}) {
+  return Object.entries(cost).every(([resourceKey, amount]) => (
+    (resources?.[resourceKey] ?? 0) >= amount
+  ));
+}
+
+function subtractResourceCost(resources = {}, cost = {}) {
+  const nextResources = { ...(resources ?? {}) };
+
+  for (const [resourceKey, amount] of Object.entries(cost)) {
+    nextResources[resourceKey] = Math.max(0, (nextResources[resourceKey] ?? 0) - amount);
+  }
+
+  return nextResources;
+}
+
+function withRecruitmentMessage(appState, message) {
+  return {
+    ...appState,
+    ui: {
+      ...(appState.ui ?? {}),
+      saveMessage: message,
+    },
+  };
+}
+
+export function calculateRecruitmentCost(amount) {
+  const recruitAmount = Math.max(0, Math.round(Number(amount) || 0));
+  const costMultiplier = recruitAmount / RECRUITMENT_COST_UNIT_SIZE;
+
+  return Object.fromEntries(
+    Object.entries(RECRUITMENT_BASE_COST).map(([resourceKey, baseAmount]) => [
+      resourceKey,
+      Math.ceil(baseAmount * costMultiplier),
+    ]),
+  );
+}
+
+function normalizeCommandRank(commandRank) {
+  return Object.values(COMMAND_RANK_KEYS).includes(commandRank)
+    ? commandRank
+    : COMMAND_RANK_KEYS.OFFICER;
+}
+
+function getHeroCommandRankForCity(hero, city) {
+  return city?.governorHeroId === hero?.id
+    ? COMMAND_RANK_KEYS.GOVERNOR
+    : normalizeCommandRank(hero?.commandRank);
+}
+
+function getHeroCommandSummary(hero, city) {
+  const commandRank = getHeroCommandRankForCity(hero, city);
+
+  return {
+    commandRank,
+    commandLabel: COMMAND_RANK_LABELS[commandRank] ?? COMMAND_RANK_LABELS[COMMAND_RANK_KEYS.OFFICER],
+    commandLimit: COMMAND_RANK_LIMITS[commandRank] ?? COMMAND_RANK_LIMITS[COMMAND_RANK_KEYS.OFFICER],
+  };
+}
+
+function getCityGarrisonTroops(city) {
+  return Math.max(0, Number(city?.military?.garrisonTroops) || 0);
+}
+
+function getWoundedQueue(city) {
+  return Array.isArray(city?.military?.woundedQueue) ? city.military.woundedQueue : [];
+}
+
+function getWoundedTroopTotal(city) {
+  return getWoundedQueue(city).reduce((total, entry) => total + Math.max(0, Number(entry?.troops) || 0), 0);
+}
+
+function buildDefaultTroopAllocations(candidates = [], availableGarrison = 0) {
+  const activeCandidates = (candidates ?? []).filter((hero) => (hero?.commandLimit ?? 0) > 0);
+  const totalCommandLimit = activeCandidates.reduce((total, hero) => total + (hero.commandLimit ?? 0), 0);
+  let remainingGarrison = Math.min(Math.max(0, Number(availableGarrison) || 0), totalCommandLimit);
+  const allocations = {};
+
+  for (const hero of candidates ?? []) {
+    allocations[hero.id] = 0;
+  }
+
+  while (remainingGarrison > 0) {
+    const openCandidates = activeCandidates.filter((hero) => allocations[hero.id] < hero.commandLimit);
+
+    if (openCandidates.length === 0) {
+      break;
+    }
+
+    const share = Math.max(1, Math.ceil(remainingGarrison / openCandidates.length));
+    let assignedThisPass = 0;
+
+    for (const hero of openCandidates) {
+      const room = Math.max(0, hero.commandLimit - allocations[hero.id]);
+      const allocation = Math.min(room, share, remainingGarrison);
+
+      allocations[hero.id] += allocation;
+      assignedThisPass += allocation;
+      remainingGarrison -= allocation;
+
+      if (remainingGarrison <= 0) {
+        break;
+      }
+    }
+
+    if (assignedThisPass <= 0) {
+      break;
+    }
+  }
+
+  return allocations;
+}
+
+function buildSequentialTroopAllocations(candidates = [], availableGarrison = 0) {
+  let remainingGarrison = Math.max(0, Number(availableGarrison) || 0);
+  const allocations = {};
+
+  for (const hero of candidates ?? []) {
+    const allocation = Math.min(hero?.commandLimit ?? 0, remainingGarrison);
+    allocations[hero.id] = allocation;
+    remainingGarrison -= allocation;
+  }
+
+  return allocations;
+}
+
+function getSelectedAllocationTotal(pendingHeroDeployment) {
+  const selectedHeroIds = new Set(pendingHeroDeployment?.selectedHeroIds ?? []);
+  const allocations = pendingHeroDeployment?.troopAllocations ?? {};
+
+  return Object.entries(allocations)
+    .filter(([heroId]) => selectedHeroIds.has(heroId))
+    .reduce((total, [, amount]) => total + Math.max(0, Number(amount) || 0), 0);
+}
+
+function clampDeploymentAllocations(pendingHeroDeployment) {
+  if (!pendingHeroDeployment) {
+    return pendingHeroDeployment;
+  }
+
+  const selectedHeroIds = new Set(pendingHeroDeployment.selectedHeroIds ?? []);
+  const allocations = {};
+  let remainingGarrison = Math.max(0, Number(pendingHeroDeployment.sourceGarrisonTroops) || 0);
+
+  for (const hero of pendingHeroDeployment.candidates ?? []) {
+    if (!selectedHeroIds.has(hero.id)) {
+      allocations[hero.id] = 0;
+      continue;
+    }
+
+    const requestedAmount = Math.max(0, Number(pendingHeroDeployment.troopAllocations?.[hero.id]) || 0);
+    const allocation = Math.min(requestedAmount, hero.commandLimit ?? 0, remainingGarrison);
+    allocations[hero.id] = allocation;
+    remainingGarrison -= allocation;
+  }
+
+  return {
+    ...pendingHeroDeployment,
+    troopAllocations: allocations,
+    totalAllocatedTroops: Object.values(allocations).reduce((total, amount) => total + amount, 0),
+    remainingGarrisonTroops: remainingGarrison,
+  };
+}
+
+function addWoundedToCity(city, troops, turnsLeft = 3) {
+  const woundedTroops = Math.max(0, Math.floor(Number(troops) || 0));
+
+  if (woundedTroops <= 0) {
+    return city;
+  }
+
+  return {
+    ...city,
+    military: {
+      ...(city.military ?? {}),
+      woundedQueue: [
+        ...getWoundedQueue(city),
+        {
+          turnsLeft,
+          troops: woundedTroops,
+        },
+      ],
+    },
+  };
+}
+
+function updateCityMilitary(cities, cityId, updater) {
+  return (cities ?? []).map((city) => (
+    city.id === cityId
+      ? {
+        ...city,
+        military: updater(city.military ?? {}, city),
+      }
+      : city
+  ));
+}
+
+function findNearestPlayerOwnedNeighbor(cities = [], cityId, playerFactionId = "player") {
+  const city = cities.find((entry) => entry.id === cityId) ?? null;
+
+  if (!city) {
+    return null;
+  }
+
+  return (city.neighbors ?? [])
+    .map((neighborId) => cities.find((entry) => entry.id === neighborId))
+    .find((neighbor) => neighbor?.ownerFactionId === playerFactionId) ?? null;
+}
+
+export function calculateBattleUnitSurvivors(unit) {
+  const initialAllocatedTroops = Math.max(0, Number(unit?.initialAllocatedTroops ?? unit?.allocatedTroops) || 0);
+
+  if (initialAllocatedTroops <= 0 || unit?.isAlive === false || (Number(unit?.hp) || 0) <= 0) {
+    return 0;
+  }
+
+  const maxHp = Math.max(1, Number(unit?.maxHp) || 1);
+  const survivalRatio = Math.max(0, Math.min(1, (Number(unit?.hp) || 0) / maxHp));
+  return Math.floor(initialAllocatedTroops * survivalRatio);
+}
+
+export function calculateBattleTroopOutcome(battle, didPlayerWin) {
+  const allocation = battle?.troopAllocation ?? null;
+  const allocated = Math.max(0, Number(allocation?.totalAllocatedTroops) || 0);
+  const allocatedHeroIds = new Set(Object.keys(allocation?.allocations ?? {}));
+  const playerUnits = (battle?.units ?? []).filter((unit) => (
+    unit.side === "player"
+    && allocatedHeroIds.has(unit.heroId)
+  ));
+  const rawSurvivors = playerUnits.reduce((total, unit) => total + calculateBattleUnitSurvivors(unit), 0);
+  const survivors = didPlayerWin ? Math.min(allocated, rawSurvivors) : 0;
+  const losses = didPlayerWin ? Math.max(0, allocated - survivors) : allocated;
+  const wounded = didPlayerWin
+    ? Math.floor(losses * 0.30)
+    : Math.floor(allocated * 0.50);
+  const dead = Math.max(0, allocated - survivors - wounded);
+
+  return {
+    sourceCityId: allocation?.sourceCityId ?? null,
+    battleType: allocation?.battleType ?? battle?.battleContext?.type ?? "attack",
+    allocated,
+    survivors,
+    losses,
+    wounded,
+    dead,
+    allocations: allocation?.allocations ?? {},
+  };
+}
+
+function calculateEnemyBattleTroopOutcome(battle, didEnemyWin) {
+  const allocation = battle?.troopAllocation ?? null;
+  const allocated = Math.max(0, Number(allocation?.enemyTotalAllocatedTroops) || 0);
+  const allocatedHeroIds = new Set(Object.keys(allocation?.enemyAllocations ?? {}));
+  const enemyUnits = (battle?.units ?? []).filter((unit) => (
+    unit.side === "enemy"
+    && allocatedHeroIds.has(unit.heroId)
+  ));
+  const rawSurvivors = enemyUnits.reduce((total, unit) => total + calculateBattleUnitSurvivors(unit), 0);
+  const survivors = didEnemyWin ? Math.min(allocated, rawSurvivors) : 0;
+  const losses = didEnemyWin ? Math.max(0, allocated - survivors) : allocated;
+  const wounded = didEnemyWin
+    ? Math.floor(losses * 0.30)
+    : Math.floor(allocated * 0.50);
+  const dead = Math.max(0, allocated - survivors - wounded);
+
+  return {
+    sourceCityId: allocation?.enemySourceCityId ?? null,
+    battleType: allocation?.battleType ?? battle?.battleContext?.type ?? "attack",
+    allocated,
+    survivors,
+    losses,
+    wounded,
+    dead,
+    allocations: allocation?.enemyAllocations ?? {},
   };
 }
 
@@ -102,8 +403,11 @@ export function createInitialAppState() {
       skills,
       turnOwner: "player",
       pendingEnemyTurnResult: null,
+      lastRecruitmentAction: null,
       lastRecruitmentResult: null,
       lastCityLoyaltyResult: null,
+      lastBattleTroopResult: null,
+      lastWoundedRecoveryResult: null,
     },
   };
 }
@@ -200,6 +504,82 @@ export function setCityGovernorPolicy(appState, cityId, governorPolicy) {
   };
 }
 
+export function recruitCityTroops(appState, cityId, amount = RECRUIT_TROOP_BATCH_SIZE) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const city = appState?.world?.cities.find((entry) => entry.id === cityId) ?? null;
+
+  if (
+    appState?.mode !== "world"
+    || appState?.battle
+    || appState?.world?.turnOwner !== "player"
+    || hasPendingWorldInteraction(appState)
+  ) {
+    return withRecruitmentMessage(appState, "지금은 모집할 수 없습니다.");
+  }
+
+  if (!city || city.ownerFactionId !== playerFactionId) {
+    return withRecruitmentMessage(appState, "아군 도시에서만 모집할 수 있습니다.");
+  }
+
+  const requestedAmount = Math.max(0, Math.round(Number(amount) || 0));
+  const beforeRecruitableTroops = Math.max(0, Number(city?.military?.recruitableTroops) || 0);
+  const recruitmentCapacity = calculateRecruitmentRatioState(city);
+  const recruitAmount = Math.min(requestedAmount, recruitmentCapacity.remainingRecruitCapacity);
+
+  if (recruitAmount <= 0) {
+    return withRecruitmentMessage(appState, "모집 한계");
+  }
+
+  const cost = calculateRecruitmentCost(recruitAmount);
+
+  if (!hasEnoughResources(appState.resources, cost)) {
+    return withRecruitmentMessage(appState, "자원 부족");
+  }
+
+  const beforeGarrisonTroops = Math.max(0, Number(city?.military?.garrisonTroops) || 0);
+  const afterGarrisonTroops = beforeGarrisonTroops + recruitAmount;
+  const afterRecruitableTroops = Math.max(0, beforeRecruitableTroops - recruitAmount);
+  const nextCities = appState.world.cities.map((entry) => (
+    entry.id === city.id
+      ? {
+        ...entry,
+        military: {
+          ...(entry.military ?? {}),
+          garrisonTroops: afterGarrisonTroops,
+          recruitableTroops: afterRecruitableTroops,
+        },
+      }
+      : entry
+  ));
+  const lastRecruitmentAction = {
+    turn: appState?.meta?.turn ?? 1,
+    cityId: city.id,
+    cityName: city.name,
+    recruitAmount,
+    cost,
+    beforeGarrisonTroops,
+    afterGarrisonTroops,
+    beforeRecruitableTroops,
+    afterRecruitableTroops,
+    population: recruitmentCapacity.population,
+    maxTroopRatio: recruitmentCapacity.maxTroopRatio,
+    beforeRecruitmentRatio: recruitmentCapacity.recruitmentRatio,
+    afterRecruitmentRatio: afterGarrisonTroops / recruitmentCapacity.population,
+    maxTroopsByPopulation: recruitmentCapacity.maxTroopsByPopulation,
+  };
+
+  return withRecruitmentMessage({
+    ...appState,
+    resources: subtractResourceCost(appState.resources, cost),
+    world: {
+      ...appState.world,
+      cities: nextCities,
+      lastRecruitmentAction,
+      lastRecruitmentResult: lastRecruitmentAction,
+    },
+  }, `${city.name} 병사 ${recruitAmount}명 모집 완료`);
+}
+
 export function selectCity(appState, cityId) {
   const selectedCity = appState.world.cities.find((city) => city.id === cityId) ?? null;
   const originCityId = selectedCity?.ownerFactionId === appState.meta.playerFactionId
@@ -265,6 +645,26 @@ function toTransferHeroSummary(hero) {
   };
 }
 
+function toDeploymentHeroSummary(hero, sourceCity) {
+  const command = getHeroCommandSummary(hero, sourceCity);
+
+  return {
+    id: hero.id,
+    name: hero.name,
+    role: hero.role,
+    troops: hero.troops,
+    maxTroops: hero.maxTroops,
+    attack: hero.attack,
+    defense: hero.defense,
+    intelligence: hero.intelligence,
+    commandRank: command.commandRank,
+    commandLabel: command.commandLabel,
+    commandLimit: command.commandLimit,
+    portraitImage: hero.portraitImage ?? null,
+    skillName: getSkillName(hero.skillId),
+  };
+}
+
 function toDestinationCitySummary(city) {
   return {
     id: city.id,
@@ -302,32 +702,63 @@ function buildHeroDeployment(appState, cityId) {
     return null;
   }
 
+  const sourceCity = appState.world.cities.find((city) => city.id === pendingBattleChoice.originCityId) ?? null;
+  const sourceGarrisonTroops = getCityGarrisonTroops(sourceCity);
   const candidates = getPlayerDeploymentCandidateIds(pendingBattleChoice.originCityId)
     .map((heroId) => heroes.find((hero) => hero.id === heroId))
     .filter(Boolean)
-    .map((hero) => ({
-      id: hero.id,
-      name: hero.name,
-      role: hero.role,
-      troops: hero.troops,
-      maxTroops: hero.maxTroops,
-      attack: hero.attack,
-      defense: hero.defense,
-      intelligence: hero.intelligence,
-      portraitImage: hero.portraitImage ?? null,
-      skillName: getSkillName(hero.skillId),
-    }));
+    .map((hero) => toDeploymentHeroSummary(hero, sourceCity));
+  const troopAllocations = buildDefaultTroopAllocations(candidates, sourceGarrisonTroops);
+  const totalAllocatedTroops = Object.values(troopAllocations).reduce((total, amount) => total + amount, 0);
 
   return {
     type: "attack",
+    sourceCityId: pendingBattleChoice.originCityId,
     originCityId: pendingBattleChoice.originCityId,
     originCityName: pendingBattleChoice.originCityName,
     targetCityId: pendingBattleChoice.targetCityId,
     targetCityName: pendingBattleChoice.targetCityName,
     battleContext: pendingBattleChoice.battleContext,
     autoBattleEnabled: false,
+    sourceGarrisonTroops,
     candidates,
     selectedHeroIds: candidates.map((hero) => hero.id),
+    troopAllocations,
+    totalAllocatedTroops,
+    remainingGarrisonTroops: Math.max(0, sourceGarrisonTroops - totalAllocatedTroops),
+  };
+}
+
+function buildDefenseHeroDeployment(appState, pendingBattleChoice) {
+  const defenderCity = appState.world.cities.find((city) => city.id === pendingBattleChoice?.targetCityId) ?? null;
+
+  if (!defenderCity || defenderCity.ownerFactionId !== appState.meta.playerFactionId) {
+    return null;
+  }
+
+  const sourceGarrisonTroops = getCityGarrisonTroops(defenderCity);
+  const candidates = getHeroIdsBySideAndLocation(defenderCity.id, appState.meta.playerFactionId)
+    .map((heroId) => heroes.find((hero) => hero.id === heroId))
+    .filter(Boolean)
+    .map((hero) => toDeploymentHeroSummary(hero, defenderCity));
+  const troopAllocations = buildDefaultTroopAllocations(candidates, sourceGarrisonTroops);
+  const totalAllocatedTroops = Object.values(troopAllocations).reduce((total, amount) => total + amount, 0);
+
+  return {
+    type: "defense",
+    sourceCityId: defenderCity.id,
+    originCityId: pendingBattleChoice.originCityId,
+    originCityName: pendingBattleChoice.originCityName,
+    targetCityId: pendingBattleChoice.targetCityId,
+    targetCityName: pendingBattleChoice.targetCityName,
+    battleContext: pendingBattleChoice.battleContext,
+    autoBattleEnabled: false,
+    sourceGarrisonTroops,
+    candidates,
+    selectedHeroIds: candidates.map((hero) => hero.id),
+    troopAllocations,
+    totalAllocatedTroops,
+    remainingGarrisonTroops: Math.max(0, sourceGarrisonTroops - totalAllocatedTroops),
   };
 }
 
@@ -426,6 +857,29 @@ export function openHeroDeployment(appState, cityId) {
   }
 
   const pendingHeroDeployment = buildHeroDeployment(appState, cityId);
+
+  if (!pendingHeroDeployment) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    pendingBattleChoice: null,
+    pendingHeroDeployment,
+  };
+}
+
+export function openDefenseHeroDeployment(appState) {
+  if (
+    appState.mode !== "world"
+    || appState.world.turnOwner !== "enemy"
+    || appState.pendingBattleChoice?.type !== "defense"
+    || appState.pendingHeroTransfer
+  ) {
+    return appState;
+  }
+
+  const pendingHeroDeployment = buildDefenseHeroDeployment(appState, appState.pendingBattleChoice);
 
   if (!pendingHeroDeployment) {
     return appState;
@@ -560,19 +1014,120 @@ export function toggleDeploymentHero(appState, heroId) {
   }
 
   const selectedHeroSet = new Set(pendingHeroDeployment.selectedHeroIds);
+  let nextTroopAllocations = pendingHeroDeployment.troopAllocations ?? {};
 
   if (selectedHeroSet.has(heroId)) {
     selectedHeroSet.delete(heroId);
   } else {
     selectedHeroSet.add(heroId);
+    const hero = pendingHeroDeployment.candidates.find((candidate) => candidate.id === heroId);
+    const currentTotal = getSelectedAllocationTotal(pendingHeroDeployment);
+    const remainingGarrison = Math.max(0, (pendingHeroDeployment.sourceGarrisonTroops ?? 0) - currentTotal);
+    nextTroopAllocations = {
+      ...nextTroopAllocations,
+      [heroId]: Math.min(hero?.commandLimit ?? 0, remainingGarrison),
+    };
   }
+
+  const nextDeployment = clampDeploymentAllocations({
+    ...pendingHeroDeployment,
+    selectedHeroIds: [...selectedHeroSet],
+    troopAllocations: nextTroopAllocations,
+  });
 
   return {
     ...appState,
-    pendingHeroDeployment: {
-      ...pendingHeroDeployment,
-      selectedHeroIds: [...selectedHeroSet],
+    pendingHeroDeployment: nextDeployment,
+  };
+}
+
+export function setDeploymentHeroTroops(appState, heroId, amount) {
+  const pendingHeroDeployment = appState.pendingHeroDeployment;
+
+  if (!pendingHeroDeployment || !pendingHeroDeployment.candidates.some((hero) => hero.id === heroId)) {
+    return appState;
+  }
+
+  const nextDeployment = clampDeploymentAllocations({
+    ...pendingHeroDeployment,
+    troopAllocations: {
+      ...(pendingHeroDeployment.troopAllocations ?? {}),
+      [heroId]: Math.max(0, Math.round(Number(amount) || 0)),
     },
+  });
+
+  return {
+    ...appState,
+    pendingHeroDeployment: nextDeployment,
+  };
+}
+
+function buildDefaultDefenseDeployment(appState, defenderCity) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const candidates = getHeroIdsBySideAndLocation(defenderCity?.id, playerFactionId)
+    .map((heroId) => heroes.find((hero) => hero.id === heroId))
+    .filter(Boolean)
+    .map((hero) => toDeploymentHeroSummary(hero, defenderCity));
+  const sourceGarrisonTroops = getCityGarrisonTroops(defenderCity);
+  const troopAllocations = buildDefaultTroopAllocations(candidates, sourceGarrisonTroops);
+  const selectedHeroIds = candidates
+    .filter((hero) => (troopAllocations[hero.id] ?? 0) > 0)
+    .map((hero) => hero.id);
+  const totalAllocatedTroops = selectedHeroIds.reduce((total, heroId) => total + (troopAllocations[heroId] ?? 0), 0);
+
+  return {
+    type: "defense",
+    sourceCityId: defenderCity?.id ?? null,
+    sourceGarrisonTroops,
+    candidates,
+    selectedHeroIds,
+    troopAllocations,
+    totalAllocatedTroops,
+  };
+}
+
+function buildAutomaticFactionAllocation(appState, sourceCity, factionId) {
+  const candidates = getHeroIdsBySideAndLocation(sourceCity?.id, factionId)
+    .map((heroId) => heroes.find((hero) => hero.id === heroId))
+    .filter(Boolean)
+    .map((hero) => toDeploymentHeroSummary(hero, sourceCity));
+  const allocations = buildDefaultTroopAllocations(candidates, getCityGarrisonTroops(sourceCity));
+  const totalAllocatedTroops = Object.values(allocations).reduce((total, amount) => total + amount, 0);
+
+  return {
+    sourceCityId: sourceCity?.id ?? null,
+    allocations,
+    totalAllocatedTroops,
+  };
+}
+
+function buildTroopAllocationForBattle(pendingHeroDeployment, battleContext) {
+  const selectedHeroIds = new Set(pendingHeroDeployment?.selectedHeroIds ?? []);
+  const allocations = {};
+
+  for (const hero of pendingHeroDeployment?.candidates ?? []) {
+    if (!selectedHeroIds.has(hero.id)) {
+      continue;
+    }
+
+    const allocation = Math.min(
+      Math.max(0, Number(pendingHeroDeployment?.troopAllocations?.[hero.id]) || 0),
+      hero.commandLimit ?? 0,
+    );
+
+    if (allocation > 0) {
+      allocations[hero.id] = allocation;
+    }
+  }
+
+  const totalAllocatedTroops = Object.values(allocations).reduce((total, amount) => total + amount, 0);
+
+  return {
+    sourceCityId: pendingHeroDeployment?.sourceCityId ?? pendingHeroDeployment?.originCityId ?? null,
+    battleType: battleContext?.type ?? pendingHeroDeployment?.type ?? "attack",
+    allocations,
+    unitAllocations: { ...allocations },
+    totalAllocatedTroops,
   };
 }
 
@@ -598,6 +1153,47 @@ export function startBattle(appState, cityId, options = {}) {
   const selectedAttackerHeroIds = Array.isArray(options.attackerHeroIds)
     ? options.attackerHeroIds
     : pendingHeroDeployment?.selectedHeroIds;
+  const deploymentForBattle = pendingHeroDeployment
+    ?? (battleContext.type === "defense" ? buildDefaultDefenseDeployment(appState, defenderCity) : null);
+  const troopAllocation = buildTroopAllocationForBattle(deploymentForBattle, battleContext);
+  const enemySourceCity = battleContext.type === "defense" ? attackerCity : defenderCity;
+  const enemyFactionId = enemySourceCity?.ownerFactionId ?? "enemy";
+  const enemyTroopAllocation = buildAutomaticFactionAllocation(appState, enemySourceCity, enemyFactionId);
+
+  if (troopAllocation.totalAllocatedTroops <= 0) {
+    return withRecruitmentMessage(appState, "배정 병력이 없습니다.");
+  }
+
+  const sourceCity = appState.world.cities.find((city) => city.id === troopAllocation.sourceCityId) ?? null;
+
+  if (!sourceCity || getCityGarrisonTroops(sourceCity) < troopAllocation.totalAllocatedTroops) {
+    return withRecruitmentMessage(appState, "주둔군이 부족합니다.");
+  }
+
+  let nextCities = updateCityMilitary(appState.world.cities, sourceCity.id, (military) => ({
+    ...military,
+    garrisonTroops: Math.max(0, (Number(military.garrisonTroops) || 0) - troopAllocation.totalAllocatedTroops),
+  }));
+  if (
+    enemyTroopAllocation.sourceCityId
+    && enemyTroopAllocation.totalAllocatedTroops > 0
+    && enemyTroopAllocation.sourceCityId !== sourceCity.id
+  ) {
+    nextCities = updateCityMilitary(nextCities, enemyTroopAllocation.sourceCityId, (military) => ({
+      ...military,
+      garrisonTroops: Math.max(0, (Number(military.garrisonTroops) || 0) - enemyTroopAllocation.totalAllocatedTroops),
+    }));
+  }
+  const battleTroopAllocation = {
+    ...troopAllocation,
+    enemySourceCityId: enemyTroopAllocation.sourceCityId,
+    enemyAllocations: enemyTroopAllocation.allocations,
+    enemyTotalAllocatedTroops: enemyTroopAllocation.totalAllocatedTroops,
+    unitAllocations: {
+      ...(troopAllocation.unitAllocations ?? troopAllocation.allocations ?? {}),
+      ...(enemyTroopAllocation.allocations ?? {}),
+    },
+  };
 
   return {
     ...appState,
@@ -615,7 +1211,12 @@ export function startBattle(appState, cityId, options = {}) {
       autoBattleEnabled: (options.autoBattleEnabled ?? pendingHeroDeployment?.autoBattleEnabled) === true,
       battleContext,
       attackerHeroIds: selectedAttackerHeroIds,
+      troopAllocation: battleTroopAllocation,
     }),
+    world: {
+      ...appState.world,
+      cities: nextCities,
+    },
   };
 }
 
@@ -630,12 +1231,14 @@ export function retreatFromBattle(appState) {
   const battleContext = appState.battle?.battleContext ?? null;
 
   if (battleContext?.type === "defense") {
+    const attackerCity = appState.world.cities.find((city) => city.id === battleContext.attackerCityId) ?? null;
+    const conquerorFactionId = attackerCity?.ownerFactionId ?? "enemy";
     const updatedCities = occupyCity(
       appState.world.cities,
       battleContext.defenderCityId,
-      "enemy",
+      conquerorFactionId,
     );
-    convertCityHeroesToFaction(battleContext.defenderCityId, "enemy");
+    convertCityHeroesToFaction(battleContext.defenderCityId, conquerorFactionId);
 
     return advanceWorldTurn(appState, {
       mode: "world",
@@ -668,6 +1271,93 @@ export function retreatFromBattle(appState) {
   };
 }
 
+function applyBattleTroopReturn(cities, targetCityId, outcome, { includeSurvivors = true, includeWounded = true } = {}) {
+  return (cities ?? []).map((city) => {
+    if (city.id !== targetCityId) {
+      return city;
+    }
+
+    const nextGarrison = getCityGarrisonTroops(city) + (includeSurvivors ? outcome.survivors : 0);
+    let nextCity = {
+      ...city,
+      military: {
+        ...(city.military ?? {}),
+        garrisonTroops: nextGarrison,
+      },
+    };
+
+    if (includeWounded) {
+      nextCity = addWoundedToCity(nextCity, outcome.wounded, 3);
+    }
+
+    return nextCity;
+  });
+}
+
+function clearCapturedCityGarrison(cities, cityId) {
+  return updateCityMilitary(cities, cityId, (military) => ({
+    ...military,
+    garrisonTroops: 0,
+    woundedQueue: [],
+  }));
+}
+
+export function applyWoundedRecovery(state) {
+  const recoveryResults = [];
+  const nextCities = (state?.world?.cities ?? []).map((city) => {
+    const remainingQueue = [];
+    let recoveredTroops = 0;
+
+    for (const entry of getWoundedQueue(city)) {
+      const troops = Math.max(0, Number(entry?.troops) || 0);
+      const turnsLeft = Math.max(0, (Number(entry?.turnsLeft) || 0) - 1);
+
+      if (troops <= 0) {
+        continue;
+      }
+
+      if (turnsLeft <= 0) {
+        recoveredTroops += troops;
+      } else {
+        remainingQueue.push({ turnsLeft, troops });
+      }
+    }
+
+    if (recoveredTroops <= 0 && remainingQueue.length === getWoundedQueue(city).length) {
+      return city;
+    }
+
+    if (recoveredTroops > 0) {
+      recoveryResults.push({
+        cityId: city.id,
+        cityName: city.name,
+        recoveredTroops,
+      });
+    }
+
+    return {
+      ...city,
+      military: {
+        ...(city.military ?? {}),
+        garrisonTroops: getCityGarrisonTroops(city) + recoveredTroops,
+        woundedQueue: remainingQueue,
+      },
+    };
+  });
+
+  return {
+    ...state,
+    world: {
+      ...state.world,
+      cities: nextCities,
+      lastWoundedRecoveryResult: {
+        turn: state?.meta?.turn ?? 1,
+        results: recoveryResults,
+      },
+    },
+  };
+}
+
 export function returnFromBattle(appState) {
   const { battle } = appState;
 
@@ -683,12 +1373,36 @@ export function returnFromBattle(appState) {
 
   if (battleContext.type === "defense") {
     const defenseLost = battle.status !== "won";
-    const updatedCities = defenseLost
-      ? occupyCity(appState.world.cities, battle.defenderCityId, "enemy")
-      : appState.world.cities;
+    const troopOutcome = calculateBattleTroopOutcome(battle, !defenseLost);
+    const enemyTroopOutcome = calculateEnemyBattleTroopOutcome(battle, defenseLost);
+    let updatedCities = appState.world.cities;
 
     if (defenseLost) {
-      convertCityHeroesToFaction(battle.defenderCityId, "enemy");
+      const retreatCity = findNearestPlayerOwnedNeighbor(
+        appState.world.cities,
+        battle.defenderCityId,
+        appState.meta.playerFactionId,
+      );
+      const attackerCity = updatedCities.find((city) => city.id === battle.attackerCityId) ?? null;
+      const conquerorFactionId = attackerCity?.ownerFactionId ?? "enemy";
+      updatedCities = occupyCity(updatedCities, battle.defenderCityId, conquerorFactionId);
+      updatedCities = clearCapturedCityGarrison(updatedCities, battle.defenderCityId);
+      updatedCities = applyBattleTroopReturn(updatedCities, battle.defenderCityId, enemyTroopOutcome);
+      if (retreatCity) {
+        updatedCities = applyBattleTroopReturn(updatedCities, retreatCity.id, troopOutcome, {
+          includeSurvivors: false,
+          includeWounded: true,
+        });
+      }
+      convertCityHeroesToFaction(battle.defenderCityId, conquerorFactionId);
+    } else {
+      updatedCities = applyBattleTroopReturn(updatedCities, battle.defenderCityId, troopOutcome);
+      if (enemyTroopOutcome.sourceCityId) {
+        updatedCities = applyBattleTroopReturn(updatedCities, enemyTroopOutcome.sourceCityId, enemyTroopOutcome, {
+          includeSurvivors: false,
+          includeWounded: true,
+        });
+      }
     }
 
     return advanceWorldTurn(appState, {
@@ -705,16 +1419,27 @@ export function returnFromBattle(appState) {
         turnOwner: "player",
         pendingEnemyTurnResult: null,
         lastRecruitmentResult: null,
+        lastBattleTroopResult: {
+          ...troopOutcome,
+          result: defenseLost ? "lost" : "won",
+          returnCityId: defenseLost
+            ? findNearestPlayerOwnedNeighbor(appState.world.cities, battle.defenderCityId, appState.meta.playerFactionId)?.id ?? null
+            : battle.defenderCityId,
+        },
       },
     });
   }
 
   if (battle.status === "won") {
-    const updatedCities = occupyCity(
-      appState.world.cities,
+    const troopOutcome = calculateBattleTroopOutcome(battle, true);
+    const enemyTroopOutcome = calculateEnemyBattleTroopOutcome(battle, false);
+    let updatedCities = occupyCity(
+      clearCapturedCityGarrison(appState.world.cities, battle.defenderCityId),
       battle.defenderCityId,
       appState.meta.playerFactionId,
     );
+    updatedCities = applyBattleTroopReturn(updatedCities, battle.defenderCityId, troopOutcome);
+    // Defeated enemy defenders do not keep control of the captured city; only player troops enter it.
     const recruitedHeroes = recruitCityHeroesToFaction(
       battle.defenderCityId,
       appState.meta.playerFactionId,
@@ -739,8 +1464,26 @@ export function returnFromBattle(appState) {
           factionId: appState.meta.playerFactionId,
           heroes: recruitedHeroes,
         },
+        lastBattleTroopResult: {
+          ...troopOutcome,
+          result: "won",
+          returnCityId: battle.defenderCityId,
+        },
       },
     };
+  }
+
+  const troopOutcome = calculateBattleTroopOutcome(battle, false);
+  const enemyTroopOutcome = calculateEnemyBattleTroopOutcome(battle, true);
+  const returnCityId = troopOutcome.sourceCityId;
+  let updatedCities = returnCityId
+    ? applyBattleTroopReturn(appState.world.cities, returnCityId, troopOutcome, {
+      includeSurvivors: false,
+      includeWounded: true,
+    })
+    : appState.world.cities;
+  if (battle.defenderCityId) {
+    updatedCities = applyBattleTroopReturn(updatedCities, battle.defenderCityId, enemyTroopOutcome);
   }
 
   return {
@@ -752,7 +1495,13 @@ export function returnFromBattle(appState) {
     pendingHeroTransfer: null,
     world: {
       ...appState.world,
+      cities: updatedCities,
       lastRecruitmentResult: null,
+      lastBattleTroopResult: {
+        ...troopOutcome,
+        result: "lost",
+        returnCityId,
+      },
     },
   };
 }
@@ -772,18 +1521,19 @@ export function endWorldTurn(appState) {
   const incomeAppliedState = applyPlayerTurnIncome(appState);
   const upkeepAppliedState = applyTurnUpkeep(incomeAppliedState);
   const taxAppliedState = applyTaxLoyaltyEffect(upkeepAppliedState);
-  const invasionCandidate = rollEnemyInvasion(appState.world.cities, ENEMY_INVASION_CHANCE);
+  const woundedRecoveredState = applyWoundedRecovery(taxAppliedState);
+  const invasionCandidate = rollEnemyInvasion(woundedRecoveredState.world.cities, ENEMY_INVASION_CHANCE);
 
   if (invasionCandidate) {
     return {
-      ...taxAppliedState,
+      ...woundedRecoveredState,
       selection: {
-        ...taxAppliedState.selection,
+        ...woundedRecoveredState.selection,
         cityId: invasionCandidate.defenderCityId,
       },
-      pendingBattleChoice: buildDefenseBattleChoice(appState, invasionCandidate),
+      pendingBattleChoice: buildDefenseBattleChoice(woundedRecoveredState, invasionCandidate),
       world: {
-        ...taxAppliedState.world,
+        ...woundedRecoveredState.world,
         turnOwner: "enemy",
         pendingEnemyTurnResult: null,
       },
@@ -791,9 +1541,9 @@ export function endWorldTurn(appState) {
   }
 
   return {
-    ...taxAppliedState,
+    ...woundedRecoveredState,
     world: {
-      ...taxAppliedState.world,
+      ...woundedRecoveredState.world,
       turnOwner: "enemy",
       pendingEnemyTurnResult: {
         type: "no_invasion",

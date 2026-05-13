@@ -84,6 +84,10 @@ function formatShortage(shortageEntries = []) {
   return summary ? `유지비 부족: ${summary}` : "유지비 정상";
 }
 
+function formatSoldierPreviewBasis(preview = {}) {
+  return `영웅 병력 ${preview.heroTroopCount ?? 0}명 + 주둔군 ${preview.garrisonTroopCount ?? 0}명 기준, 미차감`;
+}
+
 function renderWarehouseRows(resources) {
   const warehouseStatus = getWarehouseStatus(resources);
 
@@ -296,7 +300,7 @@ function renderWarehousePanel(appState) {
         RESOURCE_KEYS.RICE,
         RESOURCE_KEYS.BARLEY,
         RESOURCE_KEYS.SEAFOOD,
-      ])} (${soldierPreview.troopCount}명 기준, 미차감)</span>
+      ])} (${formatSoldierPreviewBasis(soldierPreview)})</span>
       <span class="warehouse-note">보존 소금: 필요 ${saltPreservation.needed} / 보유 ${saltPreservation.currentSalt} / ${saltPreservation.status}</span>
       <span class="warehouse-note">${formatShortage(lastUpkeep?.shortageEntries ?? [])}</span>
     </div>

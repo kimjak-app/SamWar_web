@@ -140,6 +140,14 @@ function isActiveHero(hero) {
     && hero.active !== false;
 }
 
+function matchesFactionForAggregate(factionId, targetFactionId) {
+  if (targetFactionId === FACTION_IDS.ENEMY) {
+    return Boolean(factionId) && factionId !== FACTION_IDS.PLAYER;
+  }
+
+  return factionId === targetFactionId;
+}
+
 function isEligibleChancellorHero(hero, playerFactionId = FACTION_IDS.PLAYER) {
   return isActiveHero(hero) && hero?.side === playerFactionId;
 }
@@ -571,6 +579,13 @@ export function applyTaxLoyaltyEffect(state) {
       taxDelta: drift.taxDelta,
       securityStatus: drift.security.securityStatus,
       securityScore: drift.security.securityScore,
+      securityTroops: drift.security.securityTroops,
+      garrisonTroops: drift.security.garrisonTroops,
+      stationedHeroTroops: drift.security.stationedHeroTroops,
+      securityRequiredTroops: drift.security.securityRequiredTroops,
+      recruitmentRatio: drift.security.recruitmentRatio,
+      militaryBurdenStatus: drift.militaryBurden.status,
+      militaryBurdenDelta: drift.militaryBurden.loyaltyDeltaFromMilitaryBurden,
       stationedTroops: drift.security.troopTotal,
       economyStatus: drift.economy.economyStatus,
       economyScore: drift.economy.economyScore,
@@ -619,7 +634,7 @@ export function applyTaxLoyaltyEffect(state) {
 }
 
 export function calculateHeroUpkeep(heroes = [], side = FACTION_IDS.PLAYER) {
-  const activeHeroes = (heroes ?? []).filter((hero) => hero.side === side && isActiveHero(hero));
+  const activeHeroes = (heroes ?? []).filter((hero) => matchesFactionForAggregate(hero.side, side) && isActiveHero(hero));
   const cost = Object.fromEntries(
     Object.entries(HERO_UPKEEP_RULES).map(([resourceKey, amount]) => [
       resourceKey,
@@ -702,15 +717,21 @@ export function applyHeroUpkeep(
 }
 
 export function calculateSoldierUpkeepPreview(state, side = FACTION_IDS.PLAYER) {
-  const troopCount = (state?.world?.heroes ?? [])
-    .filter((hero) => hero.side === side && isActiveHero(hero))
+  const heroTroopCount = (state?.world?.heroes ?? [])
+    .filter((hero) => matchesFactionForAggregate(hero.side, side) && isActiveHero(hero))
     .reduce((total, hero) => total + Math.max(0, Number(hero.troops) || 0), 0);
+  const garrisonTroopCount = (state?.world?.cities ?? [])
+    .filter((city) => matchesFactionForAggregate(city?.ownerFactionId, side))
+    .reduce((total, city) => total + Math.max(0, Number(city?.military?.garrisonTroops) || 0), 0);
+  const troopCount = heroTroopCount + garrisonTroopCount;
   const unitCount = troopCount > 0
     ? Math.ceil(troopCount / SOLDIER_UPKEEP_RULES.TROOPS_PER_UNIT)
     : 0;
 
   return {
     side,
+    heroTroopCount,
+    garrisonTroopCount,
     troopCount,
     unitCount,
     applied: false,

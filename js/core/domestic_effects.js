@@ -22,10 +22,13 @@ const CHANCELLOR_PRIMARY_RATE = 0.03;
 const CHANCELLOR_SECONDARY_RATE = 0.015;
 const GOVERNOR_PRIMARY_RATE = 0.025;
 const GOVERNOR_SECONDARY_RATE = 0.0125;
-const SECURITY_STABLE_TROOPS = 200;
-const SECURITY_CAUTION_TROOPS = 100;
+const STATIONED_HERO_SECURITY_WEIGHT = 0.3;
 const CITY_LOYALTY_DRIFT_MIN = -2;
 const CITY_LOYALTY_DRIFT_MAX = 2;
+const DEFAULT_CITY_POPULATION = 30000;
+const DEFAULT_SECURITY_REQUIRED_TROOPS = 500;
+const DEFAULT_OPTIMAL_TROOP_RATIO = 0.30;
+const DEFAULT_MAX_TROOP_RATIO = 0.50;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -57,6 +60,91 @@ function getStationedTroops(city, heroes = []) {
   return (heroes ?? [])
     .filter((hero) => hero?.locationCityId === city?.id)
     .reduce((total, hero) => total + Math.max(0, Number(hero?.troops) || 0), 0);
+}
+
+function getCityGarrisonTroops(city) {
+  return Math.max(0, Number(city?.military?.garrisonTroops) || 0);
+}
+
+function getCityPopulation(city) {
+  return Math.max(1, Number(city?.population) || DEFAULT_CITY_POPULATION);
+}
+
+function getSecurityRequiredTroops(city) {
+  return Math.max(1, Number(city?.military?.securityRequiredTroops) || DEFAULT_SECURITY_REQUIRED_TROOPS);
+}
+
+function getRatioValue(value, fallback) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : fallback;
+}
+
+function getCityDefenseRating(city) {
+  return Math.max(0, Number(city?.military?.defenseRating) || 0);
+}
+
+export function calculateRecruitmentRatioState(city) {
+  const population = getCityPopulation(city);
+  const garrisonTroops = getCityGarrisonTroops(city);
+  const optimalTroopRatio = getRatioValue(city?.military?.optimalTroopRatio, DEFAULT_OPTIMAL_TROOP_RATIO);
+  const maxTroopRatio = getRatioValue(city?.military?.maxTroopRatio, DEFAULT_MAX_TROOP_RATIO);
+  const recruitmentRatio = population > 0 ? garrisonTroops / population : 0;
+  const maxTroopsByPopulation = Math.max(0, Math.floor(population * maxTroopRatio));
+  const remainingRecruitCapacity = Math.max(0, maxTroopsByPopulation - garrisonTroops);
+  let tier = "green";
+  let status = "균형";
+
+  if (recruitmentRatio >= maxTroopRatio || recruitmentRatio >= 0.50) {
+    tier = "critical";
+    status = "한계";
+  } else if (recruitmentRatio > 0.45) {
+    tier = "critical";
+    status = "한계";
+  } else if (recruitmentRatio > 0.40) {
+    tier = "red";
+    status = "위험";
+  } else if (recruitmentRatio > 0.35) {
+    tier = "yellow";
+    status = "부담";
+  } else if (recruitmentRatio > 0.30) {
+    tier = "blue";
+    status = "확장";
+  }
+
+  return {
+    population,
+    garrisonTroops,
+    recruitmentRatio,
+    optimalTroopRatio,
+    maxTroopRatio,
+    maxTroopsByPopulation,
+    remainingRecruitCapacity,
+    tier,
+    status,
+  };
+}
+
+export function calculateMilitaryBurdenState(city) {
+  const ratioState = calculateRecruitmentRatioState(city);
+  let loyaltyDeltaFromMilitaryBurden = 0;
+  let reason = null;
+
+  if (ratioState.recruitmentRatio > 0.45) {
+    loyaltyDeltaFromMilitaryBurden = -2;
+    reason = "군사 과밀";
+  } else if (ratioState.recruitmentRatio > 0.40) {
+    loyaltyDeltaFromMilitaryBurden = -1;
+    reason = "군사 부담";
+  } else if (ratioState.recruitmentRatio > 0.35) {
+    loyaltyDeltaFromMilitaryBurden = -1;
+    reason = "군사 부담";
+  }
+
+  return {
+    ...ratioState,
+    loyaltyDeltaFromMilitaryBurden,
+    reason,
+  };
 }
 
 function getProfileAptitude(hero, type) {
@@ -303,6 +391,9 @@ export function calculateMilitaryPreview(city, cityEffects = {}, options = {}) {
     : 0;
   const recruitableTroops = Math.max(0, Math.round(baseRecruitableTroops + (cityEffects.recruitableTroopsBonus ?? 0)));
   const hasMilitaryBonus = recruitableTroops > baseRecruitableTroops;
+  const defenseRating = Math.max(0, Math.round(
+    getCityDefenseRating(city) + Math.min(2, Math.floor((cityEffects.recruitableTroopsBonus ?? 0) / 60)),
+  ));
   const security = calculateCitySecurityState({
     city,
     heroes: options.heroes ?? [],
@@ -310,24 +401,36 @@ export function calculateMilitaryPreview(city, cityEffects = {}, options = {}) {
   });
 
   return {
+    garrisonTroops: security.garrisonTroops,
+    stationedHeroTroops: security.stationedHeroTroops,
+    securityTroops: security.securityTroops,
+    population: security.population,
+    securityRequiredTroops: security.securityRequiredTroops,
+    recruitmentRatio: security.recruitmentRatio,
+    recruitmentRatioStatus: security.recruitmentRatioStatus,
+    recruitmentRatioTier: security.recruitmentRatioTier,
+    remainingRecruitCapacity: security.remainingRecruitCapacity,
+    maxTroopsByPopulation: security.maxTroopsByPopulation,
     recruitableTroops,
     foodStatus: hasMilitaryBonus ? "안정" : (city?.military?.foodStatus ?? "준비 중"),
     securityStatus: security.securityStatus ?? (city?.military?.securityStatus ?? "병력 기반 계산 예정"),
+    defenseRating,
   };
 }
 
 export function calculateCitySecurityState({ city, heroes = [], cityEffects = {} } = {}) {
-  const troopTotal = getStationedTroops(city, heroes);
+  const garrisonTroops = getCityGarrisonTroops(city);
+  const stationedHeroTroops = getStationedTroops(city, heroes);
+  const troopTotal = Math.round(garrisonTroops + (stationedHeroTroops * STATIONED_HERO_SECURITY_WEIGHT));
+  const securityRequiredTroops = getSecurityRequiredTroops(city);
+  const ratioState = calculateRecruitmentRatioState(city);
   const effectBonus = Math.min(15, Math.round((cityEffects.recruitableTroopsBonus ?? 0) / 4));
   let baseScore = 35;
-  let baseDelta = -1;
 
-  if (troopTotal >= SECURITY_STABLE_TROOPS) {
+  if (troopTotal >= securityRequiredTroops * 1.2) {
     baseScore = 85;
-    baseDelta = 1;
-  } else if (troopTotal >= SECURITY_CAUTION_TROOPS) {
+  } else if (troopTotal >= securityRequiredTroops) {
     baseScore = 60;
-    baseDelta = 0;
   }
 
   const securityScore = clamp(baseScore + effectBonus, 0, 100);
@@ -336,12 +439,22 @@ export function calculateCitySecurityState({ city, heroes = [], cityEffects = {}
     : (securityScore >= 50 ? "주의" : "불안");
 
   return {
+    garrisonTroops,
+    stationedHeroTroops,
+    securityTroops: troopTotal,
     troopTotal,
+    population: ratioState.population,
+    securityRequiredTroops,
+    recruitmentRatio: ratioState.recruitmentRatio,
+    recruitmentRatioStatus: ratioState.status,
+    recruitmentRatioTier: ratioState.tier,
+    remainingRecruitCapacity: ratioState.remainingRecruitCapacity,
+    maxTroopsByPopulation: ratioState.maxTroopsByPopulation,
     securityScore,
     securityStatus,
     loyaltyDeltaFromSecurity: securityStatus === "안정"
       ? 1
-      : (securityStatus === "불안" ? -1 : baseDelta),
+      : (securityStatus === "불안" ? -1 : 0),
   };
 }
 
@@ -419,9 +532,11 @@ export function calculateCityLoyaltyDrift({
   const taxDelta = adjustLoyaltyDelta(taxLoyaltyDelta, cityEffects.cityLoyaltyLossMultiplier);
   const security = calculateCitySecurityState({ city, heroes, cityEffects });
   const economy = calculateCityEconomyState({ city, cityEffects, cityIncome });
+  const militaryBurden = calculateMilitaryBurdenState(city);
   const preliminaryDelta = taxDelta
     + security.loyaltyDeltaFromSecurity
-    + economy.loyaltyDeltaFromEconomy;
+    + economy.loyaltyDeltaFromEconomy
+    + militaryBurden.loyaltyDeltaFromMilitaryBurden;
   const control = calculateControlAdjustment({
     preliminaryDelta,
     governorHero,
@@ -443,6 +558,10 @@ export function calculateCityLoyaltyDrift({
   reasons.push(`치안 ${security.securityStatus}`);
   reasons.push(`경제 ${economy.economyStatus}`);
 
+  if (militaryBurden.reason) {
+    reasons.push(militaryBurden.reason);
+  }
+
   if (taxLoyaltyDelta < 0 && taxDelta > taxLoyaltyDelta) {
     reasons.push(governorHero ? "태수 세금 완화" : "재상 세금 완화");
   }
@@ -458,6 +577,7 @@ export function calculateCityLoyaltyDrift({
     taxDelta,
     security,
     economy,
+    militaryBurden,
     controlDelta: control.controlDelta,
     reasons,
     summary: `성충성도 ${formatSignedDelta(delta)} · 치안 ${security.securityStatus} · 경제 ${economy.economyStatus}`,

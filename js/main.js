@@ -16,9 +16,12 @@ import {
   cancelHeroTransfer,
   confirmHeroTransfer,
   openHeroDeployment,
+  openDefenseHeroDeployment,
   openHeroTransfer,
+  recruitCityTroops,
   selectHeroTransferHero,
   selectHeroTransferTargetCity,
+  setDeploymentHeroTroops,
   toggleDeploymentHero,
   updateBattleState,
 } from "./core/app_state.js";
@@ -875,6 +878,12 @@ function rerender() {
     onBattleChoiceConfirm: ({ cityId, autoBattleEnabled }) => {
       clearBattleTempoTimers();
       clearAutoBattleTimer();
+      getAppState();
+      if (!autoBattleEnabled && appState.pendingBattleChoice?.type === "defense") {
+        updateAppState((state) => openDefenseHeroDeployment(state));
+        rerender();
+        return;
+      }
       updateAppState((state) => startBattle(state, cityId, { autoBattleEnabled }));
       rerender();
       if (autoBattleEnabled) {
@@ -889,6 +898,16 @@ function rerender() {
       }
 
       updateAppState((state) => toggleDeploymentHero(state, heroId));
+      rerender();
+    },
+    onHeroDeploymentTroopsChange: ({ heroId, amount }) => {
+      getAppState();
+
+      if (appState.mode !== "world" || appState.world.pendingEnemyTurnResult) {
+        return;
+      }
+
+      updateAppState((state) => setDeploymentHeroTroops(state, heroId, amount));
       rerender();
     },
     onHeroDeploymentStart: ({ cityId, selectedHeroIds }) => {
@@ -1045,6 +1064,16 @@ function rerender() {
       }
 
       updateAppState((state) => setCityGovernorPolicy(state, cityId, governorPolicy));
+      rerender();
+    },
+    onRecruitTroops: ({ cityId, amount }) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => recruitCityTroops(state, cityId, amount));
       rerender();
     },
     onConfirmEnemyTurnResult: () => {
