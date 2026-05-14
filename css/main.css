@@ -13,6 +13,12 @@
   --shadow: rgba(0, 0, 0, 0.35);
   --font-display: "Georgia", "Times New Roman", serif;
   --font-body: "Segoe UI", "Helvetica Neue", sans-serif;
+  --battle-dom-title-size: 36px;
+  --battle-dom-subtitle-size: 19px;
+  --battle-dom-panel-size: 14px;
+  --battle-dom-panel-title-size: 16px;
+  --battle-dom-status-size: 15px;
+  --battle-dom-troop-size: 18px;
 }
 
 * {
@@ -1358,6 +1364,123 @@ button {
 
 .battle-phaser-host canvas {
   display: block;
+}
+
+.battle-dom-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.battle-dom-title,
+.battle-dom-battlefield,
+.battle-dom-instruction,
+.battle-dom-status-legend,
+.battle-dom-unit-label {
+  position: absolute;
+  color: var(--text-main);
+  white-space: nowrap;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.92),
+    0 0 1px rgba(255, 248, 226, 0.34);
+}
+
+.battle-dom-title {
+  transform: translateY(-50%);
+  font-family: var(--font-display);
+  font-size: var(--battle-dom-title-size);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.battle-dom-battlefield {
+  transform: translateY(-50%);
+  color: var(--accent-strong);
+  font-size: var(--battle-dom-subtitle-size);
+  font-weight: 800;
+}
+
+.battle-dom-instruction {
+  display: grid;
+  gap: 6px;
+  width: 460px;
+  min-height: 52px;
+  padding: 12px 18px;
+  transform: translate(-100%, -50%);
+  border: 1px solid rgba(209, 176, 117, 0.34);
+  border-radius: 6px;
+  background: rgba(15, 24, 36, 0.76);
+  font-size: var(--battle-dom-panel-size);
+  text-align: right;
+}
+
+.battle-dom-instruction strong {
+  overflow: hidden;
+  color: var(--text-main);
+  font-family: var(--font-display);
+  font-size: var(--battle-dom-panel-title-size);
+  font-weight: 900;
+  text-overflow: ellipsis;
+}
+
+.battle-dom-instruction span {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+}
+
+.battle-dom-status-legend {
+  max-width: calc(100% - 140px);
+  padding: 8px 16px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(248, 215, 152, 0.16);
+  border-radius: 5px;
+  background: rgba(5, 9, 15, 0.38);
+  color: #d9c9a7;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", var(--font-body);
+  font-size: var(--battle-dom-status-size);
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.battle-dom-unit-label {
+  min-width: 52px;
+  padding: 3px 8px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.32);
+  color: #f7f1df;
+  font-size: var(--battle-dom-troop-size);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+  text-align: center;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 1),
+    0 0 5px rgba(0, 0, 0, 0.95);
+}
+
+.battle-dom-unit-label--player {
+  border-color: rgba(91, 184, 255, 0.18);
+  color: #e2f3ff;
+}
+
+.battle-dom-unit-label--enemy {
+  border-color: rgba(255, 123, 123, 0.2);
+  color: #ffe8e1;
 }
 
 .battle-phaser-fallback {

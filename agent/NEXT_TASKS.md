@@ -1,48 +1,63 @@
 # Next Tasks
 
 ## Current Baseline
-`v0.5-8i-1 West Sea Route Patch`
+`v0.5-8i-2a Battle DOM Text Visual Polish`
 
 ## Immediate Next Target
-`v0.5-8i-2 Browser QA / West Sea Route Regression`
+`v0.5-8i-2c Battle DOM Text Scale Up Polish`
+
+Goal:
+- Scale up the overall Battle DOM Text Overlay typography.
+- Improve unit troop number readability.
+- Improve upper-right selected unit/hero info panel readability.
+- Improve bottom status legend readability.
+- Adjust top title / battlefield name size if needed.
+- Do not change battle logic, Phaser config, troop calculation, or DOM overlay coordinate math.
 
 Check:
-- 12개 도시가 모두 표시되는지.
-- active 32명 영웅 데이터가 깨지지 않는지.
-- 12세력 소유권이 정상인지.
-- 여포가 active roster에 남아 있지 않은지.
-- 곽가가 업성/위 세력에 표시되는지.
-- 사비가 백제 소유로 표시되는지.
-- 큐슈가 큐슈 세력 소유로 표시되는지.
-- 사비/큐슈 신규 영웅이 주둔 무장에 표시되는지.
-- 한성/평양은 일본 직접 이동이 여전히 불가능한지.
-- 사비 <-> 큐슈 서부 해상 루트가 정상인지.
-- 건업 <-> 사비 서해 해상 루트가 정상인지.
-- 건업 <-> 한성 direct route가 생기지 않았는지.
-- 경주 <-> 교토/오사카 동부 해상 루트가 유지되는지.
-- 신규 도시 공격/방어 전투 진입 시 빈 전장 회귀가 없는지.
-- 내정/무역/City Detail/저장 회귀가 없는지.
+- Unit troop labels such as `100/100`, `94/94`, and `221/221` are readable.
+- Unit troop labels do not become oversized black boxes.
+- Upper-right selected unit/hero info panel text is readable.
+- Bottom status legend text is readable.
+- Top title and battlefield name look natural.
+- DOM overlay does not block clicks.
+- Phaser text and DOM text are not duplicated.
+- Movement/attack updates still keep troop numbers in the correct place.
 
 ## Next Visual Target
-`v0.5-8j World Map Background Draft Prep`
+`v0.5-8i-3 Battle Asset HiDPI Pilot`
 
-Scope:
-- 현재 12도시 좌표 기준으로 월드맵 배경 이미지 초안을 준비한다.
-- 사비와 큐슈가 들어간 한반도 남서부/일본 서남부 기준점을 정리한다.
-- Phaser 좌표와 이미지 도시 위치를 맞추기 위한 기준을 정리한다.
-- 도시 아이콘, 깃발, 세력색은 이후 작업으로 둔다.
+Goal:
+- Test whether battle hero faces and unit sprites can be made sharper with higher-resolution source assets.
+- Replace only 1-2 sample hero face assets at 2x resolution.
+- Replace only one sample soldier sprite at 2x resolution.
+- Keep displayed size unchanged.
+- Defer full asset replacement until the pilot is confirmed.
+
+Guard:
+- Do not rebalance battle.
+- Do not change unit movement or attack logic.
+- Do not change Phaser config as the first solution.
 
 ## Next System Target
 `v0.5-9 Diplomacy & Spy Scaffold`
 
-Scope:
-- 적국 정보 공개 범위.
-- 첩보 없음 / 부분 / 상세 정보 공개.
-- 세력 관계 UI 확장.
-- 적국 재상 / 태수 / 자원 / 병력 노출 제한.
+Goal:
+- Add diplomacy/spy scaffold.
+- Limit enemy information visibility.
+- Add faction relation UI expansion.
+- Add no/partial/detailed spy information tiers.
+- Hide or limit enemy resources, troops, chancellor, and governor information depending on spy level.
+
+## Route / World Follow-Up
+- Keep 건업 <-> 사비 as the West Sea route.
+- Keep 건업 <-> 한성 direct route deferred.
+- Keep 한성/평양 no-direct-Japan rule.
+- Prepare a later 12-city world-map background draft after Battle DOM text polishing.
 
 ## Guardrails
-- Current baseline is `v0.5-8i-1`.
-- 건업 <-> 한성 direct route는 보류한다.
-- 신규 portrait/cutin asset을 추가하지 않는다.
-- 외교/첩보/적국 내정 AI/해전 본구현은 아직 시작하지 않는다.
+- Current baseline is `v0.5-8i-2a`.
+- Do not treat `v0.5-8d-1` or `v0.5-8h` as current.
+- Do not implement diplomacy, espionage, enemy domestic AI, or naval combat unless explicitly requested.
+- Do not add new portrait/cutin assets during text polish.
+- Do not alter save/load structure during text polish.

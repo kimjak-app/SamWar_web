@@ -8,6 +8,18 @@ import {
 import { canUseStrategy, hasStatus } from "../core/battle_strategy.js";
 import { getEnemyUnits, getPlayerUnits, getSelectedUnit } from "../core/battle_rules.js";
 import { mountBattleScene } from "../phaser/phaser_battle_mount.js";
+import { USE_DOM_BATTLE_TEXT_OVERLAY } from "../phaser/battle_scene.js";
+
+const PHASER_BATTLE_WIDTH = 1200;
+const PHASER_BATTLE_HEIGHT = 720;
+const BATTLE_BOARD = Object.freeze({
+  x: 92,
+  y: 118,
+  width: PHASER_BATTLE_WIDTH - 184,
+  height: PHASER_BATTLE_HEIGHT - 210,
+});
+const BATTLE_STATUS_ICON_LEGEND_TEXT = "상태: 🌀 혼란 · ⚠ 동요 · ◆ 방어 · ▲ 공↑ · ▼ 공↓ · ✖ 기절 · 🔥 화상 · ☠ 중독 · ! 도발 · ⛓ 속박";
+let battleDomOverlayResizeHandler = null;
 
 const BATTLE_RESULT_OVERLAY_TEXT = {
   won: {
@@ -125,6 +137,106 @@ function getDisplayTroops(unit) {
   };
 }
 
+function getUnitOverlayPoint(unit) {
+  const cellWidth = BATTLE_BOARD.width / Math.max(1, Number(unit?.gridWidth) || 14);
+  const cellHeight = BATTLE_BOARD.height / Math.max(1, Number(unit?.gridHeight) || 8);
+
+  return {
+    x: BATTLE_BOARD.x + cellWidth * unit.x + cellWidth / 2,
+    y: BATTLE_BOARD.y + cellHeight * unit.y + cellHeight / 2,
+  };
+}
+
+function getLogicalOverlayStyle(canvasElement, overlayElement, x, y) {
+  if (!canvasElement || !overlayElement) {
+    return `left:${(x / PHASER_BATTLE_WIDTH) * 100}%;top:${(y / PHASER_BATTLE_HEIGHT) * 100}%;`;
+  }
+
+  const canvasRect = canvasElement.getBoundingClientRect();
+  const overlayRect = overlayElement.getBoundingClientRect();
+  const scaleX = canvasRect.width / PHASER_BATTLE_WIDTH;
+  const scaleY = canvasRect.height / PHASER_BATTLE_HEIGHT;
+  const domX = canvasRect.left - overlayRect.left + x * scaleX;
+  const domY = canvasRect.top - overlayRect.top + y * scaleY;
+
+  return `left:${domX}px;top:${domY}px;`;
+}
+
+function getDomOverlayHelpCopy(battleState, selectedUnit, selectedSkill) {
+  if (!selectedUnit) {
+    return "이동 · 공격 · 특기 · 책략 · 방어 · 대기";
+  }
+
+  if (battleState.phase === "facing") {
+    return "이동 후 방향 선택";
+  }
+
+  if (battleState.phase === "skill") {
+    return `${selectedSkill?.name ?? "고유 특기"}: ${selectedSkill?.description ?? "범위 안의 대상을 선택하세요."}`;
+  }
+
+  if (battleState.phase === "strategy") {
+    return "책략 대상 적 유닛 선택";
+  }
+
+  if (selectedSkill && selectedUnit.currentSkillCooldown > 0) {
+    return `${selectedSkill.name}: 재사용 대기 ${selectedUnit.currentSkillCooldown}턴`;
+  }
+
+  if (selectedSkill) {
+    return `${selectedSkill.name}: ${selectedSkill.description}`;
+  }
+
+  return formatStatusList(selectedUnit);
+}
+
+function renderBattleDomTextOverlay(overlayElement, mountElement, battleState, selectedUnit, selectedSkill) {
+  if (!USE_DOM_BATTLE_TEXT_OVERLAY || !overlayElement || !battleState) {
+    if (overlayElement) {
+      overlayElement.innerHTML = "";
+    }
+    return;
+  }
+
+  const canvasElement = mountElement?.querySelector("canvas") ?? null;
+  const logicalStyle = (x, y) => getLogicalOverlayStyle(canvasElement, overlayElement, x, y);
+  const liveUnits = (battleState.units ?? []).filter((unit) => unit.isAlive !== false);
+  const unitLabels = liveUnits.map((unit) => {
+    const point = getUnitOverlayPoint({
+      ...unit,
+      gridWidth: battleState.grid?.width,
+      gridHeight: battleState.grid?.height,
+    });
+    const displayTroops = getDisplayTroops(unit);
+    return `
+      <div
+        class="battle-dom-unit-label battle-dom-unit-label--${unit.side}"
+        style="${logicalStyle(point.x, point.y + 54)}"
+        data-battle-dom-unit-id="${unit.id}"
+      >
+        ${displayTroops.current} / ${displayTroops.max}
+      </div>
+    `;
+  }).join("");
+  const selectedDisplayTroops = selectedUnit ? getDisplayTroops(selectedUnit) : null;
+  const summaryLine = selectedUnit
+    ? `${selectedUnit.name} | 병력 ${selectedDisplayTroops.current}/${selectedDisplayTroops.max} | 공격 ${Math.round(getEffectiveAttack(selectedUnit))} | 방어 ${Math.round(getEffectiveDefense(selectedUnit))} | 지력 ${selectedUnit.intelligence} | 방향 ${getDirectionLabel(selectedUnit.facing)}`
+    : "유닛을 선택하세요";
+
+  overlayElement.innerHTML = `
+    <div class="battle-dom-title" style="${logicalStyle(96, 40)}">전투 테스트</div>
+    <div class="battle-dom-battlefield" style="${logicalStyle(96, 82)}">${battleState.defenderCityName} 전장</div>
+    <div class="battle-dom-instruction" style="${logicalStyle(PHASER_BATTLE_WIDTH - 112, 62)}">
+      <strong>${summaryLine}</strong>
+      <span>${getDomOverlayHelpCopy(battleState, selectedUnit, selectedSkill)}</span>
+    </div>
+    <div class="battle-dom-status-legend" style="${logicalStyle(PHASER_BATTLE_WIDTH / 2, PHASER_BATTLE_HEIGHT - 54)}">
+      ${BATTLE_STATUS_ICON_LEGEND_TEXT}
+    </div>
+    ${unitLabels}
+  `;
+}
+
 function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = false } = {}) {
   const statusParts = [];
 
@@ -178,6 +290,7 @@ function renderBattleShell(battleState) {
             <div class="battle-phaser-shell">
               <div class="battle-phaser-host-wrap">
                 <div class="battle-phaser-host" data-battle-mount></div>
+                <div class="battle-dom-overlay" data-battle-dom-overlay aria-hidden="true"></div>
                 <div class="battle-board-overlay-layer" data-battle-overlay-layer></div>
               </div>
             </div>
@@ -450,6 +563,7 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
   const rightPanelElement = rootElement.querySelector("[data-battle-right-panel]");
   const commandBarElement = rootElement.querySelector("[data-battle-command-bar]");
   const overlayLayerElement = rootElement.querySelector("[data-battle-overlay-layer]");
+  const domOverlayElement = rootElement.querySelector("[data-battle-dom-overlay]");
   const mountElement = rootElement.querySelector("[data-battle-mount]");
 
   if (battleScreen) {
@@ -510,6 +624,25 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
       onWait: handlers.onBattleWait,
       onRetreat: handlers.onBattleRetreat,
     });
+  }
+
+  renderBattleDomTextOverlay(domOverlayElement, mountElement, battleState, selectedUnit, selectedSkill);
+
+  if (USE_DOM_BATTLE_TEXT_OVERLAY && typeof window !== "undefined" && window.requestAnimationFrame) {
+    window.requestAnimationFrame(() => {
+      renderBattleDomTextOverlay(domOverlayElement, mountElement, battleState, selectedUnit, selectedSkill);
+    });
+  }
+
+  if (USE_DOM_BATTLE_TEXT_OVERLAY && typeof window !== "undefined") {
+    if (battleDomOverlayResizeHandler) {
+      window.removeEventListener("resize", battleDomOverlayResizeHandler);
+    }
+
+    battleDomOverlayResizeHandler = () => {
+      renderBattleDomTextOverlay(domOverlayElement, mountElement, battleState, selectedUnit, selectedSkill);
+    };
+    window.addEventListener("resize", battleDomOverlayResizeHandler);
   }
 
   rootElement.querySelector('[data-battle-action="basic-attack"]')?.addEventListener("click", () => {

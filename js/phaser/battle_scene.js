@@ -111,6 +111,7 @@ const STATUS_ICON_CONVENTION = {
   bind: "⛓",
 };
 const STATUS_ICON_LEGEND_TEXT = `상태: ${STATUS_ICON_CONVENTION.confusion} 혼란 · ${STATUS_ICON_CONVENTION.shake} 동요 · ${STATUS_ICON_CONVENTION.defense} 방어 · ${STATUS_ICON_CONVENTION.attackBuff} 공↑ · ${STATUS_ICON_CONVENTION.attackDebuff} 공↓ · ${STATUS_ICON_CONVENTION.stun} 기절 · ${STATUS_ICON_CONVENTION.burn} 화상 · ${STATUS_ICON_CONVENTION.poison} 중독 · ${STATUS_ICON_CONVENTION.taunt} 도발 · ${STATUS_ICON_CONVENTION.bind} 속박`;
+export const USE_DOM_BATTLE_TEXT_OVERLAY = true;
 
 function getUnitStatusIcons(unit) {
   const icons = [];
@@ -478,17 +479,19 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.add.rectangle(width / 2, height / 2, width - 44, height - 44, 0x0d1622, 1)
         .setStrokeStyle(2, 0xd1b075, 0.24);
 
-      this.headerTitleText = this.add.text(96, 40, "전투 테스트", {
-        color: "#f3ead9",
-        fontFamily: "Georgia, serif",
-        fontSize: "34px",
-        fontStyle: "bold",
-      });
-      this.headerStatusText = this.add.text(96, 82, "", {
-        color: "#d1b075",
-        fontFamily: "Segoe UI, sans-serif",
-        fontSize: "18px",
-      });
+      if (!USE_DOM_BATTLE_TEXT_OVERLAY) {
+        this.headerTitleText = this.add.text(96, 40, "전투 테스트", {
+          color: "#f3ead9",
+          fontFamily: "Georgia, serif",
+          fontSize: "34px",
+          fontStyle: "bold",
+        });
+        this.headerStatusText = this.add.text(96, 82, "", {
+          color: "#d1b075",
+          fontFamily: "Segoe UI, sans-serif",
+          fontSize: "18px",
+        });
+      }
       this.input.mouse?.disableContextMenu();
       this.input.on("pointerdown", (pointer) => {
         if (pointer.button !== 2) {
@@ -763,15 +766,17 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
           stroke: "#081018",
           strokeThickness: 3,
         }).setOrigin(0.5, 0.5);
-        const hpText = this.add.text(0, 54, `${displayTroops.current} / ${displayTroops.max}`, {
-          color: "#eef5ff",
-          fontFamily: "Segoe UI, sans-serif",
-          fontSize: "15px",
-          fontStyle: "bold",
-          align: "center",
-          stroke: "#05090f",
-          strokeThickness: 3,
-        }).setOrigin(0.5, 0.5);
+        const hpText = USE_DOM_BATTLE_TEXT_OVERLAY
+          ? null
+          : this.add.text(0, 54, `${displayTroops.current} / ${displayTroops.max}`, {
+            color: "#eef5ff",
+            fontFamily: "Segoe UI, sans-serif",
+            fontSize: "15px",
+            fontStyle: "bold",
+            align: "center",
+            stroke: "#05090f",
+            strokeThickness: 3,
+          }).setOrigin(0.5, 0.5);
         const hpBarTrack = this.add.rectangle(0, 40, 90, 5, 0x04070b, 0.88).setStrokeStyle(1, 0xffffff, 0.22);
         const hpRatio = displayTroops.max > 0 ? Math.max(0, displayTroops.current) / displayTroops.max : 0;
         const hpBarFill = this.add.rectangle(
@@ -788,7 +793,11 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const statusIcons = this.createUnitStatusIcons(unit);
         const hitZone = this.add.zone(0, 8, 90, 110).setOrigin(0.5, 0.5);
 
-        unitGroup.add([selectionRing, tokenSprite, portraitBadge, statusIcons, facingText, hpBarTrack, hpBarFill, hpText, hitZone]);
+        unitGroup.add([selectionRing, tokenSprite, portraitBadge, statusIcons, facingText, hpBarTrack, hpBarFill, hitZone]);
+
+        if (hpText) {
+          unitGroup.add(hpText);
+        }
 
         if (unit.isDefending) {
           unitGroup.add(this.add.text(0, -52, "방어", {
@@ -985,6 +994,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
     }
 
     renderInstructionText() {
+      if (USE_DOM_BATTLE_TEXT_OVERLAY) {
+        return;
+      }
+
       const selectedUnit = this.battleState.units.find((unit) => unit.id === this.battleState.selectedUnitId) ?? null;
       const selectedSkill = selectedUnit ? getSkillById(this.battleState.skills, selectedUnit.skillId) : null;
       const summaryLine = selectedUnit
@@ -1038,6 +1051,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
     }
 
     renderStatusIconLegend() {
+      if (USE_DOM_BATTLE_TEXT_OVERLAY) {
+        return;
+      }
+
       const legendText = this.add.text(
         this.scale.width / 2,
         this.scale.height - 54,

@@ -1,88 +1,67 @@
 # Current State
 
 ## Current Baseline
-`v0.5-8i-1 West Sea Route Patch`
+`v0.5-8i-2a Battle DOM Text Visual Polish`
 
-This is the active handoff baseline. Do not treat `v0.5-8i`, `v0.5-8h`, or `v0.5-8d-1` as the current baseline.
+This is the current stable handoff candidate. Do not treat `v0.5-8i-2c`, `v0.5-8i-2`, `v0.5-8i-1`, `v0.5-8i`, `v0.5-8h`, or `v0.5-8d-1` as the current baseline unless explicitly requested.
 
-## v0.5-8i-1 State
-- Added 건업 <-> 사비 as a sea route.
-- 건업 <-> 한성 direct route is intentionally deferred.
-- 사비 now acts as the West Sea gateway from 강남/오 toward the southwestern Korean Peninsula.
-- 한성 and 평양 still do not directly connect to Japan.
-- Naval combat, diplomacy, espionage, and enemy domestic AI are still not implemented.
+## Current Completed State
+- The `v0.5-8h` 10-city / 27-hero / 10-faction structure has been expanded.
+- `v0.5-8i` added 백제 / 사비 and 큐슈 세력 / 큐슈.
+- 조조/위 active roster no longer uses 여포; 곽가 was added instead.
+- 여포 data remains reserved/inactive for future reuse.
+- Active world is now 12 cities / about 32 active heroes / 12 factions.
+- New portraits and cut-ins for the added heroes are not available yet and use `null` fallback.
 
-## v0.5-8i State
-- Active world: 12 cities / 32 active heroes / 12 factions.
-- Total hero data can be 33 because 여포 remains in reserve data.
-- 여포 is not deleted, but is excluded from the active roster and initial battle roster.
-- 곽가 is added to the 위 / 조조 세력 roster at 업성.
-- 백제 세력 and 사비 are added.
-- 큐슈 세력 and 큐슈 are added.
-- New hero portraits and skill cut-ins are still not available; new fields use `null` fallback.
-- No diplomacy, espionage, enemy domestic AI, naval combat implementation, domestic formula change, trade formula change, or battle engine overhaul was added.
-
-## Current World Structure
-
-### China
-- Cities: 업성 / 낙양 / 성도 / 건업.
-- 건업 has a western sea route to 사비.
-- 위 active roster now uses 조조 / 순욱 / 곽가.
-- 여포 remains reserved for future independent faction, event hero, or field boss use.
-
-### Korean Peninsula
-- Cities: 평양 / 한성 / 경주 / 사비.
-- 사비 is the 백제 왕도 and southwestern peninsula node.
-- Routes:
-  - 평양 <-> 한성
-  - 한성 <-> 경주
-  - 평양 <-> 경주
-  - 한성 <-> 사비
-  - 사비 <-> 경주
-
-### Japan
-- Cities: 교토 / 오사카 / 에도 / 큐슈.
-- Routes:
-  - 교토 <-> 오사카
-  - 오사카 <-> 에도
-  - 교토 <-> 에도
-  - 큐슈 <-> 오사카
-
-### Sea Route Rules
-- Eastern sea route: 경주 <-> 교토 / 오사카.
-- Western sea route: 사비 <-> 큐슈.
-- West Sea route: 건업 <-> 사비.
-- 한성 and 평양 still do not directly connect to Japan.
-- 큐슈 is the western sea pressure point between 사비 and 오사카.
-
-## New Factions / Cities / Heroes
-- `baekje_faction` / 백제 / 사비:
+## Baekje / Kyushu Expansion
+- 백제 세력:
+  - 사비
   - 의자왕
   - 계백
   - 흑치상지
-- `kyushu_faction` / 큐슈 세력 / 큐슈:
+- 큐슈 세력:
+  - 큐슈
   - 시마즈 요시히로
   - 고니시 유키나가
-- 위 / 업성:
-  - 곽가 added.
-  - 여포 reserved and removed from active roster.
+- 위 / 조조 세력:
+  - 곽가 added at 업성.
+  - 여포 excluded from active roster and battle roster.
 
 ## New Skill IDs
-- `heavenly_stratagem` / 천리기책 / 곽가.
-- `great_baekje_advance` / 대백제 진격 / 의자왕.
-- `hwangsanbeol_last_stand` / 황산벌 결사 / 계백.
-- `heukchi_restoration` / 부흥의 흑치 / 흑치상지.
-- `demon_shimazu` / 귀신 시마즈 / 시마즈 요시히로.
-- `sea_supply_route` / 해로보급 / 고니시 유키나가.
+- `heavenly_stratagem`
+- `great_baekje_advance`
+- `hwangsanbeol_last_stand`
+- `heukchi_restoration`
+- `demon_shimazu`
+- `sea_supply_route`
 
-All six are MVP placeholder-style skills using existing supported effect types.
+All six skill IDs are English snake_case. They are MVP placeholder-style skills using currently supported effect types where possible.
 
-## Save / Load
-- Save version is `v0.5-8i-1`.
-- Legacy load keeps `v0.5-8i`.
-- Legacy load keeps `v0.5-8h`, `v0.5-8f`, `v0.5-8e`, `v0.5-8d-1`, `v0.5-8d`, `v0.5-8c`, `v0.5-8b`, `v0.5-8`, and older keys.
-- Old saves merge canonical 사비/큐슈 and the latest 건업 <-> 사비 route.
-- Old saves that still contain 여포 at 업성 normalize him back to reserve/inactive.
+## West Sea Route State
+- `v0.5-8i-1` added 건업 <-> 사비 as a sea route.
+- 건업 <-> 한성 direct route remains deferred.
+- 사비 now acts as the West Sea maritime gateway.
+- 한성 and 평양 still do not directly connect to Japan.
+- 사비 <-> 큐슈 remains the western sea route.
+- 경주 <-> 교토 / 오사카 remains the eastern sea route.
+
+## Battle DOM Text State
+- `v0.5-8i-2` moved blurry Phaser canvas battle text/numbers into a DOM Overlay.
+- DOM Overlay targets:
+  - top title / battlefield name
+  - instruction text
+  - bottom status legend
+  - unit troop count labels
+- Phaser still handles battle background, grid, units, sprites, highlights, and effects.
+- `v0.5-8i-2a` polished unit troop count labels into lighter translucent mini-labels.
+- Battle text sharpness improved.
+- Battle logic, Phaser config, DOM overlay coordinate math, HP/troop calculation, domestic, trade, and save/load behavior were not changed.
+
+## Known Remaining Visual Work
+- Unit troop number labels are clearer but still need a larger size pass.
+- The upper-right selected unit/hero info panel text needs a larger readability pass.
+- The bottom status legend text needs a larger readability pass.
+- Battle hero faces, unit sprites, and background image sharpness are still unresolved.
 
 ## Previous Work Summary
 - `v0.5-8c`: 대외 무역 품목/직할 무역 조정 MVP.
@@ -93,6 +72,15 @@ All six are MVP placeholder-style skills using existing supported effect types.
 - `v0.5-8h`: 일본 / 한반도 / 중국 삼각 배치 미세 조정.
 - `v0.5-8i`: 백제 / 사비, 큐슈 / 큐슈 세력 확장.
 - `v0.5-8i-1`: 건업 <-> 사비 서해 해상 루트 추가.
+- `v0.5-8i-2`: 전투 텍스트/숫자 DOM Overlay 이전.
+- `v0.5-8i-2a`: 유닛 병력 숫자 라벨 반투명 미니 라벨 폴리싱.
 
 ## Recommended Next Target
-`v0.5-8i-2 Browser QA / West Sea Route Regression`
+`v0.5-8i-2c Battle DOM Text Scale Up Polish`
+
+Focus:
+- Increase unit troop number label size.
+- Increase upper-right selected unit/hero info panel text.
+- Increase bottom status legend text.
+- Adjust top title / battlefield name size if needed.
+- Do not change battle logic, Phaser config, troop calculation, or overlay coordinate math.
