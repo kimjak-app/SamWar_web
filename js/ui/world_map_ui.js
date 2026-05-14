@@ -1,5 +1,89 @@
 import { renderAllWorldUI } from "./ui_render.js";
 
+let debugCityDragMode = false;
+
+function getCityNodePosition(cityNode) {
+  return {
+    x: Number.parseFloat(cityNode.style.left) || 0,
+    y: Number.parseFloat(cityNode.style.top) || 0,
+  };
+}
+
+function updateCityCoordinateLabel(cityNode) {
+  const cityId = cityNode.getAttribute("data-city-id");
+  const label = cityNode.querySelector("[data-city-coordinate-label]");
+
+  if (!cityId || !label) {
+    return;
+  }
+
+  const { x, y } = getCityNodePosition(cityNode);
+  label.textContent = `${cityId} ${Math.round(x)},${Math.round(y)}`;
+}
+
+function installCityCoordinateDrag(rootElement) {
+  const stage = rootElement.querySelector(".world-stage");
+
+  if (!stage) {
+    return;
+  }
+
+  rootElement.querySelectorAll("[data-city-id]").forEach((cityNode) => {
+    cityNode.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+
+    cityNode.addEventListener("pointerdown", (event) => {
+      if (!debugCityDragMode || event.button !== 0) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      cityNode.setPointerCapture?.(event.pointerId);
+      cityNode.classList.add("is-debug-dragging");
+
+      const handlePointerMove = (moveEvent) => {
+        const rect = stage.getBoundingClientRect();
+        const nextX = ((moveEvent.clientX - rect.left) / rect.width) * 100;
+        const nextY = ((moveEvent.clientY - rect.top) / rect.height) * 100;
+        const clampedX = Math.max(0, Math.min(100, nextX));
+        const clampedY = Math.max(0, Math.min(100, nextY));
+
+        cityNode.style.left = `${clampedX}%`;
+        cityNode.style.top = `${clampedY}%`;
+        updateCityCoordinateLabel(cityNode);
+      };
+
+      const handlePointerUp = (upEvent) => {
+        upEvent.preventDefault();
+        upEvent.stopPropagation();
+        cityNode.releasePointerCapture?.(upEvent.pointerId);
+        cityNode.classList.remove("is-debug-dragging");
+        cityNode.removeEventListener("pointermove", handlePointerMove);
+        cityNode.removeEventListener("pointerup", handlePointerUp);
+        cityNode.removeEventListener("pointercancel", handlePointerUp);
+
+        const cityId = cityNode.getAttribute("data-city-id");
+        const { x, y } = getCityNodePosition(cityNode);
+        const roundedX = Math.round(x);
+        const roundedY = Math.round(y);
+
+        console.log("[CITY POS]", cityId, {
+          x: roundedX,
+          y: roundedY,
+        });
+        console.log(`{ id: "${cityId}", x: ${roundedX}, y: ${roundedY} }`);
+      };
+
+      cityNode.addEventListener("pointermove", handlePointerMove);
+      cityNode.addEventListener("pointerup", handlePointerUp);
+      cityNode.addEventListener("pointercancel", handlePointerUp);
+    });
+  });
+}
+
 export function renderWorldMap(rootElement, appState, handlers = {}) {
   const {
     onCitySelect,
@@ -36,9 +120,18 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   } = handlers;
   const { pendingHeroDeployment, pendingHeroTransfer } = appState;
 
-  rootElement.innerHTML = renderAllWorldUI(appState);
+  rootElement.innerHTML = renderAllWorldUI(appState, { debugCityDragMode });
 
-  if (onCitySelect) {
+  rootElement.querySelector("[data-debug-city-drag-toggle]")?.addEventListener("click", () => {
+    debugCityDragMode = !debugCityDragMode;
+    renderWorldMap(rootElement, appState, handlers);
+  });
+
+  if (debugCityDragMode) {
+    installCityCoordinateDrag(rootElement);
+  }
+
+  if (onCitySelect && !debugCityDragMode) {
     rootElement.querySelectorAll("[data-city-id]").forEach((element) => {
       element.addEventListener("click", () => {
         const cityId = element.getAttribute("data-city-id");

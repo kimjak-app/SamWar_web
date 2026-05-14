@@ -2,14 +2,23 @@
 
 ## Current Recent Flow
 
+### v0.5-8j World Map Coordinate Tool + Final 12-City Layout
+- Current stable handoff baseline.
+- Added a debug-only `좌표 모드` toggle to the world map.
+- OFF state preserves normal city click/select behavior.
+- ON state makes city markers draggable and shows `city.id x,y` labels.
+- Drag labels update live and drag end prints `[CITY POS]` plus a copy-ready object string.
+- Dragging does not save coordinates and does not mutate `data/cities.js`.
+- Applied final 12-city coordinates to `data/cities.js`.
+- Verified 12 cities, final coordinate match, key sea route preservation, and app static server response.
+
 ### v0.5-8i-2a Battle DOM Text Visual Polish
-- Current stable handoff candidate.
 - Polished the DOM unit troop count label style.
 - Reduced the heavy dark box feel into a lighter translucent mini-label.
 - Kept a subtle background, light border, and stronger text shadow for readability.
 - Preserved player/enemy color distinction.
 - CSS/display polish only.
-- No battle logic, HP/troop calculation, DOM coordinate, Phaser config, asset, domestic, trade, world-map, or save/load changes.
+- No battle logic, HP/troop calculation, DOM coordinate, Phaser config, asset, domestic, trade, world-map route, or save/load changes.
 
 ### v0.5-8i-2 Battle DOM Text Overlay MVP
 - Added a DOM overlay layer above the Phaser battle canvas.
@@ -18,7 +27,7 @@
 - Kept Phaser Text fallback paths available behind the overlay flag.
 - Preserved existing displayed troop formula.
 - No Phaser config zoom/resolution/pixelArt/roundPixels changes.
-- No battle logic, skill logic, troop/HP calculation, image asset, domestic, trade, world-map, or save/load structure changes.
+- No battle logic, skill logic, troop/HP calculation, image asset, domestic, trade, world-map route, or save/load structure changes.
 
 ### v0.5-8i-1 West Sea Route Patch
 - Added 건업 <-> 사비 as a sea route.

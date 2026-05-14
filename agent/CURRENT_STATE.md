@@ -1,67 +1,81 @@
 # Current State
 
 ## Current Baseline
-`v0.5-8i-2a Battle DOM Text Visual Polish`
+`v0.5-8j World Map Coordinate Tool + Final 12-City Layout`
 
-This is the current stable handoff candidate. Do not treat `v0.5-8i-2c`, `v0.5-8i-2`, `v0.5-8i-1`, `v0.5-8i`, `v0.5-8h`, or `v0.5-8d-1` as the current baseline unless explicitly requested.
+This is the current stable handoff baseline. Do not treat `v0.5-8i-2a`, `v0.5-8i-2`, `v0.5-8i-1`, `v0.5-8i`, `v0.5-8h`, or `v0.5-8d-1` as the current baseline unless explicitly requested.
 
 ## Current Completed State
 - The `v0.5-8h` 10-city / 27-hero / 10-faction structure has been expanded.
 - `v0.5-8i` added 백제 / 사비 and 큐슈 세력 / 큐슈.
-- 조조/위 active roster no longer uses 여포; 곽가 was added instead.
+- Active world is 12 cities / about 32 active heroes / 12 factions.
+- 조조/위 active roster uses 곽가 instead of 여포.
 - 여포 data remains reserved/inactive for future reuse.
-- Active world is now 12 cities / about 32 active heroes / 12 factions.
-- New portraits and cut-ins for the added heroes are not available yet and use `null` fallback.
+- `v0.5-8i-1` added 건업 <-> 사비 as a West Sea route.
+- `v0.5-8i-2` added Battle DOM Text Overlay.
+- `v0.5-8i-2a` polished Battle DOM troop labels.
+- `v0.5-8j` added the world map city coordinate debug tool and applied the final 12-city layout coordinates.
 
-## Baekje / Kyushu Expansion
-- 백제 세력:
-  - 사비
-  - 의자왕
-  - 계백
-  - 흑치상지
-- 큐슈 세력:
-  - 큐슈
-  - 시마즈 요시히로
-  - 고니시 유키나가
-- 위 / 조조 세력:
-  - 곽가 added at 업성.
-  - 여포 excluded from active roster and battle roster.
+## World Map Coordinate Tool
+- Added a world map `좌표 모드` toggle.
+- OFF by default.
+- OFF state keeps normal city click/select behavior unchanged.
+- ON state:
+  - city markers become draggable.
+  - labels appear above all city markers.
+  - label format: `city.id x,y`.
+  - labels update live while dragging.
+  - drag end logs `[CITY POS] city.id { x, y }`.
+  - drag end also logs a copy-ready object string such as `{ id: "city_id", x: XX, y: YY }`.
+- Dragging does not save coordinates automatically.
+- Dragging does not mutate `data/cities.js`.
+- Refresh/re-render resets visual drag positions unless coordinates are manually applied.
 
-## New Skill IDs
-- `heavenly_stratagem`
-- `great_baekje_advance`
-- `hwangsanbeol_last_stand`
-- `heukchi_restoration`
-- `demon_shimazu`
-- `sea_supply_route`
+## Final 12-City Coordinates
 
-All six skill IDs are English snake_case. They are MVP placeholder-style skills using currently supported effect types where possible.
+### Korean Peninsula
+- `sabi`: x 49, y 72.
+- `gyeongju`: x 56, y 61.
+- `hanseong`: x 45, y 53.
+- `pyeongyang`: x 41, y 39.
 
-## West Sea Route State
-- `v0.5-8i-1` added 건업 <-> 사비 as a sea route.
+### China
+- `chengdu`: x 14, y 84.
+- `luoyang`: x 16, y 67.
+- `yecheng`: x 20, y 51.
+- `jianye`: x 27, y 91.
+
+### Japan
+- `kyushu`: x 67, y 85.
+- `osaka`: x 78, y 81.
+- `kyoto`: x 81, y 67.
+- `edo`: x 89, y 59.
+
+## Route State
+- West Sea route: 건업 <-> 사비.
+- Western sea route: 사비 <-> 큐슈.
+- Eastern sea routes: 경주 <-> 교토 and 경주 <-> 오사카.
+- Japan western link: 오사카 <-> 큐슈.
 - 건업 <-> 한성 direct route remains deferred.
-- 사비 now acts as the West Sea maritime gateway.
 - 한성 and 평양 still do not directly connect to Japan.
-- 사비 <-> 큐슈 remains the western sea route.
-- 경주 <-> 교토 / 오사카 remains the eastern sea route.
+- Route graph was not changed during the final coordinate application.
 
 ## Battle DOM Text State
-- `v0.5-8i-2` moved blurry Phaser canvas battle text/numbers into a DOM Overlay.
-- DOM Overlay targets:
-  - top title / battlefield name
-  - instruction text
-  - bottom status legend
-  - unit troop count labels
-- Phaser still handles battle background, grid, units, sprites, highlights, and effects.
-- `v0.5-8i-2a` polished unit troop count labels into lighter translucent mini-labels.
-- Battle text sharpness improved.
-- Battle logic, Phaser config, DOM overlay coordinate math, HP/troop calculation, domestic, trade, and save/load behavior were not changed.
+- Battle DOM Text Overlay remains active from `v0.5-8i-2`.
+- Unit troop labels remain in the translucent mini-label style from `v0.5-8i-2a`.
+- Battle DOM text scale-up polish is still pending.
+- Battle asset HiDPI pass is still pending.
+- Battle logic, Phaser config, troop calculation, and save/load structure were not changed by `v0.5-8j`.
 
-## Known Remaining Visual Work
-- Unit troop number labels are clearer but still need a larger size pass.
-- The upper-right selected unit/hero info panel text needs a larger readability pass.
-- The bottom status legend text needs a larger readability pass.
-- Battle hero faces, unit sprites, and background image sharpness are still unresolved.
+## Important Warnings
+- Diplomacy is still not implemented.
+- Espionage is still not implemented.
+- Enemy domestic AI is still not implemented.
+- Naval combat is still not implemented.
+- New portrait/cutin assets for Baekje/Kyushu heroes are still missing.
+- Battle asset HiDPI pass is still pending.
+- Battle DOM text scale-up polish is still pending.
+- Northern/Mongol faction idea is only a future candidate, not implemented.
 
 ## Previous Work Summary
 - `v0.5-8c`: 대외 무역 품목/직할 무역 조정 MVP.
@@ -74,13 +88,10 @@ All six skill IDs are English snake_case. They are MVP placeholder-style skills 
 - `v0.5-8i-1`: 건업 <-> 사비 서해 해상 루트 추가.
 - `v0.5-8i-2`: 전투 텍스트/숫자 DOM Overlay 이전.
 - `v0.5-8i-2a`: 유닛 병력 숫자 라벨 반투명 미니 라벨 폴리싱.
+- `v0.5-8j`: 월드맵 좌표 디버그 도구와 최종 12도시 좌표 적용.
 
-## Recommended Next Target
-`v0.5-8i-2c Battle DOM Text Scale Up Polish`
-
-Focus:
-- Increase unit troop number label size.
-- Increase upper-right selected unit/hero info panel text.
-- Increase bottom status legend text.
-- Adjust top title / battlefield name size if needed.
-- Do not change battle logic, Phaser config, troop calculation, or overlay coordinate math.
+## Recommended Next Targets
+1. `v0.5-8k Northern Faction Planning / Genghis Khan Candidate`
+2. `v0.5-9 Diplomacy & Spy Scaffold`
+3. `Battle DOM Text Scale Up Polish`
+4. `Battle Asset HiDPI Pilot`

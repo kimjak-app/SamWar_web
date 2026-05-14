@@ -1,63 +1,67 @@
 # Next Tasks
 
 ## Current Baseline
-`v0.5-8i-2a Battle DOM Text Visual Polish`
+`v0.5-8j World Map Coordinate Tool + Final 12-City Layout`
 
-## Immediate Next Target
-`v0.5-8i-2c Battle DOM Text Scale Up Polish`
-
-Goal:
-- Scale up the overall Battle DOM Text Overlay typography.
-- Improve unit troop number readability.
-- Improve upper-right selected unit/hero info panel readability.
-- Improve bottom status legend readability.
-- Adjust top title / battlefield name size if needed.
-- Do not change battle logic, Phaser config, troop calculation, or DOM overlay coordinate math.
-
-Check:
-- Unit troop labels such as `100/100`, `94/94`, and `221/221` are readable.
-- Unit troop labels do not become oversized black boxes.
-- Upper-right selected unit/hero info panel text is readable.
-- Bottom status legend text is readable.
-- Top title and battlefield name look natural.
-- DOM overlay does not block clicks.
-- Phaser text and DOM text are not duplicated.
-- Movement/attack updates still keep troop numbers in the correct place.
-
-## Next Visual Target
-`v0.5-8i-3 Battle Asset HiDPI Pilot`
+## Immediate Candidate
+`v0.5-8k Northern Faction Planning / Genghis Khan Candidate`
 
 Goal:
-- Test whether battle hero faces and unit sprites can be made sharper with higher-resolution source assets.
-- Replace only 1-2 sample hero face assets at 2x resolution.
-- Replace only one sample soldier sprite at 2x resolution.
-- Keep displayed size unchanged.
-- Defer full asset replacement until the pilot is confirmed.
+- Plan, but do not implement by default, a northern steppe / Mongol faction candidate.
+- Candidate placement is between `pyeongyang` and `yecheng`.
+- Candidate city: `karakorum`.
+- Candidate heroes: 징기스칸, 수부타이, 제베.
+- Candidate routes:
+  - `karakorum <-> pyeongyang`
+  - `karakorum <-> yecheng`
 
 Guard:
-- Do not rebalance battle.
-- Do not change unit movement or attack logic.
-- Do not change Phaser config as the first solution.
+- Do not implement the Mongol faction unless explicitly requested.
+- Do not alter the current 12-city route graph during planning.
+- Do not add assets during planning.
 
 ## Next System Target
 `v0.5-9 Diplomacy & Spy Scaffold`
 
 Goal:
-- Add diplomacy/spy scaffold.
-- Limit enemy information visibility.
-- Add faction relation UI expansion.
-- Add no/partial/detailed spy information tiers.
-- Hide or limit enemy resources, troops, chancellor, and governor information depending on spy level.
+- Add enemy information visibility tiers.
+- Add no/partial/detailed spy information states.
+- Limit enemy resources, troops, chancellor, and governor information depending on spy level.
+- Expand faction relation UI only as needed for the scaffold.
 
-## Route / World Follow-Up
-- Keep 건업 <-> 사비 as the West Sea route.
-- Keep 건업 <-> 한성 direct route deferred.
-- Keep 한성/평양 no-direct-Japan rule.
-- Prepare a later 12-city world-map background draft after Battle DOM text polishing.
+Guard:
+- Do not implement full diplomacy AI.
+- Do not implement enemy domestic AI.
+- Do not implement naval combat.
+
+## Visual Polish Target
+`Battle DOM Text Scale Up Polish`
+
+Goal:
+- Increase unit troop label readability.
+- Increase upper-right selected unit/hero info panel text.
+- Increase bottom status legend text.
+- Keep battle logic, Phaser config, DOM overlay coordinate math, and troop calculation unchanged.
+
+## Asset Pilot Target
+`Battle Asset HiDPI Pilot`
+
+Goal:
+- Test 2x hero face assets and one 2x unit sprite.
+- Keep displayed size unchanged.
+- Confirm whether higher source resolution improves visible sharpness before replacing more assets.
+
+## World Map Follow-Up
+- The final 12-city coordinate layout is applied.
+- Coordinate debug tool can still be used for later layout work.
+- Do not change route graph unless explicitly requested.
+- Do not add 건업 <-> 한성 direct route unless explicitly requested.
+- Preserve 한성/평양 no-direct-Japan rule.
 
 ## Guardrails
-- Current baseline is `v0.5-8i-2a`.
-- Do not treat `v0.5-8d-1` or `v0.5-8h` as current.
-- Do not implement diplomacy, espionage, enemy domestic AI, or naval combat unless explicitly requested.
-- Do not add new portrait/cutin assets during text polish.
-- Do not alter save/load structure during text polish.
+- Current baseline is `v0.5-8j`.
+- Do not treat `v0.5-8i-2a`, `v0.5-8h`, or `v0.5-8d-1` as current.
+- Do not alter battle logic.
+- Do not alter domestic/trade formulas.
+- Do not alter save/load structure.
+- Do not implement diplomacy, espionage, enemy domestic AI, naval combat, or Mongol faction unless explicitly requested.

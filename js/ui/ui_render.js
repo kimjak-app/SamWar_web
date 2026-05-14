@@ -96,9 +96,9 @@ function renderRouteLayer(cities) {
   `;
 }
 
-function renderCityLayer(world, selectedCity) {
+function renderCityLayer(world, selectedCity, { debugCityDragMode = false } = {}) {
   return `
-    <div class="city-layer" aria-label="World map city anchors">
+    <div class="city-layer ${debugCityDragMode ? "is-coordinate-mode" : ""}" aria-label="World map city anchors">
       ${world.cities
         .map((city) => {
           const faction = getFactionById(world.factions, city.ownerFactionId);
@@ -114,6 +114,11 @@ function renderCityLayer(world, selectedCity) {
               style="left: ${city.x}%; top: ${city.y}%; --city-color: ${faction?.color ?? "#d3b273"};"
               aria-pressed="${isSelected}"
             >
+              ${debugCityDragMode ? `
+                <span class="city-coordinate-label" data-city-coordinate-label="${city.id}">
+                  ${city.id} ${Math.round(city.x)},${Math.round(city.y)}
+                </span>
+              ` : ""}
               <span class="city-pip"></span>
               <span class="city-label">
                 <span class="city-name">${city.name}</span>
@@ -123,6 +128,21 @@ function renderCityLayer(world, selectedCity) {
           `;
         })
         .join("")}
+    </div>
+  `;
+}
+
+function renderWorldDebugToolbar({ debugCityDragMode = false } = {}) {
+  return `
+    <div class="world-debug-toolbar" aria-label="World map debug tools">
+      <button
+        class="world-debug-toggle ${debugCityDragMode ? "is-active" : ""}"
+        type="button"
+        data-debug-city-drag-toggle="true"
+        aria-pressed="${debugCityDragMode}"
+      >
+        좌표 모드
+      </button>
     </div>
   `;
 }
@@ -187,8 +207,9 @@ function renderDefenseChoiceModal(pendingBattleChoice) {
   `;
 }
 
-export function renderAllWorldUI(appState) {
+export function renderAllWorldUI(appState, options = {}) {
   const { world } = appState;
+  const { debugCityDragMode = false } = options;
   const selectedCity = getSelectedCity(appState);
   const stationedHeroes = getStationedHeroes(world.heroes, selectedCity);
   const selectedFaction = getFactionById(world.factions, selectedCity.ownerFactionId);
@@ -213,7 +234,8 @@ export function renderAllWorldUI(appState) {
         <div class="map-overlay" aria-hidden="true"></div>
 
         ${renderRouteLayer(world.cities)}
-        ${renderCityLayer(world, selectedCity)}
+        ${renderCityLayer(world, selectedCity, { debugCityDragMode })}
+        ${renderWorldDebugToolbar({ debugCityDragMode })}
         ${renderWorldHud(appState, { canEndTurn, unified })}
 
         <aside class="hud-stack" aria-label="Selected city details">
