@@ -373,7 +373,7 @@ Do not add full diplomacy AI, treaty negotiation, espionage, merchant units, nav
 - Enemy identity is no longer one generic `enemy` in city/hero ownership.
 - Faction ids: `player`, `luoyang_faction`, `pyeongyang_faction`, `kyoto_faction`; legacy aggregate `enemy` remains only for old-save/enemy-wide summary compatibility.
 - Battle units still use `side: player/enemy` for battle rules, and keep `factionId` for true faction identity.
-- Next recommended work after QA: `v0.5-8c Trade Goods & Control MVP`.
+- Next recommended work after QA: `v0.5-9 Diplomacy & Spy Scaffold` or `v0.5-9 Enemy Domestic AI MVP`.
 
 ## v0.5-8d-1 City Detail Position + Toggle UX Patch
 - Swapped the right-side world map detail layout so `City Detail` renders before `Selected City` in the side panel.
@@ -383,3 +383,25 @@ Do not add full diplomacy AI, treaty negotiation, espionage, merchant units, nav
 - Detail tabs remain: `자원`, `자국무역`, `타국무역`.
 - Moved resource/internal trade/external trade details out of the Selected City summary.
 - No domestic, trade, troop rebalance, battle, Phaser, or save/load formula changes.
+
+
+## Final Morning Handoff — v0.5-8d-1
+Current stable candidate: `v0.5-8d-1 City Detail Position + Toggle UX Patch`.
+
+### Completed This Morning
+- Internal trade/supply display and troop rebalance line are present from the v0.5-7 series.
+- Inter-faction trade, relation/cooldown scaffold, trade goods/control, and detail-tab UX are present from the v0.5-8 series.
+- Selected City was shortened into a main operation card.
+- City Detail now contains the long-form information split into `자원 / 자국무역 / 타국무역`.
+- City Detail now renders before Selected City on wide screens and can be collapsed/opened.
+
+### Stable Candidate QA Still Worth Checking
+- Relation action buttons: 교역 강화 / 교역 중단 / 교역 재개.
+- Trade control modal after panel move.
+- Save → reload → load after toggling City Detail.
+- Attack/defense battle entry after the DOM rearrangement.
+
+### Next Session Recommendation
+Start the next session from the agent docs and choose one:
+1. `v0.5-9 Diplomacy & Spy Scaffold` — 정보 공개 범위, 첩보 없음/일부/상세 공개, 적국 정보 숨김.
+2. `v0.5-9 Enemy Domestic AI MVP` — 적국 재상/태수 자동 임명, 적국 모집/보급/무역 판단.

@@ -1,6 +1,48 @@
 # Current State
 
 ## Status
+- Current working version: `v0.5-8h Japan Triangle Micro Layout Patch`.
+- Japan micro tuning: Kyoto shifted slightly right, Osaka slightly left, Edo slightly up-right for a cleaner Kyoto–Osaka–Edo triangle.
+- Baseline before this patch: `v0.5-8f World Route Layout Cleanup`.
+- Scope: city coordinate / neighbor graph tune only. No battle, domestic, trade, diplomacy, espionage, or enemy AI logic was intentionally changed.
+- Browser manual QA is pending after zip handoff; static/module smoke checks passed in the work folder.
+
+## Current Stable Baseline Candidate: v0.5-8h Japan Triangle Micro Layout Patch
+- Kept the 10-city / 27-hero / 10-faction expansion from v0.5-8e and the land/sea route rendering from v0.5-8f.
+- Added `yecheng <-> jianye` so China now has a clearer northern/southern tension line as requested.
+- Moved `jianye` left/down for a cleaner China cluster.
+- Rebuilt the Korean Peninsula into a triangle:
+  - `pyeongyang <-> hanseong`
+  - `hanseong <-> gyeongju`
+  - `pyeongyang <-> gyeongju`
+- Moved `hanseong` left so `pyeongyang/hanseong/gyeongju` reads less like a straight diagonal chain.
+- Kept Japan access restricted to `gyeongju`; `hanseong` and `pyeongyang` still cannot directly reach Japan.
+- Moved `kyoto` right into the Japanese island area and moved `osaka` lower.
+- Rebuilt Japan into a triangle:
+  - `kyoto <-> osaka`
+  - `osaka <-> edo`
+  - `kyoto <-> edo`
+- Save version advanced to `v0.5-8h`; `v0.5-8f` is now treated as a legacy load key.
+- Save/load continues to preserve canonical `neighbors`, `routeTypes`, `x`, and `y` so old saves adopt the latest route layout.
+
+## Next Recommended Target
+1. `v0.5-8h-1 Browser QA / World Map Image Prep`
+   - Open fresh app.
+   - Confirm China, Korea, and Japan each read as an intentional triangle cluster.
+   - Confirm `yecheng <-> jianye` is visible and usable.
+   - Confirm `hanseong` / `pyeongyang` cannot directly attack Japan.
+   - Confirm `gyeongju` remains the only Korea-Japan gateway.
+   - Confirm manual battle entry still works from adjacent enemy cities.
+2. `v0.5-8h World Map Background Draft`
+   - Generate a new temporary world-map image around the approved 10-city triangle graph.
+3. `v0.5-9 Diplomacy & Spy Scaffold`
+   - Start only after the 10-city route graph feels visually stable.
+
+---
+
+---
+
+## Status
 - Current working version: `v0.5-8c Trade Goods & Control MVP`.
 - Baseline before this patch: `v0.5-5b Attack/Defense Empty Battlefield Common Battle Unit Render Fix`.
 - v0.5-3a is the first real domestic-effect MVP. It connects chancellor/governor aptitude and policy choices to actual domestic results through a central engine.
@@ -484,3 +526,19 @@
 - Detail tabs remain: `자원`, `자국무역`, `타국무역`.
 - Moved resource/internal trade/external trade details out of the Selected City summary.
 - No domestic, trade, troop rebalance, battle, Phaser, or save/load formula changes.
+
+
+## Current Baseline — v0.5-8d-1 Final Handoff
+- Current working baseline: `v0.5-8d-1 City Detail Position + Toggle UX Patch`.
+- `Selected City` is the operation summary card and `City Detail` is the auxiliary tabbed detail card.
+- `City Detail` appears before `Selected City` on wide screens and can be collapsed/opened.
+- Detail tabs: `자원`, `자국무역`, `타국무역`.
+- Resource, internal trade/supply, internal troop rebalance, external trade, faction relation, and trade control details are no longer stacked inside the Selected City summary.
+- v0.5-8 line status:
+  - `v0.5-8 Inter-Faction Trade MVP`: implemented.
+  - `v0.5-8b Trade Relation / Agreement Scaffold`: implemented.
+  - `v0.5-8c Trade Goods & Control MVP`: implemented.
+  - `v0.5-8d City Detail Panel Tabs UX`: implemented.
+  - `v0.5-8d-1 City Detail Position + Toggle UX Patch`: implemented.
+- No formula changes were made in v0.5-8d-1; it is a UX/layout-only patch.
+- Recommended next major system: `v0.5-9 Diplomacy & Spy Scaffold` or `v0.5-9 Enemy Domestic AI MVP` after final browser regression QA.

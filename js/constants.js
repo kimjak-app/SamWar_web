@@ -1,6 +1,20 @@
 export const FACTION_IDS = Object.freeze({
   PLAYER: "player",
   ENEMY: "enemy", // legacy aggregate id for old saves / enemy-wide UI summaries
+
+  // v0.5-8e active historical factions
+  GOGURYEO: "goguryeo",
+  SILLA: "silla",
+  GORYEO_JOSEON: "goryeo_joseon",
+  CHU: "chu",
+  WEI: "wei",
+  SHU: "shu",
+  WU: "wu",
+  ODA: "oda",
+  TOYOTOMI: "toyotomi",
+  TOKUGAWA: "tokugawa",
+
+  // Legacy faction ids kept for old saves and migration fallback.
   LUOYANG: "luoyang_faction",
   PYEONGYANG: "pyeongyang_faction",
   KYOTO: "kyoto_faction",
@@ -8,9 +22,16 @@ export const FACTION_IDS = Object.freeze({
 
 export const FACTION_HOME_CITY_IDS = Object.freeze({
   [FACTION_IDS.PLAYER]: "hanseong",
-  [FACTION_IDS.LUOYANG]: "luoyang",
-  [FACTION_IDS.PYEONGYANG]: "pyeongyang",
-  [FACTION_IDS.KYOTO]: "kyoto",
+  [FACTION_IDS.GORYEO_JOSEON]: "hanseong",
+  [FACTION_IDS.GOGURYEO]: "pyeongyang",
+  [FACTION_IDS.SILLA]: "gyeongju",
+  [FACTION_IDS.CHU]: "luoyang",
+  [FACTION_IDS.WEI]: "yecheng",
+  [FACTION_IDS.SHU]: "chengdu",
+  [FACTION_IDS.WU]: "jianye",
+  [FACTION_IDS.ODA]: "kyoto",
+  [FACTION_IDS.TOYOTOMI]: "osaka",
+  [FACTION_IDS.TOKUGAWA]: "edo",
 });
 
 export const LEGACY_ENEMY_FACTION_IDS = Object.freeze([
@@ -58,12 +79,16 @@ export const CITY_TYPES = Object.freeze({
   COMMERCIAL_CAPITAL: "commercial_capital",
   PRODUCTION_CITY: "production_city",
   COASTAL_TRADE_CITY: "coastal_trade_city",
+  RIVER_TRADE_CITY: "river_trade_city",
+  MILITARY_FORTRESS: "military_fortress",
 });
 
 export const CITY_TYPE_LABELS = Object.freeze({
   [CITY_TYPES.COMMERCIAL_CAPITAL]: "상업대도시",
   [CITY_TYPES.PRODUCTION_CITY]: "생산형",
   [CITY_TYPES.COASTAL_TRADE_CITY]: "해안무역도시",
+  [CITY_TYPES.RIVER_TRADE_CITY]: "수운교역도시",
+  [CITY_TYPES.MILITARY_FORTRESS]: "군사요새",
 });
 
 export const LOYALTY_KEYS = Object.freeze({

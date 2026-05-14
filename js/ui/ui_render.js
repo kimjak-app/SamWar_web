@@ -29,8 +29,13 @@ function getCityEdges(cities) {
         continue;
       }
 
+      const neighborCity = cities.find((entry) => entry.id === neighborId);
+      const routeType = city.routeTypes?.[neighborId]
+        ?? neighborCity?.routeTypes?.[city.id]
+        ?? "land";
+
       seen.add(edgeKey);
-      edges.push([city.id, neighborId]);
+      edges.push({ fromId: city.id, toId: neighborId, routeType });
     }
   }
 
@@ -40,13 +45,23 @@ function getCityEdges(cities) {
 function getCityLabelClass(cityId) {
   switch (cityId) {
     case "luoyang":
-      return "label-east";
+    case "yecheng":
+    case "chengdu":
+      return "label-west";
+    case "jianye":
+      return "label-east label-south";
     case "pyeongyang":
       return "label-east label-north";
     case "hanseong":
+      return "label-east";
+    case "gyeongju":
       return "label-east label-south";
     case "kyoto":
       return "label-west label-north";
+    case "osaka":
+      return "label-west label-south";
+    case "edo":
+      return "label-west";
     default:
       return "label-east";
   }
@@ -58,7 +73,7 @@ function renderRouteLayer(cities) {
   return `
     <svg class="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       ${cityEdges
-        .map(([fromId, toId]) => {
+        .map(({ fromId, toId, routeType }) => {
           const fromCity = cities.find((city) => city.id === fromId);
           const toCity = cities.find((city) => city.id === toId);
 
@@ -68,7 +83,7 @@ function renderRouteLayer(cities) {
 
           return `
             <line
-              class="route-line"
+              class="route-line ${routeType === "sea" ? "route-line-sea" : "route-line-land"}"
               x1="${fromCity.x}"
               y1="${fromCity.y}"
               x2="${toCity.x}"

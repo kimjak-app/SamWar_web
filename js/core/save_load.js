@@ -1,4 +1,5 @@
 import { gameStore } from "./GameStore.js";
+import { cities as canonicalCities } from "../../data/cities.js";
 import { heroes as canonicalHeroes } from "../../data/heroes.js";
 import {
   createInitialDomesticPolicy,
@@ -12,9 +13,28 @@ import { normalizeFactionRelations } from "./inter_faction_trade.js";
 import { getDefaultFactionIdForCity, initializeCityDomesticData } from "./world_rules.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
-const SAVE_KEY = "samwar.save.v0.5-8c";
-const LEGACY_SAVE_KEYS = Object.freeze(["samwar.save.v0.5-8b", "samwar.save.v0.5-8", "samwar.save.v0.5-7c", "samwar.save.v0.5-7", "samwar.save.v0.5-6", "samwar.save.v0.5-5b", "samwar.save.v0.5-5a", "samwar.save.v0.5-5", "samwar.save.v0.5-4c", "samwar.save.v0.5-4b", "samwar.save.v0.5-4", "samwar.save.v0.5-3c", "samwar.save.v0.5-3b", "samwar.save.v0.5-1h"]);
-const SAVE_VERSION = "v0.5-8c";
+const SAVE_KEY = "samwar.save.v0.5-8h";
+const LEGACY_SAVE_KEYS = Object.freeze([
+  "samwar.save.v0.5-8g",
+  "samwar.save.v0.5-8f",
+  "samwar.save.v0.5-8e",
+  "samwar.save.v0.5-8c",
+  "samwar.save.v0.5-8b",
+  "samwar.save.v0.5-8",
+  "samwar.save.v0.5-7c",
+  "samwar.save.v0.5-7",
+  "samwar.save.v0.5-6",
+  "samwar.save.v0.5-5b",
+  "samwar.save.v0.5-5a",
+  "samwar.save.v0.5-5",
+  "samwar.save.v0.5-4c",
+  "samwar.save.v0.5-4b",
+  "samwar.save.v0.5-4",
+  "samwar.save.v0.5-3c",
+  "samwar.save.v0.5-3b",
+  "samwar.save.v0.5-1h",
+]);
+const SAVE_VERSION = "v0.5-8h";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {
@@ -55,6 +75,26 @@ function hydrateCanonicalHeroes(savedHeroes) {
   return canonicalHeroes;
 }
 
+function mergeCanonicalCities(savedCities) {
+  if (!Array.isArray(savedCities)) {
+    return canonicalCities;
+  }
+
+  const savedCityById = new Map(savedCities.map((city) => [city?.id, city]).filter(([cityId]) => Boolean(cityId)));
+
+  return [
+    ...canonicalCities.map((canonicalCity) => ({
+      ...canonicalCity,
+      ...(savedCityById.get(canonicalCity.id) ?? {}),
+      neighbors: canonicalCity.neighbors,
+      routeTypes: canonicalCity.routeTypes,
+      x: canonicalCity.x,
+      y: canonicalCity.y,
+    })),
+    ...savedCities.filter((city) => city?.id && !canonicalCities.some((canonicalCity) => canonicalCity.id === city.id)),
+  ];
+}
+
 function getFallbackSelectedCityId(cities = [], selection = {}) {
   if (cities.some((city) => city.id === selection?.cityId)) {
     return selection.cityId;
@@ -68,7 +108,7 @@ function getFallbackSelectedCityId(cities = [], selection = {}) {
 function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
   const fallbackWorld = fallbackState.world ?? {};
   const savedWorld = savedState.world ?? {};
-  const cities = initializeCityDomesticData(savedWorld.cities ?? fallbackWorld.cities ?? []);
+  const cities = initializeCityDomesticData(mergeCanonicalCities(savedWorld.cities ?? fallbackWorld.cities));
   const heroes = hydrateCanonicalHeroes(savedWorld.heroes ?? fallbackWorld.heroes ?? []);
   const playerFactionId = savedState.meta?.playerFactionId
     ?? fallbackState.meta?.playerFactionId

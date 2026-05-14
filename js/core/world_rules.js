@@ -33,9 +33,19 @@ export function getDefaultFactionIdForCity(cityId, fallbackFactionId = FACTION_I
     ?? fallbackFactionId;
 }
 
+const LEGACY_CITY_OWNER_FACTION_ID_MAP = Object.freeze({
+  [FACTION_IDS.LUOYANG]: FACTION_IDS.CHU,
+  [FACTION_IDS.PYEONGYANG]: FACTION_IDS.GOGURYEO,
+  [FACTION_IDS.KYOTO]: FACTION_IDS.ODA,
+});
+
 export function normalizeCityOwnerFactionId(city) {
   if (city?.ownerFactionId === FACTION_IDS.ENEMY) {
     return getDefaultFactionIdForCity(city.id, FACTION_IDS.ENEMY);
+  }
+
+  if (LEGACY_CITY_OWNER_FACTION_ID_MAP[city?.ownerFactionId]) {
+    return LEGACY_CITY_OWNER_FACTION_ID_MAP[city.ownerFactionId];
   }
 
   return city?.ownerFactionId ?? getDefaultFactionIdForCity(city?.id, FACTION_IDS.PLAYER);

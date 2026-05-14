@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-05-14
+
+### v0.5-8h Japan Triangle Micro Layout Patch
+- Tuned the v0.5-8f route layout after browser screenshot review.
+- Added `yecheng <-> jianye` to connect 업성 and 건업.
+- Moved `jianye` left/down for a cleaner China cluster.
+- Moved `hanseong` left and added `pyeongyang <-> gyeongju` so 평양/한성/경주 form a triangle.
+- Preserved the rule that only `gyeongju` can reach Japan; `hanseong` and `pyeongyang` still have no direct Japan route.
+- Moved `kyoto` right into the Japanese island area and moved `osaka` lower.
+- Added `kyoto <-> edo` so 교토/오사카/에도 form a triangle.
+- Advanced save version to `v0.5-8h` and added `v0.5-8f` as a legacy load key.
+- No battle logic, domestic logic, trade logic, diplomacy, espionage, enemy domestic AI, hero portrait asset, or skill cut-in asset was added.
+
+## 2026-05-14
+
+### v0.5-8f World Route Layout Cleanup
+- Cleaned up the expanded 10-city world route graph after v0.5-8e.
+- Removed direct `hanseong` / `pyeongyang` routes to Japan.
+- Made `gyeongju` the Korea-Japan gateway with sea routes to `kyoto` and `osaka`.
+- Repositioned `hanseong` upward between `pyeongyang` and `gyeongju` for a cleaner peninsula cluster.
+- Repositioned Japanese cities into a clearer `kyoto -> osaka -> edo` chain with `gyeongju` gateway pressure.
+- Rebuilt China routes around `yecheng` as the northern gate and `luoyang/chengdu/jianye` as the main triangle.
+- Added optional `routeTypes` metadata for Korea-Japan sea routes.
+- Updated world route rendering with land/sea route classes.
+- Updated city label classes for the 10-city layout.
+- Advanced save version to `v0.5-8f` and added `v0.5-8e` as a legacy load key.
+- Save/load now preserves canonical `neighbors`, `routeTypes`, `x`, and `y` from current city data.
+- No battle logic, domestic logic, trade logic, diplomacy, espionage, enemy domestic AI, hero portrait asset, or skill cut-in asset was added.
+
+
 ## v0.5-8c Trade Goods & Control MVP
 - Added external trade goods/control scaffolding.
 - MVP trade goods are `gold`, `rice`, `barley`, `seafood`, `salt`, and `silk`.
@@ -838,3 +868,25 @@
 - Detail tabs remain: `자원`, `자국무역`, `타국무역`.
 - Moved resource/internal trade/external trade details out of the Selected City summary.
 - No domestic, trade, troop rebalance, battle, Phaser, or save/load formula changes.
+
+
+## v0.5-8d-1 Final Handoff Docs Refresh
+- Refreshed agent handoff notes after confirming the City Detail position/toggle patch works.
+- Marked the current stable candidate as `v0.5-8d-1 City Detail Position + Toggle UX Patch`.
+- Clarified that v0.5-8d-1 is UX/layout-only and does not alter domestic, trade, troop, battle, Phaser, or save/load formulas.
+- Added next-session candidates: `v0.5-9 Diplomacy & Spy Scaffold` and `v0.5-9 Enemy Domestic AI MVP`.
+
+## v0.5-8e World Expansion Data Patch
+- Expanded world data from 4 cities to 10 cities: 한성, 평양, 경주, 낙양, 업성, 성도, 건업, 교토, 오사카, 에도.
+- Added active historical factions for the expanded board: 고구려, 신라, 초, 위, 촉, 오, 오다, 도요토미, 도쿠가와, plus player.
+- Preserved legacy faction ids for old-save fallback while migrating current canonical ownership to active historical faction ids.
+- Added 19 new hero data entries for a total of 27 heroes.
+- Standardized new Chinese hero/city ids to pinyin-style romanization (`xiang_yu`, `cao_cao`, `zhuge_liang`, `yecheng`, `chengdu`, `jianye`, etc.).
+- Fixed Kim Yu-sin skill id to English-only `unification_charge`.
+- Added `nameKey`/`titleKey`/`traitKey` localization hooks while keeping Korean `name` as display fallback.
+- Added placeholder unique skills for new heroes using existing supported battle effect types.
+- Set missing new hero portraits and cut-ins to `null` so the current UI fallback can handle missing assets.
+- Rebuilt battle rosters for all 10 cities.
+- Added `CITY_TYPES.RIVER_TRADE_CITY` and `CITY_TYPES.MILITARY_FORTRESS`.
+- Updated save key/version to `v0.5-8e` and merged canonical cities during legacy load so old saves can receive new cities.
+- No new image assets, final skill mechanics, diplomacy/spy logic, enemy domestic AI, naval route logic, or world map redraw was added.
