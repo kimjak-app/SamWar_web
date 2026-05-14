@@ -22,12 +22,13 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onGovernorHeroChange,
     onGovernorPolicyChange,
     onRecruitTroops,
-    onCityDetailTabChange,
     onTradeRelationAction,
     onTradeControlOpen,
     onTradeControlApply,
     onTradeControlAuto,
     onTradeControlClose,
+    onCityDetailTabChange,
+    onCityDetailToggle,
     onConfirmEnemyTurnResult,
     onSaveGame,
     onLoadGame,
@@ -235,18 +236,6 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     });
   }
 
-  if (onCityDetailTabChange) {
-    rootElement.querySelectorAll("[data-city-detail-tab]").forEach((element) => {
-      element.addEventListener("click", () => {
-        const tab = element.getAttribute("data-city-detail-tab");
-
-        if (tab) {
-          onCityDetailTabChange(tab);
-        }
-      });
-    });
-  }
-
   if (onTradeRelationAction) {
     rootElement.querySelectorAll("[data-trade-relation-action]").forEach((element) => {
       element.addEventListener("click", () => {
@@ -311,6 +300,26 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   if (onTradeControlClose) {
     rootElement.querySelector("[data-trade-control-close='true']")?.addEventListener("click", () => {
       onTradeControlClose();
+    });
+  }
+
+  if (onCityDetailTabChange) {
+    rootElement.querySelectorAll("[data-city-detail-tab]").forEach((element) => {
+      element.addEventListener("click", () => {
+        const tab = element.getAttribute("data-city-detail-tab");
+
+        if (tab) {
+          onCityDetailTabChange(tab);
+        }
+      });
+    });
+  }
+
+  if (onCityDetailToggle) {
+    rootElement.querySelectorAll("[data-city-detail-toggle]").forEach((element) => {
+      element.addEventListener("click", () => {
+        onCityDetailToggle(element.getAttribute("data-city-detail-toggle") === "open");
+      });
     });
   }
 

@@ -645,23 +645,11 @@ button {
   z-index: 5;
   display: grid;
   gap: 16px;
-  width: min(760px, calc(100vw - 440px));
+  width: min(380px, calc(100vw - 44px));
 }
 
 .hud-panel {
   width: 100%;
-}
-
-.selected-city-layout {
-  display: grid;
-  grid-template-columns: minmax(300px, 0.95fr) minmax(320px, 1.05fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.selected-city-summary-panel,
-.city-detail-panel {
-  min-width: 0;
 }
 
 .detail-card {
@@ -767,42 +755,6 @@ button {
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid rgba(248, 215, 152, 0.14);
-}
-
-.city-detail-panel {
-  display: grid;
-  gap: 12px;
-}
-
-.city-detail-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.city-detail-tab-button {
-  min-width: 0;
-  padding: 8px 6px;
-  border: 1px solid rgba(209, 176, 117, 0.22);
-  border-radius: 8px;
-  background: rgba(12, 24, 38, 0.62);
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 0.78rem;
-}
-
-.city-detail-tab-button.active {
-  border-color: rgba(248, 215, 152, 0.64);
-  background: rgba(74, 54, 30, 0.54);
-  color: var(--accent-strong);
-}
-
-.city-detail-tab-content {
-  display: grid;
-  gap: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(248, 215, 152, 0.12);
 }
 
 .city-governor-panel,
@@ -1960,15 +1912,11 @@ button {
 
   .hud-stack {
     gap: 10px;
-    width: min(680px, calc(100vw - 360px));
+    width: min(340px, calc(100vw - 36px));
     max-height: calc(100vh - 24px);
     overflow: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(209, 176, 117, 0.35) rgba(7, 14, 23, 0.12);
-  }
-
-  .selected-city-layout {
-    grid-template-columns: 1fr;
   }
 
   .left-hud-stack::-webkit-scrollbar,
@@ -2237,5 +2185,129 @@ button {
 
   .city-meta {
     font-size: 0.68rem;
+  }
+}
+
+/* v0.5-8d-1 City Detail Position + Toggle UX */
+.hud-stack {
+  width: min(760px, calc(100vw - 44px));
+}
+
+.selected-city-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 1.05fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.selected-city-summary-panel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.city-detail-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.city-detail-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.city-detail-toggle-button,
+.city-detail-collapsed-card,
+.city-detail-tab-button {
+  border: 1px solid rgba(209, 176, 117, 0.28);
+  border-radius: 10px;
+  background: rgba(10, 19, 31, 0.78);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.city-detail-toggle-button {
+  padding: 7px 10px;
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.city-detail-toggle-button:hover,
+.city-detail-collapsed-card:hover,
+.city-detail-tab-button:hover,
+.city-detail-tab-button.active {
+  border-color: rgba(248, 215, 152, 0.72);
+  background: rgba(36, 27, 13, 0.72);
+}
+
+.city-detail-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.city-detail-tab-button {
+  padding: 8px 10px;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.city-detail-tab-button.active {
+  color: var(--accent-strong);
+}
+
+.city-detail-tab-content {
+  display: grid;
+  gap: 12px;
+}
+
+.city-detail-panel-collapsed {
+  padding: 10px;
+  border-radius: 16px;
+}
+
+.city-detail-collapsed-card {
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+@media (max-width: 1500px) {
+  .hud-stack {
+    width: min(720px, calc(100vw - 36px));
+  }
+
+  .selected-city-layout {
+    grid-template-columns: minmax(260px, 0.95fr) minmax(300px, 1.05fr);
+    gap: 10px;
+  }
+
+  .selected-city-summary-panel {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 1120px) {
+  .hud-stack {
+    width: min(380px, calc(100vw - 36px));
+  }
+
+  .selected-city-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .city-detail-panel {
+    order: 1;
+  }
+
+  .selected-city-summary-panel {
+    order: 2;
   }
 }

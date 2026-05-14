@@ -203,6 +203,7 @@ export function renderAllWorldUI(appState) {
 
         <aside class="hud-stack" aria-label="Selected city details">
           <div class="selected-city-layout">
+            ${renderCityDetailPanel({ appState, selectedCity })}
             <div class="selected-city-summary-panel">
               ${renderSelectedCityPanel({
                 appState,
@@ -213,11 +214,10 @@ export function renderAllWorldUI(appState) {
                 hasHeroTransferDestination,
                 canOpenAttackChoice,
               })}
-            </div>
-            ${renderCityDetailPanel(selectedCity, appState)}
-          </div>
 
-          ${renderBattleChoicePanel(rightSideBattleChoice)}
+              ${renderBattleChoicePanel(rightSideBattleChoice)}
+            </div>
+          </div>
         </aside>
         ${renderDefenseChoiceModal(pendingBattleChoice)}
         ${renderHeroDeploymentPanel(pendingHeroDeployment)}

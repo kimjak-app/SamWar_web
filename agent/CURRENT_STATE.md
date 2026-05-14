@@ -1,24 +1,12 @@
 # Current State
 
 ## Status
-- Current working version: `v0.5-8d City Detail Panel Tabs UX`.
+- Current working version: `v0.5-8c Trade Goods & Control MVP`.
 - Baseline before this patch: `v0.5-5b Attack/Defense Empty Battlefield Common Battle Unit Render Fix`.
 - v0.5-3a is the first real domestic-effect MVP. It connects chancellor/governor aptitude and policy choices to actual domestic results through a central engine.
 - Browser manual QA passed with no console errors.
 
-## Current Stable Baseline: v0.5-8d City Detail Panel Tabs UX
-- Selected City summary panel is shortened to core judgment controls and status.
-- A separate City Detail Panel now sits beside the summary panel on wide screens and stacks below it on narrow screens.
-- City Detail tabs:
-  - `자원`: 식량/전략/특산 자원 and 상업력
-  - `자국무역`: internal trade/supply, city military role, target/current garrison, shortage/surplus, and internal troop rebalance summary
-  - `타국무역`: external trade route, faction relation, trade availability, income, operation details, relation buttons, and trade-control button
-- Detail tab UI state is kept in `appState.ui.selectedCityDetailTab`; it is not saved.
-- Resource/trade/supply/relation details were moved out of the default Selected City panel to reduce vertical length.
-- No domestic, trade, supply, troop rebalance, battle, or save/load formula/structure changes were made.
-- Next target: `v0.5-9 Diplomacy & Spy Scaffold` or `v0.5-9 Enemy Domestic AI MVP`.
-
-## Previous Stable Baseline: v0.5-8c Trade Goods & Control MVP
+## Current Stable Baseline: v0.5-8c Trade Goods & Control MVP
 - External trade now has goods/control scaffolding on top of v0.5-8b relations.
 - Allowed MVP goods: 금전, 쌀, 보리, 수산물, 소금, 비단.
 - 목재, 철, 말 trade remains deferred because those resources connect to military balance and troop-type systems.
@@ -487,3 +475,12 @@
 - Enemy home cities receive scaffold governor/chancellor metadata, but player-only manual appointment remains unchanged.
 - Occupation now writes the actual conquering faction id rather than generic `enemy`.
 - Trade remains unimplemented; faction identity is the prerequisite for later internal/external trade routing.
+
+## v0.5-8d-1 City Detail Position + Toggle UX Patch
+- Swapped the right-side world map detail layout so `City Detail` renders before `Selected City` in the side panel.
+- `Selected City` is now the main operation card on the right; `City Detail` is the auxiliary card on the left when the screen is wide.
+- Added `City Detail` collapse/open UI.
+- Added UI-only state: `appState.ui.isCityDetailOpen` and `appState.ui.selectedCityDetailTab`.
+- Detail tabs remain: `자원`, `자국무역`, `타국무역`.
+- Moved resource/internal trade/external trade details out of the Selected City summary.
+- No domestic, trade, troop rebalance, battle, Phaser, or save/load formula changes.

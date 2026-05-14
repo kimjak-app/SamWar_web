@@ -1,38 +1,5 @@
 # QA Checklist
 
-## v0.5-8d City Detail Panel Tabs UX
-- [x] `node --check js/ui/selected_city_ui.js`
-- [x] `node --check js/ui/resource_ui.js`
-- [x] `node --check js/ui/world_map_ui.js`
-- [x] `node --check js/main.js`
-- [x] `node --check js/ui/world_hud_ui.js`
-- [x] `node --check js/core/inter_faction_trade.js`
-- [x] `node --check js/core/trade_supply.js`
-- [x] `node --check js/core/app_state.js`
-- [x] `node --check js/core/save_load.js`
-- [x] Browser: fresh refresh has no console errors.
-- [x] Browser: Hanseong selection works normally.
-- [x] Browser: Selected City summary no longer contains the long resource/detail panel.
-- [x] Browser: City Detail Panel displays.
-- [x] Browser: resource tab displays by default.
-- [x] Browser: 자원 tab click works.
-- [x] Browser: 자국무역 tab click works.
-- [x] Browser: 타국무역 tab click works.
-- [x] Browser: tab active state updates.
-- [x] Browser: switching selected city keeps panel stable.
-- [x] Browser: resource tab shows food/strategic/specialty/commerce data.
-- [x] Browser: internal trade tab shows internal route and target garrison data.
-- [x] Browser: external trade tab shows relation/trade controls.
-- [x] Browser: trade-control modal opens from the external trade tab.
-- [x] Regression: recruitment button remains present.
-- [x] Regression: governor hero/policy controls remain present.
-- [x] Regression: chancellor hero/policy controls remain present.
-- [x] Regression: hero transfer button remains present.
-- [x] Regression: save and turn-end controls remain present.
-- [ ] Browser: relation promote/pause/resume click flow after tab relocation.
-- [ ] Browser: save/load full interaction after tab relocation.
-- [ ] Browser: attack/defense battle entry after tab relocation.
-
 ## v0.5-8c Trade Goods & Control MVP
 - [x] `node --check js/core/inter_faction_trade.js`
 - [x] `node --check js/core/app_state.js`
@@ -610,3 +577,16 @@
 - Legacy saves with owner/hero side `enemy` normalize safely.
 - Save/load preserves faction-specific ownerFactionId and hero.side.
 - No trade, diplomacy, enemy AI domestic automation, or intelligence system was introduced.
+
+## v0.5-8d-1 City Detail Position + Toggle UX Patch
+- [ ] Wide screen: City Detail panel appears to the left of Selected City.
+- [ ] Selected City remains visible as the main operation card on the right.
+- [ ] City Detail `접기` button collapses the panel.
+- [ ] `도시 상세 열기` opens the panel again.
+- [ ] 자원 / 자국무역 / 타국무역 tabs still switch correctly.
+- [ ] Collapsing/opening preserves selected city information.
+- [ ] Relation action buttons still work from the moved 타국무역 tab.
+- [ ] 무역 조정 modal still opens from 타국무역 tab.
+- [ ] 병사 모집, 태수/재상 controls, 무장 이동, save/load, and turn end still work.
+- [ ] Attack/defense battle entry still works.
+- [ ] No console errors.

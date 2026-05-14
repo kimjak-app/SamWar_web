@@ -1,6 +1,6 @@
 # Next Tasks
 
-Current working version: `v0.5-8d City Detail Panel Tabs UX`.
+Current working version: `v0.5-8c Trade Goods & Control MVP`.
 Baseline: `v0.5-5b Attack/Defense Empty Battlefield Common Battle Unit Render Fix`.
 
 ## Immediate Next Target: v0.5-9 Diplomacy & Spy Scaffold
@@ -16,14 +16,6 @@ Do not implement by default:
 - troop types
 - direct rule
 - rebellion/riot
-
-## v0.5-8d Closure Notes
-- Selected City summary panel was shortened.
-- Resource, internal trade/supply, internal troop rebalance, external trade, faction relation, and trade-control details moved into a separate City Detail Panel.
-- City Detail tabs are `자원`, `자국무역`, and `타국무역`.
-- Wide layout shows summary and detail panels side by side; narrow layout stacks them.
-- Existing relation buttons and trade-control modal remain wired from their new tab location.
-- No domestic formulas, trade formulas, relation rules, troop rebalance logic, battle logic, Phaser Scene code, save/load structure, diplomacy, espionage, or enemy domestic AI was changed.
 
 ## v0.5-8b Closure Notes
 - External trade relation states are now shown clearly in Selected City and World HUD.
@@ -180,3 +172,9 @@ Do not implement yet:
 1. Browser QA: verify faction names on city selection, attack/defense battle units, city occupation owner changes, and save/load.
 2. Keep player-only manual chancellor/governor controls for now. Enemy chancellor/governor data is scaffold metadata, not full enemy domestic AI.
 3. Next large system candidate: `v0.5-8 Inter-Faction Trade MVP`, using faction-specific ownership and internal logistics as the baseline.
+
+## After v0.5-8d-1
+1. Browser QA: verify City Detail is left of Selected City on wide screens.
+2. Verify City Detail collapse/open works and tabs still switch correctly.
+3. Verify relation buttons, trade control modal, recruitment, governor/chancellor controls, save/load, and attack/defense entry still work after the DOM move.
+4. Next system candidate remains `v0.5-9 Diplomacy & Spy Scaffold` or `v0.5-9 Enemy Domestic AI MVP` after UX stabilization.

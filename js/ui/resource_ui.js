@@ -42,16 +42,6 @@ const TRADE_MODE_LABELS = Object.freeze({
   [TRADE_CONTROL_MODES.AUTO]: "자동 운영",
   [TRADE_CONTROL_MODES.DIRECT]: "직할 운영",
 });
-const CITY_DETAIL_TAB_KEYS = Object.freeze({
-  RESOURCES: "resources",
-  INTERNAL_TRADE: "internal-trade",
-  EXTERNAL_TRADE: "external-trade",
-});
-const CITY_DETAIL_TABS = Object.freeze([
-  { key: CITY_DETAIL_TAB_KEYS.RESOURCES, label: "자원" },
-  { key: CITY_DETAIL_TAB_KEYS.INTERNAL_TRADE, label: "자국무역" },
-  { key: CITY_DETAIL_TAB_KEYS.EXTERNAL_TRADE, label: "타국무역" },
-]);
 
 function getResourceValue(resources, key) {
   const value = resources?.[key] ?? 0;
@@ -192,7 +182,7 @@ function renderSupplyTradeSection(city, appState) {
   if (!summary) {
     return `
       <div class="city-domestic-section">
-        <p class="city-domestic-heading">자국무역 / 내부 보급망</p>
+        <p class="city-domestic-heading">무역/보급 정보</p>
         <div class="domestic-yield-row">
           <span>내부 교역로</span>
           <strong>비활성</strong>
@@ -335,7 +325,7 @@ function renderExternalTradeSection(city, appState) {
 
     return `
       <div class="city-domestic-section city-supply-section">
-        <p class="city-domestic-heading">타국무역 / 세력 관계</p>
+        <p class="city-domestic-heading">대외 무역 / 세력 관계</p>
         <div class="domestic-yield-row">
           <span>교역 상대</span>
           <strong>${getFactionName(appState, partnerFactionId)}</strong>
@@ -374,7 +364,7 @@ function renderExternalTradeSection(city, appState) {
 
     return `
       <div class="city-domestic-section city-supply-section">
-        <p class="city-domestic-heading">타국무역 / 세력 관계</p>
+        <p class="city-domestic-heading">대외 무역 / 세력 관계</p>
         <div class="domestic-yield-row">
           <span>${getFactionName(appState, suspendedRelation.factionId)}</span>
           <strong>${label}</strong>
@@ -389,7 +379,7 @@ function renderExternalTradeSection(city, appState) {
 
   return `
     <div class="city-domestic-section city-supply-section">
-      <p class="city-domestic-heading">타국무역 / 세력 관계</p>
+      <p class="city-domestic-heading">대외 무역 / 세력 관계</p>
       <div class="domestic-yield-row">
         <span>관계</span>
         <strong>${relationLabel}</strong>
@@ -505,7 +495,7 @@ function renderResourceSection(title, resourceKeys, resources) {
   `;
 }
 
-export function renderCityResourceDetail(city) {
+export function renderResourcePanel(city) {
   const resources = city.resources ?? {};
 
   return `
@@ -519,67 +509,65 @@ export function renderCityResourceDetail(city) {
   `;
 }
 
-export function renderCityInternalTradeDetail(city, appState = null) {
+export function renderInternalTradePanel(city, appState = null) {
   return `
     ${renderSupplyTradeSection(city, appState)}
     ${renderTroopRebalanceSection(city, appState)}
   `;
 }
 
-export function renderCityExternalTradeDetail(city, appState = null) {
-  return `
-    ${renderExternalTradeSection(city, appState)}
-  `;
+export function renderExternalTradePanel(city, appState = null) {
+  return renderExternalTradeSection(city, appState);
 }
 
-export function renderResourcePanel(city, appState = null) {
-  return `
-    ${renderCityResourceDetail(city)}
-    ${renderCityInternalTradeDetail(city, appState)}
-    ${renderCityExternalTradeDetail(city, appState)}
-  `;
-}
+const CITY_DETAIL_TABS = Object.freeze({
+  RESOURCES: "resources",
+  INTERNAL_TRADE: "internal-trade",
+  EXTERNAL_TRADE: "external-trade",
+});
+
+const CITY_DETAIL_TAB_LABELS = Object.freeze({
+  [CITY_DETAIL_TABS.RESOURCES]: "자원",
+  [CITY_DETAIL_TABS.INTERNAL_TRADE]: "자국무역",
+  [CITY_DETAIL_TABS.EXTERNAL_TRADE]: "타국무역",
+});
 
 function normalizeCityDetailTab(tab) {
-  return CITY_DETAIL_TABS.some((entry) => entry.key === tab)
+  return Object.values(CITY_DETAIL_TABS).includes(tab)
     ? tab
-    : CITY_DETAIL_TAB_KEYS.RESOURCES;
+    : CITY_DETAIL_TABS.RESOURCES;
 }
 
-function renderCityDetailTabs(activeTab) {
+function renderCityDetailTabButton(tab, activeTab) {
   return `
-    <div class="city-detail-tabs" role="tablist" aria-label="도시 상세 탭">
-      ${CITY_DETAIL_TABS.map((tab) => `
-        <button
-          class="city-detail-tab-button ${tab.key === activeTab ? "active" : ""}"
-          type="button"
-          role="tab"
-          aria-selected="${tab.key === activeTab}"
-          data-city-detail-tab="${tab.key}"
-        >
-          ${tab.label}
-        </button>
-      `).join("")}
-    </div>
+    <button
+      class="city-detail-tab-button ${tab === activeTab ? "active" : ""}"
+      type="button"
+      data-city-detail-tab="${tab}"
+      aria-pressed="${tab === activeTab}"
+    >
+      ${CITY_DETAIL_TAB_LABELS[tab]}
+    </button>
   `;
 }
 
 function renderCityDetailTabContent(city, appState, activeTab) {
-  switch (activeTab) {
-    case CITY_DETAIL_TAB_KEYS.INTERNAL_TRADE:
-      return renderCityInternalTradeDetail(city, appState);
-    case CITY_DETAIL_TAB_KEYS.EXTERNAL_TRADE:
-      return renderCityExternalTradeDetail(city, appState);
-    case CITY_DETAIL_TAB_KEYS.RESOURCES:
-    default:
-      return renderCityResourceDetail(city);
+  if (activeTab === CITY_DETAIL_TABS.INTERNAL_TRADE) {
+    return renderInternalTradePanel(city, appState);
   }
+
+  if (activeTab === CITY_DETAIL_TABS.EXTERNAL_TRADE) {
+    return renderExternalTradePanel(city, appState);
+  }
+
+  return renderResourcePanel(city);
 }
 
-export function renderCityDetailPanel(city, appState = null) {
+export function renderCityDetailPanel({ appState, selectedCity }) {
+  const isOpen = appState?.ui?.isCityDetailOpen !== false;
   const activeTab = normalizeCityDetailTab(appState?.ui?.selectedCityDetailTab);
 
-  if (!city) {
+  if (!selectedCity) {
     return `
       <section class="detail-card hud-panel city-detail-panel">
         <p class="eyebrow">City Detail</p>
@@ -589,13 +577,30 @@ export function renderCityDetailPanel(city, appState = null) {
     `;
   }
 
+  if (!isOpen) {
+    return `
+      <section class="detail-card hud-panel city-detail-panel city-detail-panel-collapsed">
+        <button class="city-detail-collapsed-card" type="button" data-city-detail-toggle="open">
+          도시 상세 열기
+        </button>
+      </section>
+    `;
+  }
+
   return `
     <section class="detail-card hud-panel city-detail-panel">
-      <p class="eyebrow">City Detail</p>
-      <h3 class="detail-heading">도시 상세</h3>
-      ${renderCityDetailTabs(activeTab)}
+      <div class="city-detail-panel-header">
+        <div>
+          <p class="eyebrow">City Detail</p>
+          <h3 class="detail-heading">도시 상세</h3>
+        </div>
+        <button class="city-detail-toggle-button" type="button" data-city-detail-toggle="close">접기</button>
+      </div>
+      <div class="city-detail-tabs" role="tablist" aria-label="도시 상세 탭">
+        ${Object.values(CITY_DETAIL_TABS).map((tab) => renderCityDetailTabButton(tab, activeTab)).join("")}
+      </div>
       <div class="city-detail-tab-content">
-        ${renderCityDetailTabContent(city, appState, activeTab)}
+        ${renderCityDetailTabContent(selectedCity, appState, activeTab)}
       </div>
     </section>
   `;

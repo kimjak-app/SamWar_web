@@ -58,7 +58,6 @@ import {
 } from "./world_rules.js";
 
 const DEFAULT_SELECTED_CITY_ID = "hanseong";
-const CITY_DETAIL_TAB_VALUES = new Set(["resources", "internal-trade", "external-trade"]);
 const GOVERNOR_POLICY_VALUES = new Set(Object.values(GOVERNOR_POLICY_KEYS));
 export const RECRUIT_TROOP_BATCH_SIZE = 500;
 const RECRUITMENT_COST_UNIT_SIZE = 50;
@@ -409,6 +408,7 @@ export function createInitialAppState() {
       saveMessage: "",
       tradeControlCityId: null,
       selectedCityDetailTab: "resources",
+      isCityDetailOpen: true,
     },
     ruler: {
       currentCityId: DEFAULT_SELECTED_CITY_ID,
@@ -591,16 +591,27 @@ export function closeTradeControl(appState) {
   };
 }
 
+
+const CITY_DETAIL_TAB_KEYS = Object.freeze(["resources", "internal-trade", "external-trade"]);
+
 export function setSelectedCityDetailTab(appState, tab) {
-  const selectedCityDetailTab = CITY_DETAIL_TAB_VALUES.has(tab)
-    ? tab
-    : "resources";
+  const selectedCityDetailTab = CITY_DETAIL_TAB_KEYS.includes(tab) ? tab : "resources";
 
   return {
     ...appState,
     ui: {
       ...(appState.ui ?? {}),
       selectedCityDetailTab,
+    },
+  };
+}
+
+export function setCityDetailOpen(appState, isOpen) {
+  return {
+    ...appState,
+    ui: {
+      ...(appState.ui ?? {}),
+      isCityDetailOpen: Boolean(isOpen),
     },
   };
 }

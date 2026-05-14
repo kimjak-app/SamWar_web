@@ -2,16 +2,6 @@
 
 ## 2026-05-14
 
-### v0.5-8d City Detail Panel Tabs UX
-- Shortened Selected City summary by moving long resource/trade/supply detail sections out of the base card.
-- Added City Detail Panel with tabs: 자원, 자국무역, 타국무역.
-- Moved resource and commerce rows to the 자원 tab.
-- Moved internal supply/trade and troop rebalance sections to the 자국무역 tab.
-- Moved external trade, faction relation actions, and trade-control entry point to the 타국무역 tab.
-- Added transient `ui.selectedCityDetailTab` state and tab click handling.
-- Kept relation action and trade-control modal events working after DOM relocation.
-- Confirmed browser smoke for panel render, tab switching, city switching, and trade-control modal opening.
-
 ### v0.5-8c Trade Goods & Control MVP
 - Added trade goods/control scaffolding for external trade.
 - Added city `tradeSettings` defaults and normalization for auto/direct mode, intensity, export weights, import priorities, and route-limit scaffold.
@@ -777,3 +767,12 @@
 - Preserved tactical battle engine expectations by keeping battle unit side as `player` or `enemy`, while storing the real faction id separately.
 - Smoke-tested attack and defense unit creation after faction split.
 - Confirmed conquest can convert city ownership and local heroes to the actual conquering faction.
+
+## v0.5-8d-1 City Detail Position + Toggle UX Patch
+- Swapped the right-side world map detail layout so `City Detail` renders before `Selected City` in the side panel.
+- `Selected City` is now the main operation card on the right; `City Detail` is the auxiliary card on the left when the screen is wide.
+- Added `City Detail` collapse/open UI.
+- Added UI-only state: `appState.ui.isCityDetailOpen` and `appState.ui.selectedCityDetailTab`.
+- Detail tabs remain: `자원`, `자국무역`, `타국무역`.
+- Moved resource/internal trade/external trade details out of the Selected City summary.
+- No domestic, trade, troop rebalance, battle, Phaser, or save/load formula changes.
