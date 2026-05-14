@@ -1,5 +1,6 @@
 import { canAttackCity, getFactionById, isPlayerCity, isWorldUnified } from "../core/world_rules.js";
 import { renderHeroDeploymentPanel, renderHeroTransferPanel } from "./hero_transfer_ui.js";
+import { renderTradeControlModal } from "./resource_ui.js";
 import { renderSelectedCityPanel } from "./selected_city_ui.js";
 import { renderWorldHud } from "./world_hud_ui.js";
 
@@ -216,6 +217,7 @@ export function renderAllWorldUI(appState) {
         ${renderDefenseChoiceModal(pendingBattleChoice)}
         ${renderHeroDeploymentPanel(pendingHeroDeployment)}
         ${renderHeroTransferPanel(pendingHeroTransfer)}
+        ${renderTradeControlModal(appState)}
       </section>
     </main>
   `;

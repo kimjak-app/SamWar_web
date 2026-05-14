@@ -22,6 +22,11 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onGovernorHeroChange,
     onGovernorPolicyChange,
     onRecruitTroops,
+    onTradeRelationAction,
+    onTradeControlOpen,
+    onTradeControlApply,
+    onTradeControlAuto,
+    onTradeControlClose,
     onConfirmEnemyTurnResult,
     onSaveGame,
     onLoadGame,
@@ -229,6 +234,73 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     });
   }
 
+  if (onTradeRelationAction) {
+    rootElement.querySelectorAll("[data-trade-relation-action]").forEach((element) => {
+      element.addEventListener("click", () => {
+        const action = element.getAttribute("data-trade-relation-action");
+        const factionA = element.getAttribute("data-relation-faction-a");
+        const factionB = element.getAttribute("data-relation-faction-b");
+
+        if (action && factionA && factionB) {
+          onTradeRelationAction({ action, factionA, factionB });
+        }
+      });
+    });
+  }
+
+  if (onTradeControlOpen) {
+    rootElement.querySelectorAll("[data-trade-control-open-city-id]").forEach((element) => {
+      element.addEventListener("click", () => {
+        const cityId = element.getAttribute("data-trade-control-open-city-id");
+
+        if (cityId) {
+          onTradeControlOpen(cityId);
+        }
+      });
+    });
+  }
+
+  if (onTradeControlApply) {
+    rootElement.querySelector("[data-trade-control-apply-city-id]")?.addEventListener("click", (event) => {
+      const cityId = event.currentTarget.getAttribute("data-trade-control-apply-city-id");
+      const modal = event.currentTarget.closest(".trade-control-modal");
+
+      if (!cityId || !modal) {
+        return;
+      }
+
+      onTradeControlApply({
+        cityId,
+        tradeSettings: collectTradeControlSettings(modal),
+      });
+    });
+  }
+
+  if (onTradeControlAuto) {
+    rootElement.querySelector("[data-trade-control-auto-city-id]")?.addEventListener("click", (event) => {
+      const cityId = event.currentTarget.getAttribute("data-trade-control-auto-city-id");
+      const modal = event.currentTarget.closest(".trade-control-modal");
+
+      if (!cityId || !modal) {
+        return;
+      }
+
+      onTradeControlAuto({
+        cityId,
+        tradeSettings: {
+          ...collectTradeControlSettings(modal),
+          mode: "auto",
+        },
+      });
+    });
+  }
+
+  if (onTradeControlClose) {
+    rootElement.querySelector("[data-trade-control-close='true']")?.addEventListener("click", () => {
+      onTradeControlClose();
+    });
+  }
+
   if (onConfirmEnemyTurnResult) {
     rootElement.querySelector("[data-enemy-turn-result='confirm']")?.addEventListener("click", () => {
       onConfirmEnemyTurnResult();
@@ -252,4 +324,34 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
       onResetGame();
     });
   }
+}
+
+function getControlValue(modal, name, fallback) {
+  return modal.querySelector(`[name="${name}"]`)?.value ?? fallback;
+}
+
+function getControlNumber(modal, name, fallback = 50) {
+  const numericValue = Number(getControlValue(modal, name, fallback));
+  return Math.max(0, Math.min(100, Math.round(Number.isFinite(numericValue) ? numericValue : fallback)));
+}
+
+function collectTradeControlSettings(modal) {
+  return {
+    mode: getControlValue(modal, "mode", "auto"),
+    intensity: getControlValue(modal, "intensity", "normal"),
+    exportWeights: {
+      rice: getControlNumber(modal, "export-rice"),
+      barley: getControlNumber(modal, "export-barley"),
+      seafood: getControlNumber(modal, "export-seafood"),
+      salt: getControlNumber(modal, "export-salt"),
+      silk: getControlNumber(modal, "export-silk"),
+    },
+    importPriority: {
+      gold: getControlNumber(modal, "import-gold", 70),
+      food: getControlNumber(modal, "import-food"),
+      salt: getControlNumber(modal, "import-salt"),
+      silk: getControlNumber(modal, "import-silk", 30),
+    },
+    routeLimitOverride: null,
+  };
 }

@@ -23,6 +23,23 @@ import {
   normalizeChancellorPolicy,
   normalizeTaxLevel,
 } from "./domestic_income.js";
+import {
+  applyPlayerInterFactionTradeIncome,
+  calculateInterFactionTradeResult,
+  createInitialFactionRelations,
+  decrementTradeCooldowns,
+  normalizeCityTradeSettings,
+  pauseFactionTrade,
+  promoteFactionTrade,
+  resumeFactionTrade,
+  setFactionTradeSuspended,
+} from "./inter_faction_trade.js";
+import {
+  applyInternalSupplyNetwork,
+  applyInternalTroopRebalance,
+  calculateGarrisonSurplusShortage,
+  classifyCityMilitaryRole,
+} from "./trade_supply.js";
 import { createInitialCalendar, deriveCalendarFromTurn } from "./world_calendar.js";
 import {
   ENEMY_INVASION_CHANCE,
@@ -389,6 +406,7 @@ export function createInitialAppState() {
     pendingHeroTransfer: null,
     ui: {
       saveMessage: "",
+      tradeControlCityId: null,
     },
     ruler: {
       currentCityId: DEFAULT_SELECTED_CITY_ID,
@@ -396,6 +414,7 @@ export function createInitialAppState() {
     domesticPolicy: createInitialDomesticPolicy(),
     resources: createInitialResourceStock(),
     enemyResources: createInitialEnemyResourceStock(),
+    factionRelations: createInitialFactionRelations(factions),
     world: {
       cities: initializeCityDomesticData(cities),
       factions,
@@ -408,6 +427,9 @@ export function createInitialAppState() {
       lastCityLoyaltyResult: null,
       lastBattleTroopResult: null,
       lastWoundedRecoveryResult: null,
+      lastSupplyNetworkResult: null,
+      lastTroopRebalanceResult: null,
+      lastInterFactionTradeResult: null,
     },
   };
 }
@@ -504,6 +526,118 @@ export function setCityGovernorPolicy(appState, cityId, governorPolicy) {
   };
 }
 
+export function setTradeRelationAction(appState, action, factionA, factionB) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+
+  if (
+    appState?.mode !== "world"
+    || appState?.battle
+    || appState?.pendingBattleChoice
+    || appState?.pendingHeroDeployment
+    || appState?.pendingHeroTransfer
+    || appState?.world?.pendingEnemyTurnResult
+    || ![factionA, factionB].includes(playerFactionId)
+  ) {
+    return appState;
+  }
+
+  switch (action) {
+    case "promote":
+      return withUpdatedInterFactionTradeResult(promoteFactionTrade(appState, factionA, factionB));
+    case "pause":
+      return withUpdatedInterFactionTradeResult(pauseFactionTrade(appState, factionA, factionB));
+    case "resume":
+      return withUpdatedInterFactionTradeResult(resumeFactionTrade(appState, factionA, factionB));
+    default:
+      return appState;
+  }
+}
+
+export function openTradeControl(appState, cityId) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const city = appState?.world?.cities?.find((entry) => entry.id === cityId) ?? null;
+
+  if (
+    appState?.mode !== "world"
+    || appState?.battle
+    || appState?.pendingBattleChoice
+    || appState?.pendingHeroDeployment
+    || appState?.pendingHeroTransfer
+    || appState?.world?.pendingEnemyTurnResult
+    || !city
+    || city.ownerFactionId !== playerFactionId
+  ) {
+    return appState;
+  }
+
+  return {
+    ...appState,
+    ui: {
+      ...(appState.ui ?? {}),
+      tradeControlCityId: city.id,
+    },
+  };
+}
+
+export function closeTradeControl(appState) {
+  return {
+    ...appState,
+    ui: {
+      ...(appState.ui ?? {}),
+      tradeControlCityId: null,
+    },
+  };
+}
+
+export function setCityTradeSettings(appState, cityId, tradeSettings) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const city = appState?.world?.cities?.find((entry) => entry.id === cityId) ?? null;
+
+  if (
+    appState?.mode !== "world"
+    || appState?.battle
+    || appState?.pendingBattleChoice
+    || appState?.pendingHeroDeployment
+    || appState?.pendingHeroTransfer
+    || appState?.world?.pendingEnemyTurnResult
+    || !city
+    || city.ownerFactionId !== playerFactionId
+  ) {
+    return appState;
+  }
+
+  const nextState = {
+    ...appState,
+    ui: {
+      ...(appState.ui ?? {}),
+      tradeControlCityId: null,
+    },
+    world: {
+      ...appState.world,
+      cities: appState.world.cities.map((entry) => (
+        entry.id === city.id
+          ? {
+            ...entry,
+            tradeSettings: normalizeCityTradeSettings(tradeSettings),
+          }
+          : entry
+      )),
+    },
+  };
+
+  return withUpdatedInterFactionTradeResult(nextState);
+}
+
+function withUpdatedInterFactionTradeResult(appState) {
+  return {
+    ...appState,
+    world: {
+      ...appState.world,
+      lastInterFactionTradeResult: calculateInterFactionTradeResult(appState),
+    },
+  };
+}
+
 export function recruitCityTroops(appState, cityId, amount = RECRUIT_TROOP_BATCH_SIZE) {
   const playerFactionId = appState?.meta?.playerFactionId ?? "player";
   const city = appState?.world?.cities.find((entry) => entry.id === cityId) ?? null;
@@ -524,6 +658,13 @@ export function recruitCityTroops(appState, cityId, amount = RECRUIT_TROOP_BATCH
   const requestedAmount = Math.max(0, Math.round(Number(amount) || 0));
   const beforeRecruitableTroops = Math.max(0, Number(city?.military?.recruitableTroops) || 0);
   const recruitmentCapacity = calculateRecruitmentRatioState(city);
+  const cityRole = classifyCityMilitaryRole(city, appState?.world?.cities ?? []);
+  const garrisonNeed = calculateGarrisonSurplusShortage(city, cityRole);
+
+  if (garrisonNeed.currentGarrison >= garrisonNeed.targetGarrison) {
+    return withRecruitmentMessage(appState, "목표 주둔군 충족");
+  }
+
   const recruitAmount = Math.min(requestedAmount, recruitmentCapacity.remainingRecruitCapacity);
 
   if (recruitAmount <= 0) {
@@ -1195,7 +1336,7 @@ export function startBattle(appState, cityId, options = {}) {
     },
   };
 
-  return {
+  const battleState = {
     ...appState,
     mode: "battle",
     pendingBattleChoice: null,
@@ -1218,6 +1359,13 @@ export function startBattle(appState, cityId, options = {}) {
       cities: nextCities,
     },
   };
+
+  return setFactionTradeSuspended(
+    battleState,
+    attackerCity.ownerFactionId,
+    defenderCity.ownerFactionId,
+    10,
+  );
 }
 
 export function updateBattleState(appState, battleState) {
@@ -1519,21 +1667,32 @@ export function endWorldTurn(appState) {
   }
 
   const incomeAppliedState = applyPlayerTurnIncome(appState);
-  const upkeepAppliedState = applyTurnUpkeep(incomeAppliedState);
+  const interFactionTradeAppliedState = applyPlayerInterFactionTradeIncome(incomeAppliedState);
+  const upkeepAppliedState = applyTurnUpkeep(interFactionTradeAppliedState);
   const taxAppliedState = applyTaxLoyaltyEffect(upkeepAppliedState);
   const woundedRecoveredState = applyWoundedRecovery(taxAppliedState);
-  const invasionCandidate = rollEnemyInvasion(woundedRecoveredState.world.cities, ENEMY_INVASION_CHANCE);
+  const supplyNetworkAppliedState = applyInternalSupplyNetwork(
+    woundedRecoveredState,
+    woundedRecoveredState.meta.playerFactionId,
+  );
+  const troopRebalancedState = applyInternalTroopRebalance(
+    supplyNetworkAppliedState,
+    supplyNetworkAppliedState.meta.playerFactionId,
+    supplyNetworkAppliedState.world.lastSupplyNetworkResult,
+  );
+  const tradeCooldownState = decrementTradeCooldowns(troopRebalancedState);
+  const invasionCandidate = rollEnemyInvasion(tradeCooldownState.world.cities, ENEMY_INVASION_CHANCE);
 
   if (invasionCandidate) {
     return {
-      ...woundedRecoveredState,
+      ...tradeCooldownState,
       selection: {
-        ...woundedRecoveredState.selection,
+        ...tradeCooldownState.selection,
         cityId: invasionCandidate.defenderCityId,
       },
-      pendingBattleChoice: buildDefenseBattleChoice(woundedRecoveredState, invasionCandidate),
+      pendingBattleChoice: buildDefenseBattleChoice(tradeCooldownState, invasionCandidate),
       world: {
-        ...woundedRecoveredState.world,
+        ...tradeCooldownState.world,
         turnOwner: "enemy",
         pendingEnemyTurnResult: null,
       },
@@ -1541,9 +1700,9 @@ export function endWorldTurn(appState) {
   }
 
   return {
-    ...woundedRecoveredState,
+    ...tradeCooldownState,
     world: {
-      ...woundedRecoveredState.world,
+      ...tradeCooldownState.world,
       turnOwner: "enemy",
       pendingEnemyTurnResult: {
         type: "no_invasion",

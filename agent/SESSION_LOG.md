@@ -1,5 +1,81 @@
 # Session Log
 
+## 2026-05-14
+
+### v0.5-8c Trade Goods & Control MVP
+- Added trade goods/control scaffolding for external trade.
+- Added city `tradeSettings` defaults and normalization for auto/direct mode, intensity, export weights, import priorities, and route-limit scaffold.
+- Kept MVP goods to gold, rice, barley, seafood, salt, and silk.
+- Deferred wood, iron, and horses from active trade handling.
+- Added governance efficiency fallback:
+  - chancellor auto trade: 100%
+  - governor-only limited trade: 60%
+  - temporary officials: 30%
+- Added small chancellor/gubernatorial policy effects to route value and route selection.
+- Added player-owned city `무역 조정` modal.
+- Wired modal open/apply/auto/close through `resource_ui.js`, `world_map_ui.js`, `main.js`, and `app_state.js`.
+- Direct trade settings immediately refresh `world.lastInterFactionTradeResult`.
+- Advanced save/load to `v0.5-8c`.
+- Confirmed smoke tests for default settings, governance efficiency, direct high value increase, suspended trade value 0, and save persistence.
+
+### v0.5-8b Trade Relation / Agreement Scaffold
+- Added `trade_paused` as a manual/player-driven relation state.
+- Added relation labels/descriptions and faction relation summary helpers.
+- Added player-related relation actions:
+  - promote neutral to trade
+  - pause neutral/trade to trade_paused
+  - resume trade_paused to neutral
+- Kept trade_suspended cooldown and war states locked from manual resume.
+- Wired relation action buttons from Selected City UI through `world_map_ui.js`, `main.js`, and `app_state.js`.
+- Relation action changes refresh `world.lastInterFactionTradeResult` immediately.
+- Added compact World HUD relation summary.
+- Advanced save/load to `v0.5-8b`.
+- Confirmed smoke tests for pause/resume/promote, route blocking/reactivation, trade modifier, cooldown lock/recovery, and save persistence.
+
+### v0.5-8 Inter-Faction Trade MVP
+- Added `js/core/inter_faction_trade.js` for external trade between adjacent cities owned by different factions.
+- Added `state.factionRelations` relation scaffold with neutral/trade/trade_suspended/war states.
+- Added bilateral battle trade suspension: battle start sets both factions to `trade_suspended` with `tradeCooldownTurns: 10`.
+- Added cooldown decrement and neutral restore on player turn end.
+- Added external trade route value calculation from commerce, specialties, security, loyalty, and relation modifier.
+- Applied player-involved external trade income to actual player resources.
+- Kept non-player trade income ledger-only in `world.lastInterFactionTradeResult.factionTotals`.
+- Added `world.lastInterFactionTradeResult` and `lastIncomeResult.interFactionTrade` breakdown.
+- Added Selected City and World HUD external trade summaries.
+- Advanced save/load to `v0.5-8` and normalized legacy saves without faction relations.
+- Confirmed smoke tests for neutral route creation, suspended route blocking, cooldown decrement/recovery, battle start suspension, player resource gain, non-player ledger-only behavior, and save snapshot fields.
+
+### v0.5-7c Internal Troop Rebalance MVP
+- Added actual same-faction internal troop rebalance on top of v0.5-7 supply-network judgment.
+- Rear surplus cities can send troops to border/frontline shortage cities.
+- Transfers preserve target garrison rules:
+  - sender cannot fall below target garrison
+  - receiver cannot exceed target garrison
+  - receiver cannot exceed population max troop cap
+- Added one-turn movement cap and 100-troop floor rounding.
+- Added small chancellor policy movement modifiers and summary reasons.
+- Stored results in `world.lastTroopRebalanceResult`.
+- Connected turn-end order: income, upkeep, tax/city loyalty, wounded recovery, internal trade/supply, internal troop rebalance, enemy invasion roll.
+- Added Selected City and World HUD summaries for internal troop movement.
+- Added minimal recruitment blocking when target garrison is already satisfied.
+- Advanced save/load to `v0.5-7c` while preserving legacy load keys.
+- Confirmed smoke tests for transfer, total garrison preservation, sender/receiver target protection, target-satisfied no-transfer, and pending skip.
+- Deferred external/inter-faction trade to `v0.5-8 Inter-Faction Trade MVP`.
+
+### v0.5-7 Internal Trade & Supply Route MVP
+- Implemented `js/core/trade_supply.js` as the internal same-faction trade/supply engine.
+- Added faction-city collection, route generation, role classification, target garrison calculation, garrison shortage/surplus judgment, priority scoring, allocation summaries, city summaries, and faction summaries.
+- Same-faction routes are internal logistics only. No diplomacy trade, enemy trade, treaty, negotiation, espionage, merchant unit, naval route combat, or external trade was added.
+- Added role labels: 후방, 국경, 최전선.
+- Added strategic 금전/식량/소금 priority allocation based on front-line role, garrison shortage/burden, resource pressure, city loyalty, commerce, and small chancellor/governor policy effects.
+- Connected player turn end to calculate/store `world.lastSupplyNetworkResult` after wounded recovery and before enemy invasion roll.
+- Applied only the internal route 금전 bonus to national resources. 식량/소금 are displayed as allocation/efficiency only; no city stockpile system was added.
+- Replaced Selected City trade placeholder with internal trade/supply and military support judgment.
+- Added World HUD internal supply network summary.
+- Advanced save/load to `v0.5-7` and preserved legacy load keys through `v0.5-1h`, including `v0.5-6` and `v0.5-5b`.
+- Confirmed module checks and smoke tests for route counts, city role classification, garrison shortage/surplus, and supply priority.
+- Deferred actual troop movement to `v0.5-7b Internal Troop Rebalance MVP`.
+
 ## 2026-05-13
 
 ### v0.5-6 Final Session Close

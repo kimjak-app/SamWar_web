@@ -1,10 +1,120 @@
 # Current State
 
 ## Status
-- Current working version: `v0.5-6 Faction Identity Scaffold`.
+- Current working version: `v0.5-8c Trade Goods & Control MVP`.
 - Baseline before this patch: `v0.5-5b Attack/Defense Empty Battlefield Common Battle Unit Render Fix`.
 - v0.5-3a is the first real domestic-effect MVP. It connects chancellor/governor aptitude and policy choices to actual domestic results through a central engine.
 - Browser manual QA passed with no console errors.
+
+## Current Stable Baseline: v0.5-8c Trade Goods & Control MVP
+- External trade now has goods/control scaffolding on top of v0.5-8b relations.
+- Allowed MVP goods: 금전, 쌀, 보리, 수산물, 소금, 비단.
+- 목재, 철, 말 trade remains deferred because those resources connect to military balance and troop-type systems.
+- Each city has normalized `tradeSettings`:
+  - `mode`: `auto` or `direct`
+  - `intensity`: `low`, `normal`, `high`
+  - `exportWeights`: rice/barley/seafood/salt/silk
+  - `importPriority`: gold/food/salt/silk
+  - `routeLimitOverride`: scaffold only; no UI control yet
+- Automatic trade operation uses governance fallback:
+  - chancellor present: 재상 자동 운영, base efficiency 100%
+  - no chancellor + governor present: 태수 제한 무역, base efficiency 60%
+  - no chancellor/governor: 임시 관료 최소 무역, base efficiency 30%
+- Chancellor and governor policies lightly affect trade value, route limit, and gold/food/salt emphasis.
+- Player-owned cities can open a `무역 조정` modal from the external trade section.
+- Direct trade settings are saved on the city and affect route value. High intensity increases route value but only as a value modifier; no trade-risk event is implemented.
+- Relation blocking remains authoritative: `trade_paused`, `trade_suspended`, cooldown, and `war` block trade before settings matter.
+- Save version advanced to `v0.5-8c`; legacy load includes `v0.5-8b`, `v0.5-8`, `v0.5-7c`, `v0.5-7`, `v0.5-6`, `v0.5-5b`, `v0.5-5a`, `v0.5-5`, `v0.5-4c`, `v0.5-4b`, `v0.5-4`, `v0.5-3c`, `v0.5-3b`, and `v0.5-1h`.
+- No diplomacy AI, treaty negotiation, espionage, merchant units, naval trade combat, trade disruption event, battle logic change, Phaser Scene change, direct rule system, enemy domestic AI, or window compatibility reintroduction was added.
+- Next target: `v0.5-9 Diplomacy & Spy Scaffold` or `v0.5-9 Enemy Domestic AI MVP`.
+
+## Previous Stable Baseline: v0.5-8b Trade Relation / Agreement Scaffold
+- Added clearer external trade relation display and player-side relation controls.
+- Relation states are now normalized/displayed as:
+  - `neutral`: 중립 / 교역 가능
+  - `trade`: 교역 우호 / 교역 가능 / 무역 효율 소폭 증가
+  - `trade_paused`: 플레이어가 교역 중단 / 교역 불가 / cooldown 없음
+  - `trade_suspended`: 전쟁 후 교역 중단 / 교역 불가 / cooldown 있음
+  - `war`: 전쟁 / 교역 불가
+- Player-related relations can use scaffold controls:
+  - `neutral -> trade`: 교역 강화
+  - `neutral/trade -> trade_paused`: 교역 중단
+  - `trade_paused -> neutral`: 교역 재개
+- `trade_suspended` and `war` cannot be manually resumed from the UI.
+- Combat still creates `trade_suspended` with `tradeCooldownTurns: 10`; cooldown 0 restores neutral/tradeAllowed.
+- Selected City now shows external trade and faction relation labels/descriptions/actions.
+- World HUD summarizes player faction relations compactly.
+- Trade route calculation reacts immediately to relation changes.
+- Save version advanced to `v0.5-8b`; legacy load includes `v0.5-8`, `v0.5-7c`, `v0.5-7`, `v0.5-6`, `v0.5-5b`, `v0.5-5a`, `v0.5-5`, `v0.5-4c`, `v0.5-4b`, `v0.5-4`, `v0.5-3c`, `v0.5-3b`, and `v0.5-1h`.
+- Trade goods/control modal, export/import sliders, direct trade control, diplomacy AI, treaty negotiation, espionage, merchant units, naval trade combat, and trade disruption events are not implemented.
+- Next target: `v0.5-8c Trade Goods & Control MVP`.
+
+## Previous Stable Baseline: v0.5-8 Inter-Faction Trade MVP
+- Added inter-faction external trade between adjacent cities owned by different factions.
+- This is external trade MVP only. It is not diplomacy negotiation, treaty UI, espionage, merchant units, naval trade combat, trade disruption events, enemy domestic AI, or battle logic overhaul.
+- Added top-level `state.factionRelations` scaffold:
+  - `neutral`: trade allowed
+  - `trade`: trade allowed with friendly modifier
+  - `trade_suspended`: trade blocked after battle
+  - `war`: trade blocked
+- Missing/legacy relation data normalizes to neutral, trade allowed, cooldown 0.
+- Battle start sets both participating factions to `trade_suspended`, `tradeAllowed: false`, `tradeCooldownTurns: 10` in both directions.
+- Trade cooldowns decrement once per player turn end; cooldown 0 restores neutral/tradeAllowed.
+- `js/core/inter_faction_trade.js` calculates adjacent cross-faction routes only. Same-faction routes remain internal trade/supply.
+- Route value uses commerce, specialty resources, security, city loyalty, and relation status.
+- Player-involved external trade income is applied to actual player resources.
+- Non-player external trade income is recorded only in `world.lastInterFactionTradeResult.factionTotals`; no faction stockpile or enemy domestic AI is implemented.
+- World HUD and Selected City distinguish internal supply from external trade.
+- Save version advanced to `v0.5-8`; legacy load includes `v0.5-7c`, `v0.5-7`, `v0.5-6`, `v0.5-5b`, `v0.5-5a`, `v0.5-5`, `v0.5-4c`, `v0.5-4b`, `v0.5-4`, `v0.5-3c`, `v0.5-3b`, and `v0.5-1h`.
+- Superseded by v0.5-8b relation display/control scaffold.
+
+## Previous Stable Baseline: v0.5-7c Internal Troop Rebalance MVP
+- Internal supply-network military judgment now connects to actual same-faction garrison movement.
+- Rear surplus troops can move to border/frontline shortage cities at player turn end.
+- This is internal troop rebalance, not troop production, automatic recruitment, troop types, diplomacy trade, enemy trade, or battle logic.
+- A receiving city must be below its target garrison. Cities already at or above target garrison do not receive extra troops.
+- A sending city must remain at or above its target garrison after transfer.
+- One-turn movement is capped by `min(senderSurplus * 0.5, receiverShortage * 0.5, 3000 adjusted by policy)`, floored to 100-troop units.
+- Chancellor policy lightly adjusts movement cap; no chancellor makes movement more conservative.
+- `world.lastTroopRebalanceResult` stores transfers, before/after garrisons, reasons, and `totalMoved`.
+- Whole-faction garrison total is preserved. Troops are moved, not created or removed.
+- Turn order is now income -> upkeep -> tax/city loyalty -> wounded recovery -> internal trade/supply -> internal troop rebalance -> enemy invasion roll.
+- Selected City and World HUD show the latest internal troop rebalance summary.
+- Recruitment is minimally blocked when the selected city already satisfies its target garrison.
+- Save version advanced to `v0.5-7c`; legacy load includes `v0.5-7`, `v0.5-6`, `v0.5-5b`, `v0.5-5a`, `v0.5-5`, `v0.5-4c`, `v0.5-4b`, `v0.5-4`, `v0.5-3c`, `v0.5-3b`, and `v0.5-1h`.
+- Next target: `v0.5-8 Inter-Faction Trade MVP`.
+
+## Previous Stable Baseline: v0.5-7 Internal Trade & Supply Route MVP
+- Added same-faction internal trade/supply network support through `js/core/trade_supply.js`.
+- This is internal city-to-city logistics only. It is not diplomacy trade, cross-faction trade, treaties, negotiations, espionage, merchant units, or naval trade combat.
+- Player-owned cities activate an internal network when the player owns 2+ cities.
+- Internal routes are same-faction city pairs, using adjacent same-faction connections first and pair fallback only if adjacency cannot produce a route.
+- `world.lastSupplyNetworkResult` stores per-turn route count, resource allocation totals, city role results, garrison targets, surplus/shortage judgment, support candidates, and reasons.
+- 금전/식량/소금 allocation is strategic, not equal distribution:
+  - city role weight
+  - target-garrison shortage
+  - current garrison burden
+  - food/salt pressure
+  - city loyalty risk
+  - commerce/governor/chancellor policy effects
+- City military roles:
+  - 후방: no adjacent other-faction city
+  - 국경: 1 adjacent other-faction city
+  - 최전선: 2+ adjacent other-faction cities
+- Target garrison:
+  - 후방: `max(securityRequiredTroops, population * 0.10)`
+  - 국경: `max(securityRequiredTroops, population * 0.22)`
+  - 최전선: `max(securityRequiredTroops, population * 0.30)`
+  - population max recruitment cap remains `population * 0.50`.
+- v0.5-7 military support was judgment/display only:
+  - rear surplus troops are shown as support candidates
+  - border/frontline shortages show support need
+  - no automatic troop movement, no real `garrisonTroops` transfer, no troop rebalance yet.
+- Turn-end applies only a small national 금전 bonus from internal routes. 식량/소금 are displayed as allocation/efficiency and do not create per-city stockpiles.
+- Selected City replaces the old trade placeholder with internal trade/supply and military support summaries.
+- World HUD shows internal supply network route count, allocation totals, and support-needed cities.
+- Save version advanced to `v0.5-7`; legacy load includes `v0.5-6`, `v0.5-5b`, `v0.5-5a`, `v0.5-5`, `v0.5-4c`, `v0.5-4b`, `v0.5-4`, `v0.5-3c`, `v0.5-3b`, and `v0.5-1h`.
+- Superseded by v0.5-7c actual internal troop rebalance.
 
 
 ## Current Stable Baseline: v0.5-6 Faction Identity Scaffold
@@ -29,10 +139,9 @@
 - User reported v0.5-6 working after download.
 
 ## Next Major Target
-`v0.5-7 Trade Route MVP`
-- Start with same-faction internal trade routes between owned cities.
-- Use city commerce, specialty resources, security, city loyalty, governor/chancellor effects, and faction ownership.
-- Do not implement diplomacy treaties, external trade, espionage, or full enemy domestic AI in the first trade MVP.
+`v0.5-8c Trade Goods & Control MVP`
+- Add trade goods/control only after v0.5-8b relation scaffold is stable.
+- Do not introduce full diplomacy AI, treaty negotiation, espionage, merchant units, naval trade combat, battle logic changes, Phaser Scene changes, direct rule, rebellion, or troop types by default.
 
 ## v0.5-5a Troop Allocation Stabilization Patch
 - Battle troop truth is now `allocatedTroops`.

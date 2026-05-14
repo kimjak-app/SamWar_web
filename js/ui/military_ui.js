@@ -10,6 +10,10 @@ import {
   getActiveChancellorHero,
   getActiveGovernorHero,
 } from "../core/domestic_effects.js";
+import {
+  calculateGarrisonSurplusShortage,
+  classifyCityMilitaryRole,
+} from "../core/trade_supply.js";
 
 function getNumericValue(value, fallback = 0) {
   const numericValue = Number(value);
@@ -100,14 +104,19 @@ function renderRecruitmentAction(selectedCity, military, appState) {
   }
 
   const ratioState = calculateRecruitmentRatioState(selectedCity);
+  const cityRole = classifyCityMilitaryRole(selectedCity, appState?.world?.cities ?? []);
+  const garrisonNeed = calculateGarrisonSurplusShortage(selectedCity, cityRole);
+  const targetSatisfied = garrisonNeed.currentGarrison >= garrisonNeed.targetGarrison;
   const recruitableTroops = ratioState.remainingRecruitCapacity;
   const recruitAmount = Math.min(RECRUIT_TROOP_BATCH_SIZE, recruitableTroops);
   const cost = calculateRecruitmentCost(recruitAmount);
   const enoughResources = hasEnoughResources(appState.resources, cost);
-  const canRecruit = canUseRecruitmentUi(selectedCity, appState) && recruitAmount > 0 && enoughResources;
-  const disabledReason = recruitableTroops <= 0
+  const canRecruit = canUseRecruitmentUi(selectedCity, appState) && !targetSatisfied && recruitAmount > 0 && enoughResources;
+  const disabledReason = targetSatisfied
+    ? "목표 주둔군 충족"
+    : (recruitableTroops <= 0
     ? "모집 한계"
-    : (!enoughResources ? "자원 부족" : "지금은 모집할 수 없습니다.");
+    : (!enoughResources ? "자원 부족" : "지금은 모집할 수 없습니다."));
 
   return `
     <button

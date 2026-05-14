@@ -10,6 +10,7 @@ import {
   setCityGovernorPolicy,
   setChancellorHeroId,
   setChancellorPolicy,
+  setTradeRelationAction,
   setTaxLevel,
   startBattle,
   cancelHeroDeployment,
@@ -18,11 +19,14 @@ import {
   openHeroDeployment,
   openDefenseHeroDeployment,
   openHeroTransfer,
+  openTradeControl,
   recruitCityTroops,
   selectHeroTransferHero,
   selectHeroTransferTargetCity,
   setDeploymentHeroTroops,
+  setCityTradeSettings,
   toggleDeploymentHero,
+  closeTradeControl,
   updateBattleState,
 } from "./core/app_state.js";
 import {
@@ -1074,6 +1078,56 @@ function rerender() {
       }
 
       updateAppState((state) => recruitCityTroops(state, cityId, amount));
+      rerender();
+    },
+    onTradeRelationAction: ({ action, factionA, factionB }) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => setTradeRelationAction(state, action, factionA, factionB));
+      rerender();
+    },
+    onTradeControlOpen: (cityId) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => openTradeControl(state, cityId));
+      rerender();
+    },
+    onTradeControlApply: ({ cityId, tradeSettings }) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => setCityTradeSettings(state, cityId, tradeSettings));
+      rerender();
+    },
+    onTradeControlAuto: ({ cityId, tradeSettings }) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => setCityTradeSettings(state, cityId, tradeSettings));
+      rerender();
+    },
+    onTradeControlClose: () => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => closeTradeControl(state));
       rerender();
     },
     onConfirmEnemyTurnResult: () => {

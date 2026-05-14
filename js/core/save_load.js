@@ -8,12 +8,13 @@ import {
   normalizeEnemyResourceStock,
   normalizeResourceStock,
 } from "./domestic_income.js";
+import { normalizeFactionRelations } from "./inter_faction_trade.js";
 import { getDefaultFactionIdForCity, initializeCityDomesticData } from "./world_rules.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
-const SAVE_KEY = "samwar.save.v0.5-6";
-const LEGACY_SAVE_KEYS = Object.freeze(["samwar.save.v0.5-5a", "samwar.save.v0.5-5", "samwar.save.v0.5-4c", "samwar.save.v0.5-4b", "samwar.save.v0.5-4", "samwar.save.v0.5-3c", "samwar.save.v0.5-3b", "samwar.save.v0.5-1h"]);
-const SAVE_VERSION = "v0.5-6";
+const SAVE_KEY = "samwar.save.v0.5-8c";
+const LEGACY_SAVE_KEYS = Object.freeze(["samwar.save.v0.5-8b", "samwar.save.v0.5-8", "samwar.save.v0.5-7c", "samwar.save.v0.5-7", "samwar.save.v0.5-6", "samwar.save.v0.5-5b", "samwar.save.v0.5-5a", "samwar.save.v0.5-5", "samwar.save.v0.5-4c", "samwar.save.v0.5-4b", "samwar.save.v0.5-4", "samwar.save.v0.5-3c", "samwar.save.v0.5-3b", "samwar.save.v0.5-1h"]);
+const SAVE_VERSION = "v0.5-8c";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {
@@ -78,6 +79,22 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
     : selectedCityId;
   const turn = savedState.meta?.turn ?? fallbackState.meta?.turn ?? 1;
   const turnOwner = savedWorld.turnOwner === "player" ? "player" : "player";
+  const relationState = {
+    ...fallbackState,
+    ...savedState,
+    meta: {
+      ...(fallbackState.meta ?? {}),
+      ...(savedState.meta ?? {}),
+      playerFactionId,
+    },
+    world: {
+      ...fallbackWorld,
+      ...savedWorld,
+      cities,
+      heroes,
+      factions: savedWorld.factions ?? fallbackWorld.factions ?? [],
+    },
+  };
 
   return {
     ...fallbackState,
@@ -90,6 +107,7 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
     ui: {
       ...(fallbackState.ui ?? {}),
       saveMessage: "",
+      tradeControlCityId: null,
     },
     meta: {
       ...(fallbackState.meta ?? {}),
@@ -116,6 +134,7 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
     ),
     resources: normalizeResourceStock(savedState.resources ?? createInitialResourceStock()),
     enemyResources: normalizeEnemyResourceStock(savedState.enemyResources ?? createInitialEnemyResourceStock()),
+    factionRelations: normalizeFactionRelations(relationState, savedState.factionRelations ?? fallbackState.factionRelations),
     world: {
       ...fallbackWorld,
       ...savedWorld,
@@ -133,6 +152,9 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
       lastRecruitmentResult: savedWorld.lastRecruitmentResult ?? null,
       lastBattleTroopResult: savedWorld.lastBattleTroopResult ?? null,
       lastWoundedRecoveryResult: savedWorld.lastWoundedRecoveryResult ?? null,
+      lastSupplyNetworkResult: savedWorld.lastSupplyNetworkResult ?? null,
+      lastTroopRebalanceResult: savedWorld.lastTroopRebalanceResult ?? null,
+      lastInterFactionTradeResult: savedWorld.lastInterFactionTradeResult ?? null,
     },
   };
 }
@@ -161,6 +183,7 @@ export function createSaveSnapshot(state = gameStore.getState()) {
       domesticPolicy: state?.domesticPolicy ?? createInitialDomesticPolicy(),
       resources: normalizeResourceStock(state?.resources),
       enemyResources: normalizeEnemyResourceStock(state?.enemyResources),
+      factionRelations: normalizeFactionRelations(state, state?.factionRelations),
       world: {
         cities: world.cities ?? [],
         factions: world.factions ?? [],
@@ -176,6 +199,9 @@ export function createSaveSnapshot(state = gameStore.getState()) {
         lastRecruitmentResult: world.lastRecruitmentResult ?? null,
         lastBattleTroopResult: world.lastBattleTroopResult ?? null,
         lastWoundedRecoveryResult: world.lastWoundedRecoveryResult ?? null,
+        lastSupplyNetworkResult: world.lastSupplyNetworkResult ?? null,
+        lastTroopRebalanceResult: world.lastTroopRebalanceResult ?? null,
+        lastInterFactionTradeResult: world.lastInterFactionTradeResult ?? null,
       },
     },
   };

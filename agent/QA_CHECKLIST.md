@@ -1,13 +1,221 @@
 # QA Checklist
 
-## v0.5-7 Trade Route MVP Prep
-- [ ] Confirm v0.5-6 faction ids display correctly in city info.
-- [ ] Confirm same-faction ownership is available for route filtering.
-- [ ] Confirm player-owned multiple-city state after conquest can be detected.
-- [ ] Confirm trade placeholder area exists in Selected City resource/trade panel.
-- [ ] Confirm commerceRating / specialty resources / securityStatus / cityLoyalty are available to trade formula.
-- [ ] Confirm no diplomacy, treaty, espionage, or enemy domestic AI is introduced in first trade MVP.
-- [ ] Confirm save/load preserves faction ownership before adding trade state.
+## v0.5-8c Trade Goods & Control MVP
+- [x] `node --check js/core/inter_faction_trade.js`
+- [x] `node --check js/core/app_state.js`
+- [x] `node --check js/core/save_load.js`
+- [x] `node --check js/ui/selected_city_ui.js`
+- [x] `node --check js/ui/world_hud_ui.js`
+- [x] `node --check js/ui/world_map_ui.js`
+- [x] `node --check js/main.js`
+- [x] `node --check js/core/domestic_income.js`
+- [x] `node --check js/ui/resource_ui.js`
+- [x] `node --check data/factions.js`
+- [x] `node --check js/constants.js`
+- [x] Trade settings default normalization works.
+- [x] Chancellor-present city governance reports 100% automatic operation.
+- [x] No chancellor + governor city governance reports 60% limited operation.
+- [x] No chancellor/governor city governance reports 30% temporary-official operation.
+- [x] Direct mode + high intensity increases route value.
+- [x] `trade_suspended` keeps route value at 0 even with trade settings.
+- [x] Save snapshot preserves city `tradeSettings`.
+- [x] Browser: fresh refresh has no console errors.
+- [x] Browser: Hanseong selection works normally.
+- [x] Browser: external trade UI still renders.
+- [x] Browser: player city shows `무역 조정`.
+- [x] Browser: trade control modal opens.
+- [x] Browser: auto/direct mode can be changed.
+- [x] Browser: intensity can be changed.
+- [x] Browser: export/import priorities can be changed.
+- [x] Browser: applying settings updates Selected City UI.
+- [ ] Browser: save/load preserves direct trade settings.
+- [ ] Browser: chancellor/governor/temporary operation labels display as expected.
+- [ ] Browser: direct high setting changes visible trade income.
+- [ ] Browser: trade_paused/trade_suspended/war still produce no income.
+- [ ] Regression: v0.5-8b relation buttons work.
+- [ ] Regression: battle-triggered 10-turn trade suspension works.
+- [ ] Regression: internal trade/supply works.
+- [ ] Regression: internal troop rebalance works.
+- [ ] Regression: recruitment works.
+- [ ] Regression: attack/defense battle works.
+- [ ] Regression: wounded recovery works.
+- [ ] Regression: tax/chancellor/governor controls work.
+- [ ] Regression: save/load works.
+
+## v0.5-8b Trade Relation / Agreement Scaffold
+- [x] `node --check js/core/inter_faction_trade.js`
+- [x] `node --check js/core/app_state.js`
+- [x] `node --check js/core/save_load.js`
+- [x] `node --check js/ui/selected_city_ui.js`
+- [x] `node --check js/ui/world_hud_ui.js`
+- [x] `node --check js/ui/world_map_ui.js`
+- [x] `node --check js/main.js`
+- [x] `node --check js/core/domestic_income.js`
+- [x] `node --check js/ui/resource_ui.js`
+- [x] `node --check data/factions.js`
+- [x] `node --check js/constants.js`
+- [x] Neutral relation can trade and creates route.
+- [x] Neutral -> trade_paused blocks trade and route.
+- [x] trade_paused -> neutral re-enables trade and route.
+- [x] Neutral -> trade remains tradeable and increases route value.
+- [x] trade_suspended with cooldown blocks manual resume.
+- [x] Cooldown decrement to 0 restores neutral/tradeAllowed.
+- [x] Save snapshot preserves `trade_paused`.
+- [x] Browser: fresh refresh has no console errors.
+- [x] Browser: Hanseong selection works normally.
+- [x] Browser: external trade relation UI displays.
+- [ ] Browser: neutral/trade/trade_paused/trade_suspended/war labels display correctly.
+- [ ] Browser: trade cooldown turns display.
+- [ ] Browser: 교역 중단 blocks external route.
+- [ ] Browser: 교역 재개 restores external route.
+- [ ] Browser: 교역 강화 sets trade state.
+- [ ] Browser: cooldown relation disables manual resume.
+- [ ] Browser: war relation disables relation actions.
+- [ ] Regression: v0.5-8 external trade works.
+- [ ] Regression: internal trade/supply works.
+- [ ] Regression: internal troop rebalance works.
+- [ ] Regression: recruitment works.
+- [ ] Regression: attack/defense battle works.
+- [ ] Regression: battle-triggered 10-turn trade suspension works.
+- [ ] Regression: wounded recovery works.
+- [ ] Regression: tax/chancellor/governor controls work.
+- [ ] Regression: save/load works.
+
+## v0.5-8 Inter-Faction Trade MVP
+- [x] `node --check js/core/inter_faction_trade.js`
+- [x] `node --check js/core/trade_supply.js`
+- [x] `node --check js/core/domestic_income.js`
+- [x] `node --check js/core/app_state.js`
+- [x] `node --check js/core/save_load.js`
+- [x] `node --check js/core/world_rules.js`
+- [x] `node --check data/factions.js`
+- [x] `node --check js/constants.js`
+- [x] `node --check js/ui/selected_city_ui.js`
+- [x] `node --check js/ui/world_hud_ui.js`
+- [x] `node --check js/ui/resource_ui.js`
+- [x] `node --check js/main.js`
+- [x] `node --check js/ui/military_ui.js`
+- [x] `node --check js/ui/world_map_ui.js`
+- [x] `node --check js/core/battle_rules.js`
+- [x] `node --check js/core/battle_state.js`
+- [x] Hanseong player and Pyongyang faction adjacent with neutral relation produces inter-faction routes.
+- [x] `trade_suspended` relation blocks the player/Pyongyang external route.
+- [x] Trade cooldown decrements by 1.
+- [x] Trade cooldown 0 restores neutral/tradeAllowed.
+- [x] Battle start sets participating factions to `trade_suspended` with cooldown 10.
+- [x] Player-involved route creates positive player trade gold.
+- [x] Applying external trade income changes player resources.
+- [x] Non-player totals are recorded in `factionTotals`.
+- [x] External trade income application does not mutate `enemyResources`.
+- [x] Save snapshot includes `factionRelations` and `lastInterFactionTradeResult`.
+- [x] No diplomacy negotiation UI, treaty UI, espionage, merchant units, naval trade combat, trade disruption events, troop types, battle logic overhaul, Phaser Scene changes, direct rule, enemy domestic AI, rebellion/riot, or window compatibility reintroduction.
+- [x] Browser: fresh refresh has no console errors.
+- [x] Browser: Hanseong selection works normally.
+- [x] Browser: internal supply UI still renders.
+- [x] Browser: external trade section appears for adjacent other-faction city routes.
+- [x] Browser: external trade partner faction name displays.
+- [x] Browser: neutral trade state displays.
+- [x] Browser: gold/food/salt external trade income displays.
+- [x] Browser: World HUD external trade summary displays.
+- [ ] Browser: turn end applies external trade income to player resources.
+- [ ] Browser: battle with another faction sets trade suspension and UI shows cooldown.
+- [ ] Browser: cooldown decreases per turn and restores neutral at 0.
+- [ ] Regression: internal trade/supply works.
+- [ ] Regression: internal troop rebalance works.
+- [ ] Regression: soldier recruitment works.
+- [ ] Regression: attack/defense battle works.
+- [ ] Regression: allocatedTroops battle display works.
+- [ ] Regression: wounded recovery works.
+- [ ] Regression: tax/chancellor/governor controls work.
+- [ ] Regression: save/load works.
+- [ ] Regression: enemy invasion center modal works.
+
+## v0.5-7c Internal Troop Rebalance MVP
+- [x] `node --check js/core/trade_supply.js`
+- [x] `node --check js/core/app_state.js`
+- [x] `node --check js/core/domestic_income.js`
+- [x] `node --check js/core/save_load.js`
+- [x] `node --check js/ui/selected_city_ui.js`
+- [x] `node --check js/ui/world_hud_ui.js`
+- [x] `node --check js/main.js`
+- [x] `node --check js/core/domestic_effects.js`
+- [x] `node --check js/core/world_rules.js`
+- [x] `node --check js/ui/resource_ui.js`
+- [x] `node --check js/ui/military_ui.js`
+- [x] Player has Hanseong + Pyongyang in a smoke scenario: Hanseong garrison decreased and Pyongyang garrison increased.
+- [x] Player total `garrisonTroops` before/after rebalance is preserved.
+- [x] Sender does not fall below target garrison.
+- [x] Receiver does not exceed target garrison.
+- [x] Target-satisfied receiver does not receive additional troops.
+- [x] Pending battle choice skips internal troop rebalance.
+- [x] No diplomacy trade, enemy trade, treaties, negotiation, espionage, merchant units, troop types, battle logic changes, Phaser Scene changes, direct rule, rebellion/riot, or window compatibility reintroduction were added.
+- [x] Browser: fresh refresh has no console errors.
+- [x] Browser: Hanseong selection works normally.
+- [x] Browser: internal supply UI still renders.
+- [ ] Browser: player has 2+ cities and turn end moves eligible garrison troops.
+- [ ] Browser: Selected City shows internal troop rebalance result.
+- [x] Browser: World HUD shows internal troop rebalance summary.
+- [ ] Browser: total player garrison is preserved after movement.
+- [ ] Browser: target-satisfied city does not receive additional troops.
+- [ ] Browser: target-satisfied city recruitment is disabled or warns with target-satisfied message.
+- [ ] Regression: internal trade/supply display works.
+- [ ] Regression: soldier recruitment works when target garrison is not satisfied.
+- [ ] Regression: attack/defense battle works.
+- [ ] Regression: allocatedTroops battle display works.
+- [ ] Regression: wounded recovery works.
+- [ ] Regression: tax/chancellor/governor controls work.
+- [ ] Regression: save/load works.
+- [ ] Regression: enemy invasion center modal works.
+
+## v0.5-7 Internal Trade & Supply Route MVP
+- [x] `node --check js/core/trade_supply.js`
+- [x] `node --check js/core/domestic_income.js`
+- [x] `node --check js/core/domestic_effects.js`
+- [x] `node --check js/core/world_rules.js`
+- [x] `node --check js/core/save_load.js`
+- [x] `node --check js/ui/selected_city_ui.js`
+- [x] `node --check js/ui/world_hud_ui.js`
+- [x] `node --check js/ui/resource_ui.js`
+- [x] `node --check js/main.js`
+- [x] `node --check data/cities.js`
+- [x] `node --check js/constants.js`
+- [x] `node --check js/ui/military_ui.js`
+- [x] `node --check js/ui/world_map_ui.js`
+- [x] Player has only Hanseong: internal route count is 0.
+- [x] Player owns Hanseong + Pyongyang: route count is greater than 0 and city results are generated.
+- [x] Rear role check: no adjacent other-faction city produces role `후방`.
+- [x] Border role check: one adjacent other-faction city produces role `국경`.
+- [x] Frontline role check: two or more adjacent other-faction cities produce role `최전선`.
+- [x] Garrison shortage/surplus calculations produce positive shortage or surplus as expected.
+- [x] Higher-risk/frontline city can receive higher or equal supply priority.
+- [x] Browser: fresh refresh has no console errors.
+- [x] Browser: Hanseong selection works normally.
+- [x] Browser: existing battle/military UI still renders.
+- [x] Browser: Hanseong-only state shows internal routes as inactive/0.
+- [ ] Browser: after occupying Pyongyang or Luoyang, Selected City shows internal route and supply information.
+- [x] Browser: World HUD shows internal supply network summary.
+- [ ] Browser: role, target garrison, current garrison, shortage/surplus judgment display correctly.
+- [ ] Browser: no automatic troop movement occurs.
+- [ ] Browser: 금전/식량/소금 allocation and reasons display.
+- [ ] Browser: no duplicate resource income is observed.
+- [ ] Regression: recruitment works.
+- [ ] Regression: troop deployment and battle allocation work.
+- [ ] Regression: attack/defense battles work.
+- [ ] Regression: wounded recovery works.
+- [ ] Regression: tax/chancellor/governor controls work.
+- [ ] Regression: save/load works.
+- [ ] Regression: enemy invasion center modal works.
+- [ ] Regression: no console errors.
+- [x] No diplomacy trade, treaties, negotiation, espionage, merchant units, naval trade combat, troop type additions, Phaser Scene changes, battle logic changes, direct rule, or window compatibility reintroduction were added.
+
+## v0.5-7b Internal Troop Rebalance MVP Prep
+- [ ] Rear surplus source selection.
+- [ ] Border/frontline shortage target selection.
+- [ ] Chancellor-first rebalance judgment.
+- [ ] Governor policy secondary priority.
+- [ ] Source city minimum garrison protection.
+- [ ] Per-turn movement cap.
+- [ ] Actual `garrisonTroops` transfer implementation.
 
 ## v0.5-6 Faction Identity Final QA
 - [x] v0.5-6 download confirmed working by user.

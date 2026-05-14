@@ -9,6 +9,7 @@ import {
   RESOURCE_KEYS,
   YIELD_KEYS,
 } from "../constants.js";
+import { normalizeCityTradeSettings } from "./inter_faction_trade.js";
 
 export function getFactionById(factions, factionId) {
   return factions.find((faction) => faction.id === factionId) ?? null;
@@ -229,6 +230,7 @@ export function initializeCityDomesticData(cities) {
     cityLoyalty: city.cityLoyalty ?? 75,
     governorHeroId: city.governorHeroId ?? (normalizeCityOwnerFactionId(city) === FACTION_IDS.PLAYER ? null : (cityGovernorPresets[city.id] ?? null)),
     governorPolicy: normalizeGovernorPolicy(city.governorPolicy),
+    tradeSettings: normalizeCityTradeSettings(city.tradeSettings),
     domestic: {
       ...defaultCityDomestic,
       ...(city.domestic ?? {}),

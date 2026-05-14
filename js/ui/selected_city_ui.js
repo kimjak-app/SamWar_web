@@ -44,10 +44,10 @@ function renderAttackAction(selectedCity, canOpenAttackChoice) {
   `;
 }
 
-function renderCityDomesticPanel(selectedCity) {
+function renderCityDomesticPanel(selectedCity, appState) {
   return `
     <div class="city-domestic-panel">
-      ${renderResourcePanel(selectedCity)}
+      ${renderResourcePanel(selectedCity, appState)}
     </div>
   `;
 }
@@ -175,7 +175,7 @@ export function renderSelectedCityPanel({
           : ""
       }
       ${renderCityMilitaryPanel(selectedCity, stationedHeroes, appState)}
-      ${renderCityDomesticPanel(selectedCity)}
+      ${renderCityDomesticPanel(selectedCity, appState)}
       ${renderAttackAction(selectedCity, canOpenAttackChoice)}
     </section>
   `;

@@ -25,6 +25,14 @@ import {
   getTaxLoyaltyDelta,
   normalizeDomesticPolicy,
 } from "../core/domestic_income.js";
+import {
+  buildFactionRelationSummary,
+  calculateInterFactionTradeResult,
+} from "../core/inter_faction_trade.js";
+import {
+  buildFactionSupplySummary,
+  calculateInternalSupplyNetwork,
+} from "../core/trade_supply.js";
 import { deriveCalendarFromTurn, formatCalendarLabel } from "../core/world_calendar.js";
 import { renderLoyaltyGauge } from "./loyalty_ui.js";
 
@@ -307,6 +315,77 @@ function renderWarehousePanel(appState) {
   `;
 }
 
+function renderSupplyNetworkHud(appState) {
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const result = appState?.world?.lastSupplyNetworkResult?.factionId === playerFactionId
+    ? appState.world.lastSupplyNetworkResult
+    : calculateInternalSupplyNetwork(appState, playerFactionId);
+  const summary = buildFactionSupplySummary(result);
+  const supportNeeded = summary.supportNeededCities.length
+    ? summary.supportNeededCities.slice(0, 2).join(", ")
+    : "없음";
+
+  return `
+    <div class="warehouse-panel supply-network-panel">
+      <strong class="warehouse-title">내부 보급망</strong>
+      <span class="warehouse-note">활성 교역로 ${summary.routeCount}개</span>
+      <span class="warehouse-note">금전 +${summary.totals.gold} / 식량 +${summary.totals.food} / 소금 +${summary.totals.salt}</span>
+      <span class="warehouse-note">군사 지원 필요 도시: ${supportNeeded}</span>
+    </div>
+  `;
+}
+
+function renderTroopRebalanceHud(appState) {
+  const result = appState?.world?.lastTroopRebalanceResult;
+  const transfers = result?.transfers ?? [];
+  const summary = transfers.length
+    ? transfers
+      .slice(0, 2)
+      .map((transfer) => `${transfer.fromCityName} → ${transfer.toCityName} ${transfer.amount.toLocaleString("ko-KR")}명`)
+      .join(" / ")
+    : "목표 주둔군 충족";
+
+  return `
+    <div class="warehouse-panel supply-network-panel">
+      <strong class="warehouse-title">내부 병력 재배치</strong>
+      <span class="warehouse-note">${summary}</span>
+      <span class="warehouse-note">총 이동 ${Math.max(0, Number(result?.totalMoved) || 0).toLocaleString("ko-KR")}명</span>
+    </div>
+  `;
+}
+
+function renderInterFactionTradeHud(appState) {
+  const result = appState?.world?.lastInterFactionTradeResult ?? calculateInterFactionTradeResult(appState);
+  const playerFactionId = appState?.meta?.playerFactionId ?? "player";
+  const relationSummary = buildFactionRelationSummary(appState, playerFactionId)
+    .slice(0, 3)
+    .map((entry) => `${entry.factionName.replace(" 세력", "")}: ${entry.label}${entry.relation.tradeCooldownTurns > 0 ? ` ${entry.relation.tradeCooldownTurns}턴` : ""}`)
+    .join(" / ");
+  const playerTotals = result?.playerTotals ?? {};
+  const suspended = result?.suspendedRoutes?.[0] ?? null;
+  const playerRoute = (result?.routes ?? []).find((route) => (
+    route.fromFactionId === playerFactionId || route.toFactionId === playerFactionId
+  )) ?? null;
+  const incomeLine = `이번 턴 수익: 금전 +${playerTotals.gold ?? 0} / 식량 +${(playerTotals.rice ?? 0) + (playerTotals.barley ?? 0) + (playerTotals.seafood ?? 0)} / 소금 +${playerTotals.salt ?? 0}`;
+  const operationLine = playerRoute?.governance
+    ? `운영: ${playerRoute.governance.operationLabel} · 효율 ${Math.round((playerRoute.governance.efficiency ?? 1) * 100)}%`
+    : "";
+  const suspendedLine = suspended
+    ? `${suspended.fromFactionName} ↔ ${suspended.toFactionName} 교역 중단 ${suspended.tradeCooldownTurns}턴`
+    : "";
+
+  return `
+    <div class="warehouse-panel supply-network-panel">
+      <strong class="warehouse-title">대외 무역</strong>
+      <span class="warehouse-note">활성 교역로 ${result?.routeCount ?? 0}개</span>
+      ${operationLine ? `<span class="warehouse-note">${operationLine}</span>` : ""}
+      <span class="warehouse-note">${incomeLine}</span>
+      ${relationSummary ? `<span class="warehouse-note">세력 관계: ${relationSummary}</span>` : ""}
+      ${suspendedLine ? `<span class="warehouse-note">${suspendedLine}</span>` : ""}
+    </div>
+  `;
+}
+
 function renderTurnAction({ canEndTurn, pendingEnemyTurnResult }) {
   if (!pendingEnemyTurnResult) {
     return canEndTurn ? `
@@ -387,6 +466,9 @@ export function renderWorldHud(appState, { canEndTurn, unified } = {}) {
         ${renderChancellorPolicyControl(chancellorPolicy)}
         <span class="turn-stock">보유 자원: ${formatResourceStock(appState.resources)}</span>
         ${renderWarehousePanel(appState)}
+        ${renderSupplyNetworkHud(appState)}
+        ${renderTroopRebalanceHud(appState)}
+        ${renderInterFactionTradeHud(appState)}
         ${incomeSummary ? `<span class="turn-income">${incomeSummary}</span>` : ""}
         <span class="turn-policy-effect">${chancellorPolicySummary}</span>
         ${taxEffect ? `<span class="turn-tax-effect">${taxEffect}</span>` : ""}
