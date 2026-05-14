@@ -22,6 +22,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onGovernorHeroChange,
     onGovernorPolicyChange,
     onRecruitTroops,
+    onCityDetailTabChange,
     onTradeRelationAction,
     onTradeControlOpen,
     onTradeControlApply,
@@ -229,6 +230,18 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
 
         if (cityId) {
           onRecruitTroops({ cityId, amount });
+        }
+      });
+    });
+  }
+
+  if (onCityDetailTabChange) {
+    rootElement.querySelectorAll("[data-city-detail-tab]").forEach((element) => {
+      element.addEventListener("click", () => {
+        const tab = element.getAttribute("data-city-detail-tab");
+
+        if (tab) {
+          onCityDetailTabChange(tab);
         }
       });
     });

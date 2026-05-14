@@ -25,6 +25,7 @@ import {
   selectHeroTransferTargetCity,
   setDeploymentHeroTroops,
   setCityTradeSettings,
+  setSelectedCityDetailTab,
   toggleDeploymentHero,
   closeTradeControl,
   updateBattleState,
@@ -1078,6 +1079,16 @@ function rerender() {
       }
 
       updateAppState((state) => recruitCityTroops(state, cityId, amount));
+      rerender();
+    },
+    onCityDetailTabChange: (tab) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => setSelectedCityDetailTab(state, tab));
       rerender();
     },
     onTradeRelationAction: ({ action, factionA, factionB }) => {

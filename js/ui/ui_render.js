@@ -1,6 +1,6 @@
 import { canAttackCity, getFactionById, isPlayerCity, isWorldUnified } from "../core/world_rules.js";
 import { renderHeroDeploymentPanel, renderHeroTransferPanel } from "./hero_transfer_ui.js";
-import { renderTradeControlModal } from "./resource_ui.js";
+import { renderCityDetailPanel, renderTradeControlModal } from "./resource_ui.js";
 import { renderSelectedCityPanel } from "./selected_city_ui.js";
 import { renderWorldHud } from "./world_hud_ui.js";
 
@@ -202,15 +202,20 @@ export function renderAllWorldUI(appState) {
         ${renderWorldHud(appState, { canEndTurn, unified })}
 
         <aside class="hud-stack" aria-label="Selected city details">
-          ${renderSelectedCityPanel({
-            appState,
-            selectedCity,
-            selectedFaction,
-            stationedHeroes,
-            canOpenHeroTransfer,
-            hasHeroTransferDestination,
-            canOpenAttackChoice,
-          })}
+          <div class="selected-city-layout">
+            <div class="selected-city-summary-panel">
+              ${renderSelectedCityPanel({
+                appState,
+                selectedCity,
+                selectedFaction,
+                stationedHeroes,
+                canOpenHeroTransfer,
+                hasHeroTransferDestination,
+                canOpenAttackChoice,
+              })}
+            </div>
+            ${renderCityDetailPanel(selectedCity, appState)}
+          </div>
 
           ${renderBattleChoicePanel(rightSideBattleChoice)}
         </aside>

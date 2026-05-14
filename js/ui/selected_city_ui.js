@@ -10,7 +10,6 @@ import { renderGarrisonPanel } from "./garrison_ui.js";
 import { renderCityGovernorPanel } from "./governor_ui.js";
 import { renderLoyaltyGauge } from "./loyalty_ui.js";
 import { renderCityMilitaryPanel } from "./military_ui.js";
-import { renderResourcePanel } from "./resource_ui.js";
 
 function getStatusText(cities, selectedCity) {
   if (isWorldUnified(cities)) {
@@ -41,14 +40,6 @@ function renderAttackAction(selectedCity, canOpenAttackChoice) {
     <button class="attack-button" type="button" data-attack-city-id="${selectedCity.id}">
       공격
     </button>
-  `;
-}
-
-function renderCityDomesticPanel(selectedCity, appState) {
-  return `
-    <div class="city-domestic-panel">
-      ${renderResourcePanel(selectedCity, appState)}
-    </div>
   `;
 }
 
@@ -175,7 +166,6 @@ export function renderSelectedCityPanel({
           : ""
       }
       ${renderCityMilitaryPanel(selectedCity, stationedHeroes, appState)}
-      ${renderCityDomesticPanel(selectedCity, appState)}
       ${renderAttackAction(selectedCity, canOpenAttackChoice)}
     </section>
   `;

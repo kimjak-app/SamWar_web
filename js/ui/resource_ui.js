@@ -42,6 +42,16 @@ const TRADE_MODE_LABELS = Object.freeze({
   [TRADE_CONTROL_MODES.AUTO]: "자동 운영",
   [TRADE_CONTROL_MODES.DIRECT]: "직할 운영",
 });
+const CITY_DETAIL_TAB_KEYS = Object.freeze({
+  RESOURCES: "resources",
+  INTERNAL_TRADE: "internal-trade",
+  EXTERNAL_TRADE: "external-trade",
+});
+const CITY_DETAIL_TABS = Object.freeze([
+  { key: CITY_DETAIL_TAB_KEYS.RESOURCES, label: "자원" },
+  { key: CITY_DETAIL_TAB_KEYS.INTERNAL_TRADE, label: "자국무역" },
+  { key: CITY_DETAIL_TAB_KEYS.EXTERNAL_TRADE, label: "타국무역" },
+]);
 
 function getResourceValue(resources, key) {
   const value = resources?.[key] ?? 0;
@@ -182,7 +192,7 @@ function renderSupplyTradeSection(city, appState) {
   if (!summary) {
     return `
       <div class="city-domestic-section">
-        <p class="city-domestic-heading">무역/보급 정보</p>
+        <p class="city-domestic-heading">자국무역 / 내부 보급망</p>
         <div class="domestic-yield-row">
           <span>내부 교역로</span>
           <strong>비활성</strong>
@@ -325,7 +335,7 @@ function renderExternalTradeSection(city, appState) {
 
     return `
       <div class="city-domestic-section city-supply-section">
-        <p class="city-domestic-heading">대외 무역 / 세력 관계</p>
+        <p class="city-domestic-heading">타국무역 / 세력 관계</p>
         <div class="domestic-yield-row">
           <span>교역 상대</span>
           <strong>${getFactionName(appState, partnerFactionId)}</strong>
@@ -364,7 +374,7 @@ function renderExternalTradeSection(city, appState) {
 
     return `
       <div class="city-domestic-section city-supply-section">
-        <p class="city-domestic-heading">대외 무역 / 세력 관계</p>
+        <p class="city-domestic-heading">타국무역 / 세력 관계</p>
         <div class="domestic-yield-row">
           <span>${getFactionName(appState, suspendedRelation.factionId)}</span>
           <strong>${label}</strong>
@@ -379,7 +389,7 @@ function renderExternalTradeSection(city, appState) {
 
   return `
     <div class="city-domestic-section city-supply-section">
-      <p class="city-domestic-heading">대외 무역 / 세력 관계</p>
+      <p class="city-domestic-heading">타국무역 / 세력 관계</p>
       <div class="domestic-yield-row">
         <span>관계</span>
         <strong>${relationLabel}</strong>
@@ -495,7 +505,7 @@ function renderResourceSection(title, resourceKeys, resources) {
   `;
 }
 
-export function renderResourcePanel(city, appState = null) {
+export function renderCityResourceDetail(city) {
   const resources = city.resources ?? {};
 
   return `
@@ -506,8 +516,87 @@ export function renderResourcePanel(city, appState = null) {
       <p class="city-domestic-heading">상업</p>
       ${renderCommerceRatingRow(city.commerceRating ?? 0)}
     </div>
+  `;
+}
+
+export function renderCityInternalTradeDetail(city, appState = null) {
+  return `
     ${renderSupplyTradeSection(city, appState)}
     ${renderTroopRebalanceSection(city, appState)}
+  `;
+}
+
+export function renderCityExternalTradeDetail(city, appState = null) {
+  return `
     ${renderExternalTradeSection(city, appState)}
+  `;
+}
+
+export function renderResourcePanel(city, appState = null) {
+  return `
+    ${renderCityResourceDetail(city)}
+    ${renderCityInternalTradeDetail(city, appState)}
+    ${renderCityExternalTradeDetail(city, appState)}
+  `;
+}
+
+function normalizeCityDetailTab(tab) {
+  return CITY_DETAIL_TABS.some((entry) => entry.key === tab)
+    ? tab
+    : CITY_DETAIL_TAB_KEYS.RESOURCES;
+}
+
+function renderCityDetailTabs(activeTab) {
+  return `
+    <div class="city-detail-tabs" role="tablist" aria-label="도시 상세 탭">
+      ${CITY_DETAIL_TABS.map((tab) => `
+        <button
+          class="city-detail-tab-button ${tab.key === activeTab ? "active" : ""}"
+          type="button"
+          role="tab"
+          aria-selected="${tab.key === activeTab}"
+          data-city-detail-tab="${tab.key}"
+        >
+          ${tab.label}
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderCityDetailTabContent(city, appState, activeTab) {
+  switch (activeTab) {
+    case CITY_DETAIL_TAB_KEYS.INTERNAL_TRADE:
+      return renderCityInternalTradeDetail(city, appState);
+    case CITY_DETAIL_TAB_KEYS.EXTERNAL_TRADE:
+      return renderCityExternalTradeDetail(city, appState);
+    case CITY_DETAIL_TAB_KEYS.RESOURCES:
+    default:
+      return renderCityResourceDetail(city);
+  }
+}
+
+export function renderCityDetailPanel(city, appState = null) {
+  const activeTab = normalizeCityDetailTab(appState?.ui?.selectedCityDetailTab);
+
+  if (!city) {
+    return `
+      <section class="detail-card hud-panel city-detail-panel">
+        <p class="eyebrow">City Detail</p>
+        <h3 class="detail-heading">도시 상세</h3>
+        <p class="city-detail-copy">도시를 선택하세요.</p>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="detail-card hud-panel city-detail-panel">
+      <p class="eyebrow">City Detail</p>
+      <h3 class="detail-heading">도시 상세</h3>
+      ${renderCityDetailTabs(activeTab)}
+      <div class="city-detail-tab-content">
+        ${renderCityDetailTabContent(city, appState, activeTab)}
+      </div>
+    </section>
   `;
 }

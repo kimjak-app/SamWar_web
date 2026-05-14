@@ -1,11 +1,23 @@
 # SamWar_web Handoff
 
-Current working version: `v0.5-8c Trade Goods & Control MVP`.
+Current working version: `v0.5-8d City Detail Panel Tabs UX`.
 Baseline: `v0.5-5b Attack/Defense Empty Battlefield Common Battle Unit Render Fix`.
 
 v0.5-3a and v0.5-3b browser manual QA passed with no console errors. v0.5-6 browser QA was reported working by user.
 
-## Current Close: v0.5-8c Trade Goods & Control MVP
+## Current Close: v0.5-8d City Detail Panel Tabs UX
+- Selected City summary panel is shorter.
+- Added City Detail Panel with tabs:
+  - 자원
+  - 자국무역
+  - 타국무역
+- Resource/commerce details moved to 자원.
+- Internal trade/supply and troop rebalance moved to 자국무역.
+- External trade, faction relation buttons, and trade-control button moved to 타국무역.
+- Active tab is transient UI state: `appState.ui.selectedCityDetailTab`.
+- No formulas, relation rules, troop rebalance logic, battle logic, Phaser Scene code, save/load structure, diplomacy, espionage, or enemy domestic AI changed.
+
+## Previous Close: v0.5-8c Trade Goods & Control MVP
 - External trade now includes goods/control MVP.
 - Active goods: gold, rice, barley, seafood, salt, silk.
 - Deferred goods: wood, iron, horses.

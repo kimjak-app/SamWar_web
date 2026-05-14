@@ -645,11 +645,23 @@ button {
   z-index: 5;
   display: grid;
   gap: 16px;
-  width: min(380px, calc(100vw - 44px));
+  width: min(760px, calc(100vw - 440px));
 }
 
 .hud-panel {
   width: 100%;
+}
+
+.selected-city-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.95fr) minmax(320px, 1.05fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.selected-city-summary-panel,
+.city-detail-panel {
+  min-width: 0;
 }
 
 .detail-card {
@@ -755,6 +767,42 @@ button {
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid rgba(248, 215, 152, 0.14);
+}
+
+.city-detail-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.city-detail-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.city-detail-tab-button {
+  min-width: 0;
+  padding: 8px 6px;
+  border: 1px solid rgba(209, 176, 117, 0.22);
+  border-radius: 8px;
+  background: rgba(12, 24, 38, 0.62);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
+.city-detail-tab-button.active {
+  border-color: rgba(248, 215, 152, 0.64);
+  background: rgba(74, 54, 30, 0.54);
+  color: var(--accent-strong);
+}
+
+.city-detail-tab-content {
+  display: grid;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(248, 215, 152, 0.12);
 }
 
 .city-governor-panel,
@@ -1912,11 +1960,15 @@ button {
 
   .hud-stack {
     gap: 10px;
-    width: min(340px, calc(100vw - 36px));
+    width: min(680px, calc(100vw - 360px));
     max-height: calc(100vh - 24px);
     overflow: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(209, 176, 117, 0.35) rgba(7, 14, 23, 0.12);
+  }
+
+  .selected-city-layout {
+    grid-template-columns: 1fr;
   }
 
   .left-hud-stack::-webkit-scrollbar,

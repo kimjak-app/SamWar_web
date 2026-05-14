@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5-8d City Detail Panel Tabs UX
+- Shortened the default Selected City panel by removing long resource/trade/supply/detail sections.
+- Added a separate City Detail Panel next to the Selected City summary panel.
+- Added three City Detail tabs:
+  - 자원
+  - 자국무역
+  - 타국무역
+- Moved resource rows and commerce rating to the 자원 tab.
+- Moved internal trade/supply, military supply judgment, and internal troop rebalance summary to the 자국무역 tab.
+- Moved external trade, faction relation display, relation action buttons, and trade-control button to the 타국무역 tab.
+- Added UI state `appState.ui.selectedCityDetailTab` for the active tab. It is not persisted to save data.
+- Updated responsive layout so wide screens show summary/detail side by side and narrow screens stack them.
+- Kept existing event data attributes for relation actions and trade control after DOM relocation.
+- No domestic formula, trade formula, faction relation rule, troop rebalance logic, battle logic, Phaser Scene code, save/load structure, diplomacy, espionage, or enemy domestic AI changes.
+
 ## v0.5-8c Trade Goods & Control MVP
 - Added external trade goods/control scaffolding.
 - MVP trade goods are `gold`, `rice`, `barley`, `seafood`, `salt`, and `silk`.

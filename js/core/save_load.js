@@ -108,6 +108,7 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
       ...(fallbackState.ui ?? {}),
       saveMessage: "",
       tradeControlCityId: null,
+      selectedCityDetailTab: "resources",
     },
     meta: {
       ...(fallbackState.meta ?? {}),

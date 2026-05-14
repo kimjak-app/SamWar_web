@@ -1,6 +1,6 @@
 # Next Tasks
 
-Current working version: `v0.5-8c Trade Goods & Control MVP`.
+Current working version: `v0.5-8d City Detail Panel Tabs UX`.
 Baseline: `v0.5-5b Attack/Defense Empty Battlefield Common Battle Unit Render Fix`.
 
 ## Immediate Next Target: v0.5-9 Diplomacy & Spy Scaffold
@@ -16,6 +16,14 @@ Do not implement by default:
 - troop types
 - direct rule
 - rebellion/riot
+
+## v0.5-8d Closure Notes
+- Selected City summary panel was shortened.
+- Resource, internal trade/supply, internal troop rebalance, external trade, faction relation, and trade-control details moved into a separate City Detail Panel.
+- City Detail tabs are `자원`, `자국무역`, and `타국무역`.
+- Wide layout shows summary and detail panels side by side; narrow layout stacks them.
+- Existing relation buttons and trade-control modal remain wired from their new tab location.
+- No domestic formulas, trade formulas, relation rules, troop rebalance logic, battle logic, Phaser Scene code, save/load structure, diplomacy, espionage, or enemy domestic AI was changed.
 
 ## v0.5-8b Closure Notes
 - External trade relation states are now shown clearly in Selected City and World HUD.
