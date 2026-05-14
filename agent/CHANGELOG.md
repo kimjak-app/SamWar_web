@@ -2,12 +2,32 @@
 
 ## Current Recent Flow
 
-### v0.5-8h Japan Triangle Micro Layout Patch
+### v0.5-8i-1 West Sea Route Patch
 - Current baseline for the next session.
-- Tuned the expanded 10-city route layout after browser screenshot review.
+- Added 건업 <-> 사비 as a sea route.
+- Kept 건업 <-> 한성 direct route deferred.
+- Reinforced 사비 as the West Sea maritime gateway.
+- Preserved 한성/평양 no-direct-Japan rule.
+- Save version advanced to `v0.5-8i-1`; `v0.5-8i` remains legacy-loadable.
+- No naval combat, diplomacy, espionage, enemy AI, asset, Phaser, battle, domestic, or trade formula changes.
+
+### v0.5-8i Baekje + Kyushu Expansion Patch
+- Expanded active world from 10 cities to 12 cities.
+- Expanded active roster from 27 heroes to 32 active heroes.
+- Expanded active factions from 10 to 12 factions.
+- Removed 여포 from the active 조조/위 roster without deleting his data; he is now reserve/inactive.
+- Added 곽가 to 업성/위 with `heavenly_stratagem`.
+- Added 백제 / 사비 with 의자왕, 계백, 흑치상지.
+- Added 큐슈 세력 / 큐슈 with 시마즈 요시히로, 고니시 유키나가.
+- Added six placeholder-style unique skills using existing supported battle effect types.
+- Save version advanced to `v0.5-8i`; old 10-city saves merge canonical 사비/큐슈.
+- No diplomacy, espionage, enemy domestic AI, naval combat, new assets, or battle engine overhaul.
+
+### v0.5-8h Japan Triangle Micro Layout Patch
+- Stabilized the 10-city route layout before the Baekje/Kyushu expansion.
 - Added 업성 <-> 건업 for a clearer China tension line.
 - Rebuilt the Korean Peninsula into a 평양 / 한성 / 경주 triangle.
-- Preserved 경주 as the only Korea-to-Japan gateway.
+- Preserved 경주 as the only Korea-to-Japan gateway at that time.
 - Rebuilt Japan into a 교토 / 오사카 / 에도 triangle.
 - Advanced save version to `v0.5-8h`.
 - No battle, domestic, trade, diplomacy, espionage, enemy AI, or asset changes.
@@ -18,7 +38,7 @@
 - Made 경주 the Korea-Japan gateway with sea routes to 교토 and 오사카.
 - Repositioned 한성, Japanese cities, and China routes for a cleaner regional layout.
 - Added route type metadata for land/sea route rendering.
-- Save/load now preserves canonical neighbors, route types, and coordinates from current city data.
+- Save/load preserves canonical neighbors, route types, and coordinates from current city data.
 - No battle, domestic, trade, diplomacy, espionage, enemy AI, or asset changes.
 
 ### v0.5-8e World Expansion Data Patch
@@ -41,14 +61,6 @@
 - UX/layout-only patch.
 - No domestic, trade, troop rebalance, battle, Phaser, or save/load formula changes.
 
-### v0.5-8d City Detail Panel Tabs UX
-- Reduced Selected City overload by separating detail-heavy information.
-- Added City Detail tab structure for resources, internal trade, and external trade.
-- Kept operational controls in Selected City.
-- Preserved existing trade, domestic, troop, and battle logic.
-- Prepared the right-side panel for later expanded world data.
-- No save/load formula change.
-
 ### v0.5-8c Trade Goods & Control MVP
 - Added external trade goods/control scaffolding.
 - Active MVP goods: gold, rice, barley, seafood, salt, silk.
@@ -60,8 +72,8 @@
 - No diplomacy AI, espionage, merchant units, naval trade combat, battle logic, or enemy domestic AI.
 
 ## Older Baseline Summary
-- `v0.5-8b`: Trade relation / agreement scaffold with pause, resume, friendly trade, cooldown, and war blocking.
-- `v0.5-8`: Inter-faction trade MVP for adjacent cross-faction routes.
+- `v0.5-8b`: Trade relation / agreement scaffold.
+- `v0.5-8`: Inter-faction trade MVP.
 - `v0.5-7c`: Internal troop rebalance MVP.
 - `v0.5-7`: Internal trade / supply route MVP.
 - `v0.5-6`: Faction identity scaffold.

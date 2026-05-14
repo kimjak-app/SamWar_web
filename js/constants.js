@@ -4,6 +4,7 @@ export const FACTION_IDS = Object.freeze({
 
   // v0.5-8e active historical factions
   GOGURYEO: "goguryeo",
+  BAEKJE: "baekje_faction",
   SILLA: "silla",
   GORYEO_JOSEON: "goryeo_joseon",
   CHU: "chu",
@@ -12,6 +13,7 @@ export const FACTION_IDS = Object.freeze({
   WU: "wu",
   ODA: "oda",
   TOYOTOMI: "toyotomi",
+  KYUSHU: "kyushu_faction",
   TOKUGAWA: "tokugawa",
 
   // Legacy faction ids kept for old saves and migration fallback.
@@ -24,6 +26,7 @@ export const FACTION_HOME_CITY_IDS = Object.freeze({
   [FACTION_IDS.PLAYER]: "hanseong",
   [FACTION_IDS.GORYEO_JOSEON]: "hanseong",
   [FACTION_IDS.GOGURYEO]: "pyeongyang",
+  [FACTION_IDS.BAEKJE]: "sabi",
   [FACTION_IDS.SILLA]: "gyeongju",
   [FACTION_IDS.CHU]: "luoyang",
   [FACTION_IDS.WEI]: "yecheng",
@@ -31,6 +34,7 @@ export const FACTION_HOME_CITY_IDS = Object.freeze({
   [FACTION_IDS.WU]: "jianye",
   [FACTION_IDS.ODA]: "kyoto",
   [FACTION_IDS.TOYOTOMI]: "osaka",
+  [FACTION_IDS.KYUSHU]: "kyushu",
   [FACTION_IDS.TOKUGAWA]: "edo",
 });
 

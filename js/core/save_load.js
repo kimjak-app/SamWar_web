@@ -1,6 +1,8 @@
 import { gameStore } from "./GameStore.js";
 import { cities as canonicalCities } from "../../data/cities.js";
+import { factions as canonicalFactions } from "../../data/factions.js";
 import { heroes as canonicalHeroes } from "../../data/heroes.js";
+import { skills as canonicalSkills } from "../../data/skills.js";
 import {
   createInitialDomesticPolicy,
   createInitialEnemyResourceStock,
@@ -10,14 +12,22 @@ import {
   normalizeResourceStock,
 } from "./domestic_income.js";
 import { normalizeFactionRelations } from "./inter_faction_trade.js";
-import { getDefaultFactionIdForCity, initializeCityDomesticData } from "./world_rules.js";
+import {
+  getDefaultFactionIdForCity,
+  initializeCityDomesticData,
+  initializeHeroLocationsFromRosters,
+} from "./world_rules.js";
 import { deriveCalendarFromTurn } from "./world_calendar.js";
 
-const SAVE_KEY = "samwar.save.v0.5-8h";
+const SAVE_KEY = "samwar.save.v0.5-8i-1";
 const LEGACY_SAVE_KEYS = Object.freeze([
+  "samwar.save.v0.5-8i",
+  "samwar.save.v0.5-8h",
   "samwar.save.v0.5-8g",
   "samwar.save.v0.5-8f",
   "samwar.save.v0.5-8e",
+  "samwar.save.v0.5-8d-1",
+  "samwar.save.v0.5-8d",
   "samwar.save.v0.5-8c",
   "samwar.save.v0.5-8b",
   "samwar.save.v0.5-8",
@@ -34,7 +44,7 @@ const LEGACY_SAVE_KEYS = Object.freeze([
   "samwar.save.v0.5-3b",
   "samwar.save.v0.5-1h",
 ]);
-const SAVE_VERSION = "v0.5-8h";
+const SAVE_VERSION = "v0.5-8i-1";
 
 function getStorage() {
   if (typeof window === "undefined" || !window.localStorage) {
@@ -58,6 +68,8 @@ function normalizeLegacyHeroSide(savedHero) {
 
 function hydrateCanonicalHeroes(savedHeroes) {
   if (!Array.isArray(savedHeroes)) {
+    reserveCanonicalLuBu();
+    initializeHeroLocationsFromRosters();
     return canonicalHeroes;
   }
 
@@ -72,7 +84,25 @@ function hydrateCanonicalHeroes(savedHeroes) {
     }
   }
 
+  reserveCanonicalLuBu();
+  initializeHeroLocationsFromRosters();
+
   return canonicalHeroes;
+}
+
+function reserveCanonicalLuBu() {
+  const luBu = canonicalHeroes.find((hero) => hero.id === "lu_bu");
+
+  if (!luBu) {
+    return;
+  }
+
+  Object.assign(luBu, {
+    active: false,
+    isActiveRoster: false,
+    isReserve: true,
+    locationCityId: null,
+  });
 }
 
 function mergeCanonicalCities(savedCities) {
@@ -95,6 +125,48 @@ function mergeCanonicalCities(savedCities) {
   ];
 }
 
+function mergeCanonicalFactions(savedFactions) {
+  if (!Array.isArray(savedFactions)) {
+    return canonicalFactions;
+  }
+
+  const savedFactionById = new Map(savedFactions.map((faction) => [faction?.id, faction]).filter(([factionId]) => Boolean(factionId)));
+
+  return [
+    ...canonicalFactions.map((canonicalFaction) => ({
+      ...canonicalFaction,
+      ...(savedFactionById.get(canonicalFaction.id) ?? {}),
+      name: canonicalFaction.name,
+      nameKey: canonicalFaction.nameKey,
+      shortName: canonicalFaction.shortName,
+      shortNameKey: canonicalFaction.shortNameKey,
+      capitalCityId: canonicalFaction.capitalCityId,
+      isPlayer: canonicalFaction.isPlayer,
+    })),
+    ...savedFactions.filter((faction) => faction?.id && !canonicalFactions.some((canonicalFaction) => canonicalFaction.id === faction.id)),
+  ];
+}
+
+function mergeCanonicalSkills(savedSkills) {
+  if (!Array.isArray(savedSkills)) {
+    return canonicalSkills;
+  }
+
+  const savedSkillById = new Map(savedSkills.map((skill) => [skill?.id, skill]).filter(([skillId]) => Boolean(skillId)));
+
+  return [
+    ...canonicalSkills.map((canonicalSkill) => ({
+      ...canonicalSkill,
+      ...(savedSkillById.get(canonicalSkill.id) ?? {}),
+      name: canonicalSkill.name,
+      nameKey: canonicalSkill.nameKey,
+      ownerHeroId: canonicalSkill.ownerHeroId,
+      cutinImage: canonicalSkill.cutinImage,
+    })),
+    ...savedSkills.filter((skill) => skill?.id && !canonicalSkills.some((canonicalSkill) => canonicalSkill.id === skill.id)),
+  ];
+}
+
 function getFallbackSelectedCityId(cities = [], selection = {}) {
   if (cities.some((city) => city.id === selection?.cityId)) {
     return selection.cityId;
@@ -110,6 +182,8 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
   const savedWorld = savedState.world ?? {};
   const cities = initializeCityDomesticData(mergeCanonicalCities(savedWorld.cities ?? fallbackWorld.cities));
   const heroes = hydrateCanonicalHeroes(savedWorld.heroes ?? fallbackWorld.heroes ?? []);
+  const factions = mergeCanonicalFactions(savedWorld.factions ?? fallbackWorld.factions);
+  const skills = mergeCanonicalSkills(savedWorld.skills ?? fallbackWorld.skills);
   const playerFactionId = savedState.meta?.playerFactionId
     ?? fallbackState.meta?.playerFactionId
     ?? "player";
@@ -132,7 +206,8 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
       ...savedWorld,
       cities,
       heroes,
-      factions: savedWorld.factions ?? fallbackWorld.factions ?? [],
+      factions,
+      skills,
     },
   };
 
@@ -182,8 +257,8 @@ function normalizeWorldOnlyState(savedState = {}, fallbackState = {}) {
       ...savedWorld,
       cities,
       heroes,
-      factions: savedWorld.factions ?? fallbackWorld.factions ?? [],
-      skills: savedWorld.skills ?? fallbackWorld.skills ?? [],
+      factions,
+      skills,
       turnOwner,
       pendingEnemyTurnResult: null,
       lastIncomeResult: savedWorld.lastIncomeResult ?? null,

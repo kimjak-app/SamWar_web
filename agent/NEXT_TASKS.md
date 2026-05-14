@@ -1,27 +1,34 @@
 # Next Tasks
 
 ## Current Baseline
-`v0.5-8h Japan Triangle Micro Layout Patch`
+`v0.5-8i-1 West Sea Route Patch`
 
 ## Immediate Next Target
-`v0.5-8h-2 Browser QA / Route Regression Check`
+`v0.5-8i-2 Browser QA / West Sea Route Regression`
 
 Check:
-- 10개 도시가 모두 표시되는지.
-- 27명 영웅 데이터가 깨지지 않는지.
-- 10세력 소유권이 정상인지.
-- 한반도 삼각 구도가 정상인지.
-- 일본 삼각 구도가 정상인지.
-- 중국 루트가 정상인지.
-- 경주만 일본 관문인지.
-- 공격/방어 전투 진입이 정상인지.
-- 내정/무역/저장 회귀가 없는지.
+- 12개 도시가 모두 표시되는지.
+- active 32명 영웅 데이터가 깨지지 않는지.
+- 12세력 소유권이 정상인지.
+- 여포가 active roster에 남아 있지 않은지.
+- 곽가가 업성/위 세력에 표시되는지.
+- 사비가 백제 소유로 표시되는지.
+- 큐슈가 큐슈 세력 소유로 표시되는지.
+- 사비/큐슈 신규 영웅이 주둔 무장에 표시되는지.
+- 한성/평양은 일본 직접 이동이 여전히 불가능한지.
+- 사비 <-> 큐슈 서부 해상 루트가 정상인지.
+- 건업 <-> 사비 서해 해상 루트가 정상인지.
+- 건업 <-> 한성 direct route가 생기지 않았는지.
+- 경주 <-> 교토/오사카 동부 해상 루트가 유지되는지.
+- 신규 도시 공격/방어 전투 진입 시 빈 전장 회귀가 없는지.
+- 내정/무역/City Detail/저장 회귀가 없는지.
 
 ## Next Visual Target
-`v0.5-8i World Map Background Draft Prep`
+`v0.5-8j World Map Background Draft Prep`
 
 Scope:
-- 현재 10도시 좌표 기준으로 월드맵 배경 이미지 초안을 준비한다.
+- 현재 12도시 좌표 기준으로 월드맵 배경 이미지 초안을 준비한다.
+- 사비와 큐슈가 들어간 한반도 남서부/일본 서남부 기준점을 정리한다.
 - Phaser 좌표와 이미지 도시 위치를 맞추기 위한 기준을 정리한다.
 - 도시 아이콘, 깃발, 세력색은 이후 작업으로 둔다.
 
@@ -34,16 +41,8 @@ Scope:
 - 세력 관계 UI 확장.
 - 적국 재상 / 태수 / 자원 / 병력 노출 제한.
 
-## Alternative Target
-`v0.5-9 Enemy Domestic AI MVP`
-
-Scope:
-- 적국 재상 / 태수 자동 임명.
-- 적국 병사 모집 / 보급 판단.
-- 적국 내부 / 대외 무역 ledger 활용.
-- 적국 침공 판단 고도화.
-
 ## Guardrails
-- Current baseline is `v0.5-8h`, not `v0.5-8d-1`.
-- Do not change code, data, CSS, HTML, save/load, routes, or coordinates during docs cleanup.
-- Run browser QA before using the v0.5-8h layout as the world-map image basis.
+- Current baseline is `v0.5-8i-1`.
+- 건업 <-> 한성 direct route는 보류한다.
+- 신규 portrait/cutin asset을 추가하지 않는다.
+- 외교/첩보/적국 내정 AI/해전 본구현은 아직 시작하지 않는다.

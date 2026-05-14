@@ -76,6 +76,10 @@ function resetHeroesToInitialState() {
     const hero = heroes.find((entry) => entry.id === initialHero.id);
 
     if (hero) {
+      if (!Object.prototype.hasOwnProperty.call(initialHero, "locationCityId")) {
+        delete hero.locationCityId;
+      }
+
       Object.assign(hero, {
         ...initialHero,
         chancellorProfile: initialHero.chancellorProfile

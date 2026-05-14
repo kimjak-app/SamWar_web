@@ -1,54 +1,88 @@
 # Current State
 
 ## Current Baseline
-`v0.5-8h Japan Triangle Micro Layout Patch`
+`v0.5-8i-1 West Sea Route Patch`
 
-This is the active handoff baseline. Do not treat `v0.5-8d-1` as the current baseline.
+This is the active handoff baseline. Do not treat `v0.5-8i`, `v0.5-8h`, or `v0.5-8d-1` as the current baseline.
 
-## v0.5-8h State
-- City expansion is complete: 4 cities -> 10 cities.
-- Hero expansion is complete: 8 heroes -> 27 heroes.
-- Faction setup is complete: 10 factions.
-- China, Korean Peninsula, and Japan are arranged as three readable triangle regions.
-- v0.5-8h is a coordinate, route, and world-map structure stabilization patch.
-- No battle, domestic, trade, diplomacy, espionage, or AI logic changed in v0.5-8h.
+## v0.5-8i-1 State
+- Added 건업 <-> 사비 as a sea route.
+- 건업 <-> 한성 direct route is intentionally deferred.
+- 사비 now acts as the West Sea gateway from 강남/오 toward the southwestern Korean Peninsula.
+- 한성 and 평양 still do not directly connect to Japan.
+- Naval combat, diplomacy, espionage, and enemy domestic AI are still not implemented.
+
+## v0.5-8i State
+- Active world: 12 cities / 32 active heroes / 12 factions.
+- Total hero data can be 33 because 여포 remains in reserve data.
+- 여포 is not deleted, but is excluded from the active roster and initial battle roster.
+- 곽가 is added to the 위 / 조조 세력 roster at 업성.
+- 백제 세력 and 사비 are added.
+- 큐슈 세력 and 큐슈 are added.
+- New hero portraits and skill cut-ins are still not available; new fields use `null` fallback.
+- No diplomacy, espionage, enemy domestic AI, naval combat implementation, domestic formula change, trade formula change, or battle engine overhaul was added.
 
 ## Current World Structure
 
 ### China
 - Cities: 업성 / 낙양 / 성도 / 건업.
-- Added route: 업성 <-> 건업.
-- China now has a clearer northern / central / southern tension line.
+- 건업 has a western sea route to 사비.
+- 위 active roster now uses 조조 / 순욱 / 곽가.
+- 여포 remains reserved for future independent faction, event hero, or field boss use.
 
 ### Korean Peninsula
-- Cities: 평양 / 한성 / 경주.
+- Cities: 평양 / 한성 / 경주 / 사비.
+- 사비 is the 백제 왕도 and southwestern peninsula node.
 - Routes:
   - 평양 <-> 한성
   - 한성 <-> 경주
   - 평양 <-> 경주
-- The peninsula is now a triangle rather than a straight chain.
+  - 한성 <-> 사비
+  - 사비 <-> 경주
 
 ### Japan
-- Cities: 교토 / 오사카 / 에도.
+- Cities: 교토 / 오사카 / 에도 / 큐슈.
 - Routes:
   - 교토 <-> 오사카
   - 오사카 <-> 에도
   - 교토 <-> 에도
-- Japan is now a triangle.
+  - 큐슈 <-> 오사카
 
-### Korea-Japan Gateway Rule
-- 경주 is the Korea-to-Japan gateway.
-- 한성 does not directly move to Japan.
-- 평양 does not directly move to Japan.
+### Sea Route Rules
+- Eastern sea route: 경주 <-> 교토 / 오사카.
+- Western sea route: 사비 <-> 큐슈.
+- West Sea route: 건업 <-> 사비.
+- 한성 and 평양 still do not directly connect to Japan.
+- 큐슈 is the western sea pressure point between 사비 and 오사카.
 
-## Completed System Baseline
-- Internal trade / supply MVP is implemented.
-- Internal troop rebalance MVP is implemented.
-- Inter-faction trade MVP is implemented.
-- Trade relation / agreement scaffold is implemented.
-- Trade goods / control MVP is implemented.
-- Selected City reduction and City Detail tab UX are implemented.
-- City Detail position swap and collapse/open UX are implemented.
+## New Factions / Cities / Heroes
+- `baekje_faction` / 백제 / 사비:
+  - 의자왕
+  - 계백
+  - 흑치상지
+- `kyushu_faction` / 큐슈 세력 / 큐슈:
+  - 시마즈 요시히로
+  - 고니시 유키나가
+- 위 / 업성:
+  - 곽가 added.
+  - 여포 reserved and removed from active roster.
+
+## New Skill IDs
+- `heavenly_stratagem` / 천리기책 / 곽가.
+- `great_baekje_advance` / 대백제 진격 / 의자왕.
+- `hwangsanbeol_last_stand` / 황산벌 결사 / 계백.
+- `heukchi_restoration` / 부흥의 흑치 / 흑치상지.
+- `demon_shimazu` / 귀신 시마즈 / 시마즈 요시히로.
+- `sea_supply_route` / 해로보급 / 고니시 유키나가.
+
+All six are MVP placeholder-style skills using existing supported effect types.
+
+## Save / Load
+- Save version is `v0.5-8i-1`.
+- Legacy load keeps `v0.5-8i`.
+- Legacy load keeps `v0.5-8h`, `v0.5-8f`, `v0.5-8e`, `v0.5-8d-1`, `v0.5-8d`, `v0.5-8c`, `v0.5-8b`, `v0.5-8`, and older keys.
+- Old saves merge canonical 사비/큐슈 and the latest 건업 <-> 사비 route.
+- Old saves that still contain 여포 at 업성 normalize him back to reserve/inactive.
 
 ## Previous Work Summary
 - `v0.5-8c`: 대외 무역 품목/직할 무역 조정 MVP.
@@ -57,23 +91,8 @@ This is the active handoff baseline. Do not treat `v0.5-8d-1` as the current bas
 - `v0.5-8e`: 10도시 / 27영웅 / 10세력 확장.
 - `v0.5-8f`: 월드 루트 정리.
 - `v0.5-8h`: 일본 / 한반도 / 중국 삼각 배치 미세 조정.
-
-## Not Implemented Yet
-- Full diplomacy system.
-- Espionage / intelligence system.
-- Enemy domestic AI.
-- New hero portrait assets for expanded heroes.
-- New skill cut-in assets for expanded heroes.
-- Final unique skill mechanics for new heroes; current new skills are placeholder-style.
-- A refreshed world-map background image aligned to the v0.5-8h coordinates.
+- `v0.5-8i`: 백제 / 사비, 큐슈 / 큐슈 세력 확장.
+- `v0.5-8i-1`: 건업 <-> 사비 서해 해상 루트 추가.
 
 ## Recommended Next Target
-`v0.5-8h-2 Browser QA / Route Regression Check`
-
-Primary focus:
-- Confirm all 10 cities display.
-- Confirm all 27 heroes and 10 faction ownerships remain valid.
-- Confirm Korea, Japan, and China route triangles.
-- Confirm only 경주 connects from Korea to Japan.
-- Confirm attack/defense battle entry still works.
-- Confirm domestic, trade, save, and load behavior did not regress.
+`v0.5-8i-2 Browser QA / West Sea Route Regression`

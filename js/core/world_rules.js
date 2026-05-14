@@ -272,7 +272,7 @@ export function initializeHeroLocationsFromRosters() {
     for (const heroId of heroIds) {
       const hero = heroes.find((entry) => entry.id === heroId);
 
-      if (!hero || hero.locationCityId) {
+      if (!hero || hero.active === false || hero.isActiveRoster === false || hero.isReserve === true || hero.locationCityId) {
         continue;
       }
 
@@ -294,7 +294,11 @@ export function getHeroIdsBySideAndLocation(cityId, factionId) {
       const matchesFaction = factionId === FACTION_IDS.ENEMY
         ? isEnemyFactionId(hero.side)
         : hero.side === factionId;
-      return matchesFaction && hero.locationCityId === cityId;
+      return matchesFaction
+        && hero.active !== false
+        && hero.isActiveRoster !== false
+        && hero.isReserve !== true
+        && hero.locationCityId === cityId;
     })
     .map((hero) => hero.id);
 }
@@ -304,7 +308,11 @@ export function getTransferableHeroesFromCity(cityId, factionId = FACTION_IDS.PL
     const matchesFaction = factionId === FACTION_IDS.ENEMY
       ? isEnemyFactionId(hero.side)
       : hero.side === factionId;
-    return matchesFaction && hero.locationCityId === cityId;
+    return matchesFaction
+      && hero.active !== false
+      && hero.isActiveRoster !== false
+      && hero.isReserve !== true
+      && hero.locationCityId === cityId;
   });
 }
 
