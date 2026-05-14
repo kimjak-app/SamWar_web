@@ -1,14 +1,68 @@
-# QA CHECKLIST
+# QA Checklist
 
-## v0.5-8h Japan Triangle Micro Layout Patch
+## v0.5-8h Browser QA / Route Regression
 
-- [x] Confirm current stable baseline string updated to `v0.5-8h Japan Triangle Micro Layout Patch`.
-- [x] Confirm save key/version advanced to `v0.5-8h` and `v0.5-8g` included as a legacy load key.
-- [x] Confirm Japan city coordinates updated:
-  - Kyoto x/y => 85 / 56
-  - Osaka x/y => 82 / 75
-  - Edo x/y => 93 / 49
-- [x] Confirm Japan triangle neighbors unchanged and reciprocal.
-- [x] Confirm Gyeongju sea routes to Kyoto and Osaka remain intact.
-- [x] Confirm agent docs patch string inserted.
-- [ ] Browser QA: verify the Japan triangle is visually cleaner and suitable as the basis for the next MVP world-map background generation.
+### Basic
+- [ ] 새로고침 후 콘솔 에러 없음
+- [ ] 월드맵 진입 정상
+- [ ] 저장/불러오기 버튼 정상
+- [ ] 턴 종료 정상
+
+### Cities
+- [ ] 한성 표시
+- [ ] 평양 표시
+- [ ] 경주 표시
+- [ ] 낙양 표시
+- [ ] 업성 표시
+- [ ] 성도 표시
+- [ ] 건업 표시
+- [ ] 교토 표시
+- [ ] 오사카 표시
+- [ ] 에도 표시
+
+### Routes
+- [ ] 평양 <-> 한성
+- [ ] 한성 <-> 경주
+- [ ] 평양 <-> 경주
+- [ ] 경주 <-> 교토
+- [ ] 경주 <-> 오사카
+- [ ] 교토 <-> 오사카
+- [ ] 오사카 <-> 에도
+- [ ] 교토 <-> 에도
+- [ ] 업성 <-> 건업
+- [ ] 중국 주요 루트 표시 정상
+
+### Forbidden Routes
+- [ ] 한성에서 일본 직접 공격 불가
+- [ ] 평양에서 일본 직접 공격 불가
+- [ ] 경주만 일본 진입 관문
+
+### Battle
+- [ ] 인접 적 도시 공격 버튼 정상
+- [ ] 공격전 병력 배분 정상
+- [ ] 방어전 진입 정상
+- [ ] 전투 후 월드맵 복귀 정상
+
+### Domestic / Trade
+- [ ] 재상 UI 정상
+- [ ] 태수 UI 정상
+- [ ] 병사 모집 정상
+- [ ] 내부 무역/보급망 정상
+- [ ] 내부 병력 재배치 정상
+- [ ] 대외 무역 정상
+- [ ] 세력 관계/교역 중단 정상
+- [ ] 무역 조정 모달 정상
+
+### City Detail
+- [ ] City Detail 왼쪽 표시
+- [ ] Selected City 오른쪽 표시
+- [ ] City Detail 접기/열기 정상
+- [ ] 자원 탭 정상
+- [ ] 자국무역 탭 정상
+- [ ] 타국무역 탭 정상
+
+### Save
+- [ ] 저장 후 새로고침
+- [ ] 불러오기 후 10도시 유지
+- [ ] 불러오기 후 도시 좌표/루트 최신값 유지
+- [ ] 불러오기 후 세력/영웅 위치 깨지지 않음
