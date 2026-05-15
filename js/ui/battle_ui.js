@@ -200,6 +200,20 @@ function getBattleUnitPortraitImage(unit) {
   return unit?.battlefieldPortraitImage ?? unit?.portraitImage ?? null;
 }
 
+function getBattleUnitVisualFacingClass(unit) {
+  if (unit?.facing === "right") {
+    return "battle-dom-unit-visual--facing-right";
+  }
+
+  if (unit?.facing === "left") {
+    return "battle-dom-unit-visual--facing-left";
+  }
+
+  return unit?.side === "enemy"
+    ? "battle-dom-unit-visual--facing-right"
+    : "battle-dom-unit-visual--facing-left";
+}
+
 function renderBattleDomUnitVisualOverlay(logicalStyle, battleState) {
   if (!USE_DOM_BATTLE_UNIT_IMAGE_OVERLAY || !battleState) {
     return "";
@@ -215,13 +229,14 @@ function renderBattleDomUnitVisualOverlay(logicalStyle, battleState) {
       });
       const tokenStyle = logicalStyle(point.x, point.y + 28);
       const portraitPath = getBattleUnitPortraitImage(unit);
+      const facingClass = getBattleUnitVisualFacingClass(unit);
       const selectedClass = unit.id === battleState.selectedUnitId
         ? " battle-dom-unit-visual--selected"
         : "";
 
       return `
         <div
-          class="battle-dom-unit-visual battle-dom-unit-visual--${unit.side}${selectedClass}"
+          class="battle-dom-unit-visual battle-dom-unit-visual--${unit.side} ${facingClass}${selectedClass}"
           style="${tokenStyle}"
           data-battle-dom-unit-visual-id="${unit.id}"
         >

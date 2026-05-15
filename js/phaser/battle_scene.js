@@ -753,15 +753,24 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const unitPoint = this.getUnitPoint(unit);
         const displayTroops = getDisplayTroops(unit);
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
+        const isPlayerUnit = unit.side === "player";
+        const facingTextX = isPlayerUnit ? 34 : -34;
+        const facingTextY = -34;
+        const statusIconsX = isPlayerUnit ? 40 : -40;
+        const statusIconsY = -18;
+        const defendTextX = isPlayerUnit ? 36 : -36;
+        const defendTextY = -54;
+        const defenseBuffTextX = isPlayerUnit ? 42 : -42;
+        const defenseBuffTextY = -78;
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
         unitGroup.setDepth(200 + this.getDepthForGridPosition(unit.x, unit.y));
         this.unitRenderMap.set(unit.id, unitGroup);
         const selectionRing = this.add.ellipse(0, 26, 86, 26, 0xf8d798, unit.id === selectedUnitId ? 0.24 : 0)
           .setStrokeStyle(unit.id === selectedUnitId ? 3 : 2, 0xf8d798, unit.id === selectedUnitId ? 0.85 : 0.28);
-        const facingText = this.add.text(0, -70, getDirectionLabel(unit.facing), {
+        const facingText = this.add.text(facingTextX, facingTextY, getDirectionLabel(unit.facing), {
           color: "#f3ead9",
           fontFamily: "Segoe UI, sans-serif",
-          fontSize: "22px",
+          fontSize: "18px",
           fontStyle: "bold",
           align: "center",
           stroke: "#081018",
@@ -791,7 +800,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const tokenKey = unit.side === "player" ? PLAYER_TOKEN_KEY : ENEMY_TOKEN_KEY;
         const tokenSprite = this.createUnitTokenSprite(unit, tokenKey, fillColor);
         const portraitBadge = this.createUnitPortraitBadge(unit);
-        const statusIcons = this.createUnitStatusIcons(unit);
+        const statusIcons = this.createUnitStatusIcons(unit, {
+          x: statusIconsX,
+          y: statusIconsY,
+        });
         const hitZone = this.add.zone(0, 8, 90, 110).setOrigin(0.5, 0.5);
 
         if (USE_DOM_BATTLE_UNIT_IMAGE_OVERLAY) {
@@ -806,7 +818,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         }
 
         if (unit.isDefending) {
-          unitGroup.add(this.add.text(0, -52, "방어", {
+          unitGroup.add(this.add.text(defendTextX, defendTextY, "방어", {
             color: "#c7d2fe",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
@@ -816,7 +828,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         }
 
         if (unit.defenseBuffTurns > 0 && unit.buffDefenseBonus > 0) {
-          unitGroup.add(this.add.text(0, -112, `방어 +${Math.round(unit.buffDefenseBonus * 100)}%`, {
+          unitGroup.add(this.add.text(defenseBuffTextX, defenseBuffTextY, `방어 +${Math.round(unit.buffDefenseBonus * 100)}%`, {
             color: "#9ef3b0",
             fontFamily: "Segoe UI, sans-serif",
             fontSize: "13px",
@@ -959,9 +971,9 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       return badge;
     }
 
-    createUnitStatusIcons(unit) {
+    createUnitStatusIcons(unit, offset = {}) {
       const icons = getUnitStatusIcons(unit);
-      const iconGroup = this.add.container(20, -42);
+      const iconGroup = this.add.container(offset.x ?? 20, offset.y ?? -42);
 
       iconGroup.setName("battle-status-icons");
 

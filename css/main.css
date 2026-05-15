@@ -1508,6 +1508,7 @@ button {
   height: 124px;
   pointer-events: none;
   transform: translate(-50%, -85%);
+  --battle-dom-unit-flip-x: 1;
 }
 
 .battle-dom-unit-image {
@@ -1518,20 +1519,22 @@ button {
   image-rendering: auto;
   filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35));
   transform-origin: 50% 72%;
+  transform: scaleX(var(--battle-dom-unit-flip-x)) scale(1);
   animation: battleDomUnitIdle 1.05s ease-in-out infinite alternate;
 }
 
 .battle-dom-unit-portrait-badge {
   position: absolute;
-  left: -34px;
-  top: -56px;
-  width: 40px;
-  height: 40px;
+  top: -12px;
+  width: 70px;
+  height: 70px;
   overflow: hidden;
-  border: 1px solid rgba(248, 215, 152, 0.22);
-  border-radius: 6px;
-  background: rgba(5, 9, 15, 0.18);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(248, 215, 152, 0.36);
+  border-radius: 12px;
+  background: rgba(5, 9, 15, 0.26);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
   transform: translate(-50%, -50%);
 }
 
@@ -1549,7 +1552,7 @@ button {
   justify-content: center;
   color: #f8d798;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 32px;
   font-weight: 700;
 }
 
@@ -1559,13 +1562,29 @@ button {
     drop-shadow(0 0 8px rgba(248, 215, 152, 0.24));
 }
 
+.battle-dom-unit-visual--player .battle-dom-unit-portrait-badge {
+  left: 16px;
+}
+
+.battle-dom-unit-visual--enemy .battle-dom-unit-portrait-badge {
+  left: 108px;
+}
+
+.battle-dom-unit-visual--facing-left {
+  --battle-dom-unit-flip-x: 1;
+}
+
+.battle-dom-unit-visual--facing-right {
+  --battle-dom-unit-flip-x: -1;
+}
+
 @keyframes battleDomUnitIdle {
   from {
-    transform: scale(1);
+    transform: scaleX(var(--battle-dom-unit-flip-x)) scale(1);
   }
 
   to {
-    transform: scale(1.025);
+    transform: scaleX(var(--battle-dom-unit-flip-x)) scale(1.025);
   }
 }
 
