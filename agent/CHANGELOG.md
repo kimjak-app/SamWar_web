@@ -2,8 +2,23 @@
 
 ## Current Recent Flow
 
-### v0.5-9a Battle Entry Curtain Fade Fix
+### v0.5-9b-1 Battle Movement Tween Follow-up Fix
 - Current working baseline.
+- Fixed the rerender bug where player move presentation could appear to return to the old tile before facing selection.
+- `battle_scene.js` now renders from target position whenever a move tween should not replay.
+- Added `lastAction.presentationMove` for enemy AI movement presentation metadata only.
+- Move presentation lookup now uses `pendingMove` first and `presentationMove` as fallback.
+- Enemy AI movement now uses the same `250ms` Phaser + DOM tween path as player movement.
+- Preserved battle rules, movement rules, attack / skill / strategy logic, and troop formulas.
+
+### v0.5-9b Battle Movement Tween MVP
+- Added `250ms` tween presentation for player manual movement.
+- Phaser unit stack now moves smoothly instead of snapping.
+- DOM unit image, portrait badge, and troop label move with the same direction and duration.
+- Added a short manual-input lock during move tween playback in `main.js`.
+- Preserved `battle_rules.js` movement logic and used existing `pendingMove` data for presentation only.
+
+### v0.5-9a Battle Entry Curtain Fade Fix
 - Added a DOM `battle-entry-curtain` above the battle board stack.
 - Curtain covers Phaser canvas and DOM overlay together during battle entry.
 - Curtain starts opaque and fades out after the first `renderBattleDomOverlay()` render completes.

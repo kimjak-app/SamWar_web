@@ -1516,6 +1516,10 @@ button {
   --battle-dom-unit-flip-x: 1;
 }
 
+.battle-dom-unit-visual--move-tween {
+  animation: battleDomUnitVisualMoveTween 250ms ease-in-out both;
+}
+
 .battle-dom-unit-image {
   display: block;
   width: 124px;
@@ -1590,6 +1594,20 @@ button {
 
   to {
     transform: scaleX(var(--battle-dom-unit-flip-x)) scale(1.025);
+  }
+}
+
+@keyframes battleDomUnitVisualMoveTween {
+  from {
+    transform:
+      translate(
+        calc(var(--battle-dom-move-dx, 0px) - 50%),
+        calc(var(--battle-dom-move-dy, 0px) - 85%)
+      );
+  }
+
+  to {
+    transform: translate(-50%, -85%);
   }
 }
 
@@ -1675,6 +1693,10 @@ button {
     0 0 5px rgba(0, 0, 0, 0.95);
 }
 
+.battle-dom-unit-label--move-tween {
+  animation: battleDomUnitLabelMoveTween 250ms ease-in-out both;
+}
+
 .battle-dom-unit-label--player {
   border-color: rgba(91, 184, 255, 0.18);
   color: #e2f3ff;
@@ -1683,6 +1705,20 @@ button {
 .battle-dom-unit-label--enemy {
   border-color: rgba(255, 123, 123, 0.2);
   color: #ffe8e1;
+}
+
+@keyframes battleDomUnitLabelMoveTween {
+  from {
+    transform:
+      translate(
+        calc(var(--battle-dom-move-dx, 0px) - 50%),
+        calc(var(--battle-dom-move-dy, 0px) - 50%)
+      );
+  }
+
+  to {
+    transform: translate(-50%, -50%);
+  }
 }
 
 .battle-phaser-fallback {

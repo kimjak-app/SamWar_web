@@ -992,6 +992,13 @@ function applyAiMove(battleState, unitId, movePosition, facingDirection = null) 
       actorUnitId: unitId,
       targetUnitIds: [],
       effects: [],
+      presentationMove: {
+        unitId,
+        fromX: actingUnit.x,
+        fromY: actingUnit.y,
+        toX: movePosition.x,
+        toY: movePosition.y,
+      },
     },
   };
 

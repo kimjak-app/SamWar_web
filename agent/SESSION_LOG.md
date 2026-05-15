@@ -1,5 +1,59 @@
 # Session Log
 
+## 2026-05-15 — v0.5-9b-1 Battle Movement Tween Follow-up Fix
+
+### Summary
+- Continued from the battle movement tween MVP.
+- Fixed the post-move rerender regression on player manual movement presentation.
+- Added enemy AI move presentation metadata and connected it to Phaser + DOM tween playback.
+
+### Player Movement Follow-up Fix
+- In `js/phaser/battle_scene.js`, `rawStartPoint` is now only used when the move tween should actually play.
+- When the tween should not replay, `unitGroup` now renders from current target position.
+- This prevents selection ring, HP bar, facing text, and status indicators from appearing to jump back before facing selection resolves.
+
+### AI Movement Presentation Metadata
+- In `js/core/battle_rules.js`, `applyAiMove()` now writes:
+  - `lastAction.presentationMove.unitId`
+  - `lastAction.presentationMove.fromX`
+  - `lastAction.presentationMove.fromY`
+  - `lastAction.presentationMove.toX`
+  - `lastAction.presentationMove.toY`
+- This metadata is presentation-only.
+- Battle rules, movement rules, attack / skill / strategy logic, and troop formulas were not changed.
+
+### Shared Move Presentation Priority
+- `pendingMove` remains the first source of truth for player manual movement tween.
+- `lastAction.presentationMove` is used only as fallback when `pendingMove` is absent.
+- This priority is implemented in both:
+  - `js/phaser/battle_scene.js`
+  - `js/ui/battle_ui.js`
+
+### Verification Completed
+- `node --check js/phaser/battle_scene.js` passed.
+- `node --check js/ui/battle_ui.js` passed.
+- `node --check js/core/battle_rules.js` passed.
+- `node --check js/main.js` passed.
+- Browser QA confirmed:
+  - player movement tween still works
+  - player movement no longer visually snaps back before facing selection
+  - enemy AI movement now uses tween presentation
+  - DOM overlay move tween remains synchronized
+  - auto battle still works
+  - manual attack / skill / strategy still work
+  - console error count remained zero
+
+### Next Candidate Work
+1. `v0.5-9c Battle Background Sharpness Pass`
+2. `v0.5-9d Battle Movement Cancel Tween / Dust FX`
+3. `v0.5-10 Diplomacy & Spy Scaffold`
+
+## 2026-05-15 — v0.5-9a Battle Entry Curtain Fade Fix
+
+### Summary
+- Historical session record only.
+- This is no longer the active baseline after movement tween follow-up fixes.
+
 ## 2026-05-15 — v0.5-9a Battle Entry Curtain Fade Fix
 
 ### Summary

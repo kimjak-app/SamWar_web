@@ -22,6 +22,8 @@ const BATTLE_STATUS_ICON_LEGEND_TEXT = "상태: 🌀 혼란 · ⚠ 동요 · ◆
 const PLAYER_BATTLE_TOKEN_IMAGE = "assets/unit_tokens_battlefield/unit_blue_battlefield.png";
 const ENEMY_BATTLE_TOKEN_IMAGE = "assets/unit_tokens_battlefield/unit_red_battlefield.png";
 let battleDomOverlayResizeHandler = null;
+let activeDomMoveTweenSignature = null;
+let activeDomMoveTweenUntil = 0;
 
 const BATTLE_RESULT_OVERLAY_TEXT = {
   won: {
@@ -149,19 +151,35 @@ function getUnitOverlayPoint(unit) {
   };
 }
 
-function getLogicalOverlayStyle(canvasElement, overlayElement, x, y) {
-  if (!canvasElement || !overlayElement) {
-    return `left:${(x / PHASER_BATTLE_WIDTH) * 100}%;top:${(y / PHASER_BATTLE_HEIGHT) * 100}%;`;
+function getLogicalOverlayPoint(canvasElement, overlayElement, x, y) {
+  if (!overlayElement) {
+    return {
+      x: (x / PHASER_BATTLE_WIDTH) * 100,
+      y: (y / PHASER_BATTLE_HEIGHT) * 100,
+    };
+  }
+
+  if (!canvasElement) {
+    return {
+      x: (x / PHASER_BATTLE_WIDTH) * overlayElement.clientWidth,
+      y: (y / PHASER_BATTLE_HEIGHT) * overlayElement.clientHeight,
+    };
   }
 
   const canvasRect = canvasElement.getBoundingClientRect();
   const overlayRect = overlayElement.getBoundingClientRect();
   const scaleX = canvasRect.width / PHASER_BATTLE_WIDTH;
   const scaleY = canvasRect.height / PHASER_BATTLE_HEIGHT;
-  const domX = canvasRect.left - overlayRect.left + x * scaleX;
-  const domY = canvasRect.top - overlayRect.top + y * scaleY;
 
-  return `left:${domX}px;top:${domY}px;`;
+  return {
+    x: canvasRect.left - overlayRect.left + x * scaleX,
+    y: canvasRect.top - overlayRect.top + y * scaleY,
+  };
+}
+
+function getLogicalOverlayStyle(canvasElement, overlayElement, x, y) {
+  const point = getLogicalOverlayPoint(canvasElement, overlayElement, x, y);
+  return `left:${point.x}px;top:${point.y}px;`;
 }
 
 function getDomOverlayHelpCopy(battleState, selectedUnit, selectedSkill) {
@@ -200,6 +218,99 @@ function getBattleUnitPortraitImage(unit) {
   return unit?.battlefieldPortraitImage ?? unit?.portraitImage ?? null;
 }
 
+function getDomMovePresentation(battleState, unit) {
+  const pendingMove = battleState?.pendingMove;
+
+  if (
+    battleState?.lastAction?.type === "move"
+    && pendingMove
+    && pendingMove.unitId === unit.id
+    && Number.isFinite(pendingMove.fromX)
+    && Number.isFinite(pendingMove.fromY)
+  ) {
+    return {
+      unitId: unit.id,
+      fromX: pendingMove.fromX,
+      fromY: pendingMove.fromY,
+      toX: unit.x,
+      toY: unit.y,
+      source: "pendingMove",
+    };
+  }
+
+  const presentationMove = battleState?.lastAction?.presentationMove;
+
+  if (
+    battleState?.lastAction?.type === "move"
+    && presentationMove
+    && presentationMove.unitId === unit.id
+    && Number.isFinite(presentationMove.fromX)
+    && Number.isFinite(presentationMove.fromY)
+    && Number.isFinite(presentationMove.toX)
+    && Number.isFinite(presentationMove.toY)
+  ) {
+    return {
+      ...presentationMove,
+      source: "presentationMove",
+    };
+  }
+
+  return null;
+}
+
+function getDomMoveTweenSignature(battleState, unit) {
+  const presentation = getDomMovePresentation(battleState, unit);
+
+  if (!presentation) {
+    return null;
+  }
+
+  return `${battleState.id}:${unit.id}:${presentation.fromX},${presentation.fromY}->${presentation.toX},${presentation.toY}`;
+}
+
+function getDomMoveTweenInfo(unit, battleState, canvasElement, overlayElement, pointOffsetY = 0) {
+  const presentation = getDomMovePresentation(battleState, unit);
+  const signature = getDomMoveTweenSignature(battleState, unit);
+
+  if (
+    !presentation
+    || !signature
+  ) {
+    return null;
+  }
+
+  const targetLogicalPoint = getUnitOverlayPoint({
+    ...unit,
+    gridWidth: battleState.grid?.width,
+    gridHeight: battleState.grid?.height,
+  });
+  const fromLogicalPoint = getUnitOverlayPoint({
+    ...unit,
+    x: presentation.fromX,
+    y: presentation.fromY,
+    gridWidth: battleState.grid?.width,
+    gridHeight: battleState.grid?.height,
+  });
+  const targetDomPoint = getLogicalOverlayPoint(
+    canvasElement,
+    overlayElement,
+    targetLogicalPoint.x,
+    targetLogicalPoint.y + pointOffsetY,
+  );
+  const fromDomPoint = getLogicalOverlayPoint(
+    canvasElement,
+    overlayElement,
+    fromLogicalPoint.x,
+    fromLogicalPoint.y + pointOffsetY,
+  );
+
+  return {
+    signature,
+    dx: fromDomPoint.x - targetDomPoint.x,
+    dy: fromDomPoint.y - targetDomPoint.y,
+  };
+}
+
 function getBattleUnitVisualFacingClass(unit) {
   if (unit?.facing === "right") {
     return "battle-dom-unit-visual--facing-right";
@@ -214,7 +325,7 @@ function getBattleUnitVisualFacingClass(unit) {
     : "battle-dom-unit-visual--facing-left";
 }
 
-function renderBattleDomUnitVisualOverlay(logicalStyle, battleState) {
+function renderBattleDomUnitVisualOverlay(logicalStyle, battleState, canvasElement, overlayElement) {
   if (!USE_DOM_BATTLE_UNIT_IMAGE_OVERLAY || !battleState) {
     return "";
   }
@@ -233,11 +344,29 @@ function renderBattleDomUnitVisualOverlay(logicalStyle, battleState) {
       const selectedClass = unit.id === battleState.selectedUnitId
         ? " battle-dom-unit-visual--selected"
         : "";
+      const moveTweenInfo = getDomMoveTweenInfo(unit, battleState, canvasElement, overlayElement, 28);
+      const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+      let moveTweenClass = "";
+      let moveTweenStyle = "";
+
+      if (moveTweenInfo) {
+        const isNewMoveTween = moveTweenInfo.signature !== activeDomMoveTweenSignature;
+
+        if (isNewMoveTween) {
+          activeDomMoveTweenSignature = moveTweenInfo.signature;
+          activeDomMoveTweenUntil = now + 280;
+        }
+
+        if (moveTweenInfo.signature === activeDomMoveTweenSignature && now < activeDomMoveTweenUntil) {
+          moveTweenClass = " battle-dom-unit-visual--move-tween";
+          moveTweenStyle = `--battle-dom-move-dx:${moveTweenInfo.dx}px;--battle-dom-move-dy:${moveTweenInfo.dy}px;`;
+        }
+      }
 
       return `
         <div
-          class="battle-dom-unit-visual battle-dom-unit-visual--${unit.side} ${facingClass}${selectedClass}"
-          style="${tokenStyle}"
+          class="battle-dom-unit-visual battle-dom-unit-visual--${unit.side} ${facingClass}${selectedClass}${moveTweenClass}"
+          style="${tokenStyle}${moveTweenStyle}"
           data-battle-dom-unit-visual-id="${unit.id}"
         >
           <img
@@ -281,7 +410,7 @@ function renderBattleDomOverlay(overlayElement, mountElement, battleState, selec
   const canvasElement = mountElement?.querySelector("canvas") ?? null;
   const logicalStyle = (x, y) => getLogicalOverlayStyle(canvasElement, overlayElement, x, y);
   const liveUnits = (battleState.units ?? []).filter((unit) => unit.isAlive !== false);
-  const unitVisuals = renderBattleDomUnitVisualOverlay(logicalStyle, battleState);
+  const unitVisuals = renderBattleDomUnitVisualOverlay(logicalStyle, battleState, canvasElement, overlayElement);
   const unitLabels = USE_DOM_BATTLE_TEXT_OVERLAY
     ? liveUnits.map((unit) => {
       const point = getUnitOverlayPoint({
@@ -290,10 +419,29 @@ function renderBattleDomOverlay(overlayElement, mountElement, battleState, selec
         gridHeight: battleState.grid?.height,
       });
       const displayTroops = getDisplayTroops(unit);
+      const moveTweenInfo = getDomMoveTweenInfo(unit, battleState, canvasElement, overlayElement, 54);
+      const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+      let moveTweenClass = "";
+      let moveTweenStyle = "";
+
+      if (moveTweenInfo) {
+        const isNewMoveTween = moveTweenInfo.signature !== activeDomMoveTweenSignature;
+
+        if (isNewMoveTween) {
+          activeDomMoveTweenSignature = moveTweenInfo.signature;
+          activeDomMoveTweenUntil = now + 280;
+        }
+
+        if (moveTweenInfo.signature === activeDomMoveTweenSignature && now < activeDomMoveTweenUntil) {
+          moveTweenClass = " battle-dom-unit-label--move-tween";
+          moveTweenStyle = `--battle-dom-move-dx:${moveTweenInfo.dx}px;--battle-dom-move-dy:${moveTweenInfo.dy}px;`;
+        }
+      }
+
       return `
         <div
-          class="battle-dom-unit-label battle-dom-unit-label--${unit.side}"
-          style="${logicalStyle(point.x, point.y + 54)}"
+          class="battle-dom-unit-label battle-dom-unit-label--${unit.side}${moveTweenClass}"
+          style="${logicalStyle(point.x, point.y + 54)}${moveTweenStyle}"
           data-battle-dom-unit-id="${unit.id}"
         >
           ${displayTroops.current} / ${displayTroops.max}

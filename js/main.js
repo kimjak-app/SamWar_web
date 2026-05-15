@@ -1237,8 +1237,26 @@ function rerender() {
         return;
       }
 
-      updateAppState((state) => updateBattleState(state, moveSelectedUnit(state.battle, position)));
+      const nextBattleState = moveSelectedUnit(appState.battle, position);
+      const didMovePhaseStart = Boolean(
+        nextBattleState !== appState.battle
+        && nextBattleState.phase === "facing"
+        && nextBattleState.pendingMove,
+      );
+
+      if (didMovePhaseStart) {
+        battleTempoLocked = true;
+      }
+
+      updateAppState((state) => updateBattleState(state, nextBattleState));
       rerender();
+
+      if (didMovePhaseStart) {
+        scheduleBattleTempoTimer(() => {
+          battleTempoLocked = false;
+          rerender();
+        }, 280, nextBattleState.id);
+      }
     },
     onBattleAttackUnit: (targetUnitId) => {
       getAppState();

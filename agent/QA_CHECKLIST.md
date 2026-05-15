@@ -46,15 +46,29 @@
 - [ ] 고정 `방어` 텍스트가 유닛 옆에 남지 않음
 - [ ] 방어 상태 아이콘 `◆` 유지
 
-## v0.5-9a Battle Entry Curtain Fade Fix QA
-- [ ] `battle-entry-curtain` 생성
-- [ ] curtain이 Phaser canvas와 DOM overlay를 함께 덮음
-- [ ] curtain `pointer-events: none`
-- [ ] 전투 진입 직후 전장 이미지 / 방향 화살표 / 영웅 얼굴 / 병력 라벨이 먼저 튀어나오지 않음
-- [ ] 검은 curtain이 자연스럽게 걷히면서 전체 전투 화면이 동시에 나타남
-- [ ] curtain fade-out은 1회만 실행됨
-- [ ] curtain 제거 후 스킬 컷인 / 결과 컷인과 충돌 없음
-- [ ] Phaser `camera.fadeIn()` 제거 확인
+## v0.5-9b Battle Movement Tween MVP QA
+- [x] `node --check js/phaser/battle_scene.js`
+- [x] `node --check js/ui/battle_ui.js`
+- [x] `node --check js/main.js`
+- [x] 아군 수동 이동이 `250ms` 정도로 부드럽게 이동
+- [x] Phaser HP bar / 방향표시 / 상태아이콘이 같이 움직임
+- [x] DOM 부대 이미지 / 영웅 얼굴 / 병력 라벨이 같이 움직임
+- [x] 이동 중 수동 입력이 잠깐 잠김
+- [x] 이동 후 방향 선택 가능
+
+## v0.5-9b-1 Battle Movement Tween Follow-up Fix QA
+- [x] `node --check js/phaser/battle_scene.js`
+- [x] `node --check js/ui/battle_ui.js`
+- [x] `node --check js/core/battle_rules.js`
+- [x] `node --check js/main.js`
+- [x] 아군 이동 후 selection ring / HP bar / 방향표시가 원위치로 돌아가지 않음
+- [x] 방향 선택 전에도 target 위치에 고정 유지
+- [x] 방향 선택 후 갑자기 달라붙는 현상 제거
+- [x] 적군 AI 이동도 `250ms`로 스무스하게 이동
+- [x] 적군 이동 시 DOM 부대 이미지 / 영웅 얼굴 / 병력 라벨이 같이 움직임
+- [x] 자동전투 정상
+- [x] 수동 공격 / 특기 / 책략 정상
+- [x] 콘솔 error 없음
 
 ## Regression QA
 - [ ] 내정 UI 정상

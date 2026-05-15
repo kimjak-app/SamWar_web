@@ -1,7 +1,7 @@
 # SamWar_web Handoff
 
 ## Current Baseline
-`v0.5-9a Battle Entry Curtain Fade Fix`
+`v0.5-9b-1 Battle Movement Tween Follow-up Fix`
 
 Next session should start from this baseline. Before starting new work, read these six agent documents:
 - `agent/HANDOFF_TO_CHATCOACH.md`
@@ -59,25 +59,25 @@ Next session should start from this baseline. Before starting new work, read the
 - Fixed persistent Phaser `방어` text by removing the fixed defending label render.
 - DOM unit images remain sharp.
 
-## v0.5-9a Completed State
-- Added a DOM battle entry curtain above the battle board stack.
-- Curtain covers Phaser canvas and DOM overlay together during battle entry.
-- Curtain fades out only after `renderBattleDomOverlay()` completes its first render.
-- Curtain fade-out is one-shot guarded with a dataset flag.
-- Curtain is removed after fade-out and does not affect later cut-ins.
-- Removed Phaser `camera.fadeIn()` because it only affected canvas and conflicted with the mixed canvas + DOM presentation.
+## v0.5-9b Completed State
+- Added `250ms` battle movement tween for player manual movement.
+- Phaser `unitGroup` movement, HP bar, facing text, status icons, and hit zone now move together.
+- DOM unit token image, portrait badge, and troop label move together with the Phaser tween.
+- `main.js` applies a short manual-control lock during move tween playback.
+- `battle_rules.js` movement rules were not changed.
 
-## Current Battle Entry Flow
-- `renderBattleShell()` creates:
-  - Phaser mount
-  - DOM overlay
-  - board overlay
-  - entry curtain
-- `renderBattleDomOverlay()` writes the first DOM overlay frame.
-- Immediately after that first DOM overlay render, `fadeOutBattleEntryCurtain()` starts the curtain fade-out.
-- Result: battlefield image, facing text, hero portrait badges, and troop labels do not pop in separately before the transition completes.
+## v0.5-9b-1 Completed State
+- Fixed the post-move rerender bug where selection ring / HP bar / facing text could appear to snap back to the old tile.
+- `battle_scene.js` now uses target position for `unitGroup` creation whenever the tween should not replay.
+- Added `lastAction.presentationMove` metadata for AI move presentation only.
+- Move presentation priority is now:
+  - `pendingMove` first
+  - `lastAction.presentationMove` fallback second
+- Enemy AI movement now uses the same `250ms` Phaser + DOM tween path as player movement.
+- Phaser battle rules remain unchanged; `presentationMove` is presentation-only metadata.
 
 ## Verification Already Completed
+- `node --check js/core/battle_rules.js` passed.
 - `node --check js/ui/battle_ui.js` passed.
 - `node --check js/phaser/battle_scene.js` passed.
 - `node --check js/main.js` passed.
@@ -86,6 +86,10 @@ Next session should start from this baseline. Before starting new work, read the
 - Battle entry still works.
 - DOM overlay remains non-interactive.
 - Portrait badge remains `70px`.
+- Player movement tween works.
+- Enemy AI movement tween works.
+- Manual attack / skill / strategy still work.
+- Auto battle still works.
 
 ## Important Warnings
 - Diplomacy is still not implemented.
@@ -93,16 +97,15 @@ Next session should start from this baseline. Before starting new work, read the
 - Enemy domestic AI is still not implemented.
 - Naval combat is still not implemented.
 - Battlefield background sharpness pass is still pending.
-- Movement tween animation is still pending.
 - Do not change Phaser global config as the first response to battle presentation issues.
 
 ## Next Candidate Targets
-1. `v0.5-9b Battle Background Sharpness Pass`
+1. `v0.5-9c Battle Background Sharpness Pass`
    - Investigate battlefield background blur separately.
    - Candidate options: 2x battlefield image, DOM background layer, canvas scaling audit.
-2. `v0.5-9c Battle Movement Animation Pass`
-   - Replace snap movement with tweened movement.
-   - Add timing polish later if needed.
+2. `v0.5-9d Battle Movement Cancel Tween / Dust FX`
+   - Consider move-cancel tween back to origin.
+   - Consider lightweight dust / footstep FX without touching battle rules.
 3. `v0.5-10 Diplomacy & Spy Scaffold`
    - Add enemy information visibility tiers.
    - Add no/partial/detailed spy information states.
@@ -110,7 +113,6 @@ Next session should start from this baseline. Before starting new work, read the
 
 ## Scope Guard
 - Do not change battle rules.
-- Do not change movement rules yet.
 - Do not change attack / skill / strategy logic.
 - Do not change troop / HP formulas.
 - Do not change Phaser config.

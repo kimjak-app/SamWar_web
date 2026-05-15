@@ -1,10 +1,10 @@
 # Next Tasks
 
 ## Current Baseline
-`v0.5-9a Battle Entry Curtain Fade Fix`
+`v0.5-9b-1 Battle Movement Tween Follow-up Fix`
 
 ## Immediate Candidate
-`v0.5-9b Battle Background Sharpness Pass`
+`v0.5-9c Battle Background Sharpness Pass`
 
 Goal:
 - Investigate battlefield background blur as a separate problem from unit image sharpness and entry transition polish.
@@ -20,11 +20,11 @@ Guard:
 - Do not touch portrait badge size/position, facing text position, or status indicator position unless the blur investigation truly requires it.
 
 ## Follow-Up Candidate
-`v0.5-9c Battle Movement Animation Pass`
+`v0.5-9d Battle Movement Cancel Tween / Dust FX`
 
 Goal:
-- Replace snap movement with tweened movement.
-- Add small timing polish later if needed.
+- Add move-cancel tween back to origin.
+- Add lightweight dust / contact FX if presentation quality needs it.
 
 Guard:
 - Do not change movement rules, only presentation.
@@ -49,7 +49,8 @@ Guard:
 - Portrait badge position remains attached closely to the unit.
 - Status indicator position remains as-is.
 - Facing text position remains as-is.
-- Entry transition is now handled by DOM curtain fade-out, not Phaser camera fade-in.
+- Phaser and DOM battle movement both use `250ms` tween presentation.
+- AI move tween uses `lastAction.presentationMove` as presentation metadata only.
 
 ## World Map State To Preserve
 - Final 13-city coordinates are already applied.
@@ -60,7 +61,6 @@ Guard:
 
 ## Guardrails
 - Do not change battle rules.
-- Do not change movement rules yet.
 - Do not change attack / skill / strategy logic.
 - Do not change troop / HP formulas.
 - Do not change Phaser config.

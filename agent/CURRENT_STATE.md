@@ -1,7 +1,7 @@
 # Current State
 
 ## Current Baseline
-`v0.5-9a Battle Entry Curtain Fade Fix`
+`v0.5-9b-1 Battle Movement Tween Follow-up Fix`
 
 This is the current stable working baseline. Do not treat `v0.5-9`, `v0.5-8k`, `v0.5-8j`, or earlier versions as the active handoff baseline unless explicitly requested.
 
@@ -53,6 +53,7 @@ This is the current stable working baseline. Do not treat `v0.5-9`, `v0.5-8k`, `
 - `USE_DOM_BATTLE_UNIT_IMAGE_OVERLAY = true` remains active.
 - DOM overlay renders token images, portrait badges, and troop labels.
 - Phaser still handles background, grid, selection ring, HP bars, hit zones, status icons, facing text, and all battle logic.
+- Battle movement presentation is tweened for both player manual moves and enemy AI moves.
 
 ## v0.5-9 Battle DOM Unit Visual Polish State
 - Token images remain `124px x 124px`.
@@ -63,18 +64,25 @@ This is the current stable working baseline. Do not treat `v0.5-9`, `v0.5-8k`, `
 - Facing text is positioned near the unit center-top.
 - Fixed persistent defending text by removing the fixed Phaser `방어` label render.
 
-## v0.5-9a Battle Entry Curtain Fade Fix State
-- Added `.battle-entry-curtain` above the Phaser host and DOM overlay stack.
-- Curtain is `pointer-events: none`.
-- Curtain starts fully opaque and fades out with `.is-fading-out`.
-- Fade-out is triggered from `renderBattleDomOverlay()` immediately after the first DOM overlay render completes.
-- Fade-out is guarded to run once only.
-- Curtain is removed after fade-out.
-- Phaser `camera.fadeIn()` was removed because it only affected canvas and created a mismatched mixed-media transition.
+## v0.5-9b Battle Movement Tween MVP State
+- Player manual move uses `250ms` tween presentation.
+- Phaser unit stack and DOM overlay stack move together.
+- Movement rules in `battle_rules.js` were not changed.
+- `main.js` applies a short manual input lock during the move tween.
+
+## v0.5-9b-1 Battle Movement Tween Follow-up Fix State
+- Fixed the rerender regression where player move presentation could appear to snap back before facing selection.
+- `shouldTweenMove === false` now renders from current target position, not old origin position.
+- Added AI move `lastAction.presentationMove` metadata for presentation only.
+- Move presentation lookup now uses:
+  - `pendingMove` first
+  - `presentationMove` fallback second
+- Enemy AI movement now uses the same `250ms` Phaser + DOM tween presentation path.
+- `battle_rules.js` combat rules were not changed; only presentation metadata was added.
 
 ## Immediate Problems To Solve Next
 1. Battlefield background is still slightly blurry and needs a dedicated pass.
-2. Unit movement still snaps like a board piece; tween animation is a later task.
+2. Move cancel still snaps back instantly and has no dust / impact polish.
 3. Diplomacy / espionage scaffold is still unimplemented.
 
 ## Important Warnings
@@ -83,10 +91,9 @@ This is the current stable working baseline. Do not treat `v0.5-9`, `v0.5-8k`, `
 - Enemy domestic AI is still not implemented.
 - Naval combat is still not implemented.
 - Battlefield background sharpness pass is still pending.
-- Movement tween animation is still pending.
 - City label / flag UI is acceptable for now and should not be re-polished immediately.
 
 ## Recommended Next Targets
-1. `v0.5-9b Battle Background Sharpness Pass`
-2. `v0.5-9c Battle Movement Animation Pass`
+1. `v0.5-9c Battle Background Sharpness Pass`
+2. `v0.5-9d Battle Movement Cancel Tween / Dust FX`
 3. `v0.5-10 Diplomacy & Spy Scaffold`

@@ -191,6 +191,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
       this.headerTitleText = null;
       this.headerStatusText = null;
       this.lastRenderedActionSignature = null;
+      this.lastMoveTweenSignature = null;
       this.unitRenderMap = new Map();
       this.missingTokenWarnings = new Set();
       this.missingBackgroundWarningShown = false;
@@ -226,6 +227,66 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
     getUnitPoint(unit) {
       return this.gridToScreen(unit.x, unit.y);
+    }
+
+    getMovePresentation(unit) {
+      const pendingMove = this.battleState?.pendingMove;
+
+      if (
+        this.battleState?.lastAction?.type === "move"
+        && pendingMove
+        && pendingMove.unitId === unit.id
+        && Number.isFinite(pendingMove.fromX)
+        && Number.isFinite(pendingMove.fromY)
+      ) {
+        return {
+          unitId: unit.id,
+          fromX: pendingMove.fromX,
+          fromY: pendingMove.fromY,
+          toX: unit.x,
+          toY: unit.y,
+          source: "pendingMove",
+        };
+      }
+
+      const presentationMove = this.battleState?.lastAction?.presentationMove;
+
+      if (
+        this.battleState?.lastAction?.type === "move"
+        && presentationMove
+        && presentationMove.unitId === unit.id
+        && Number.isFinite(presentationMove.fromX)
+        && Number.isFinite(presentationMove.fromY)
+        && Number.isFinite(presentationMove.toX)
+        && Number.isFinite(presentationMove.toY)
+      ) {
+        return {
+          ...presentationMove,
+          source: "presentationMove",
+        };
+      }
+
+      return null;
+    }
+
+    getMoveTweenSignature(unit) {
+      const presentation = this.getMovePresentation(unit);
+
+      if (!presentation) {
+        return null;
+      }
+
+      return `${this.battleState.id}:${unit.id}:${presentation.fromX},${presentation.fromY}->${presentation.toX},${presentation.toY}`;
+    }
+
+    getMoveTweenStartPoint(unit, targetPoint) {
+      const presentation = this.getMovePresentation(unit);
+
+      if (!presentation) {
+        return targetPoint;
+      }
+
+      return this.gridToScreen(presentation.fromX, presentation.fromY);
     }
 
     getTileRect(position, inset = 0) {
@@ -751,6 +812,14 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         }
 
         const unitPoint = this.getUnitPoint(unit);
+        const rawStartPoint = this.getMoveTweenStartPoint(unit, unitPoint);
+        const moveTweenSignature = this.getMoveTweenSignature(unit);
+        const shouldTweenMove = Boolean(
+          moveTweenSignature
+          && moveTweenSignature !== this.lastMoveTweenSignature
+          && (rawStartPoint.x !== unitPoint.x || rawStartPoint.y !== unitPoint.y)
+        );
+        const startPoint = shouldTweenMove ? rawStartPoint : unitPoint;
         const displayTroops = getDisplayTroops(unit);
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
         const isPlayerUnit = unit.side === "player";
@@ -760,7 +829,7 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const statusIconsY = -18;
         const defenseBuffTextX = isPlayerUnit ? 42 : -42;
         const defenseBuffTextY = -78;
-        const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
+        const unitGroup = this.add.container(startPoint.x, startPoint.y);
         unitGroup.setDepth(200 + this.getDepthForGridPosition(unit.x, unit.y));
         this.unitRenderMap.set(unit.id, unitGroup);
         const selectionRing = this.add.ellipse(0, 26, 86, 26, 0xf8d798, unit.id === selectedUnitId ? 0.24 : 0)
@@ -853,6 +922,17 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
             duration: 500,
             yoyo: true,
             repeat: -1,
+          });
+        }
+
+        if (shouldTweenMove) {
+          this.lastMoveTweenSignature = moveTweenSignature;
+          this.tweens.add({
+            targets: unitGroup,
+            x: unitPoint.x,
+            y: unitPoint.y,
+            duration: 250,
+            ease: "Sine.easeInOut",
           });
         }
 
