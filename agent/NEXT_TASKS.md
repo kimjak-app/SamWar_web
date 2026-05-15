@@ -1,67 +1,84 @@
 # Next Tasks
 
 ## Current Baseline
-`v0.5-8j World Map Coordinate Tool + Final 12-City Layout`
+`v0.5-9 Battle DOM Unit Visual Polish`
 
-## Immediate Candidate
-`v0.5-8k Northern Faction Planning / Genghis Khan Candidate`
+## Immediate Target
+`v0.5-9 Battle DOM Unit Visual Polish`
 
 Goal:
-- Plan, but do not implement by default, a northern steppe / Mongol faction candidate.
-- Candidate placement is between `pyeongyang` and `yecheng`.
-- Candidate city: `karakorum`.
-- Candidate heroes: 징기스칸, 수부타이, 제베.
-- Candidate routes:
-  - `karakorum <-> pyeongyang`
-  - `karakorum <-> yecheng`
+- Keep the DOM battle unit image overlay approach because it fixed sharpness.
+- Enlarge and reposition hero portrait badges so they feel attached to the unit.
+- Bring status and facing indicators much closer to the unit.
+
+Requirements:
+- Hero portrait badge size: `70px`.
+- Hero portrait position: very close to the unit, near the unit upper-side / upper-left / side.
+- Portrait should feel attached to the unit, not floating away.
+- Status/facing indicators should move much closer to the unit.
+- Do not let status/facing indicators cover the portrait.
+- Keep DOM unit image sharpness.
+- Keep DOM overlay non-interactive.
+- Keep Phaser hit zones, grid, highlights, HP bars, selection ring, and battle logic untouched.
+- Do not change Phaser config.
+- Do not change assets.
+- Do not change world map.
+- Do not address battlefield background blur yet.
+- Do not implement movement tween animation yet.
+
+## Next Candidate
+`v0.5-9a Battle Background Sharpness Pass`
+
+Goal:
+- Investigate battlefield background blur as a separate problem from unit image sharpness.
+
+Candidate options:
+- 2x battlefield background image.
+- DOM background layer.
+- Canvas scaling / DPR audit.
 
 Guard:
-- Do not implement the Mongol faction unless explicitly requested.
-- Do not alter the current 12-city route graph during planning.
-- Do not add assets during planning.
+- Do not mix this pass with portrait alignment work.
+- Do not start by changing Phaser global config blindly.
 
-## Next System Target
-`v0.5-9 Diplomacy & Spy Scaffold`
+## Follow-Up Candidate
+`v0.5-9b Battle Movement Animation Pass`
+
+Goal:
+- Replace snap movement with tweened movement.
+- Add small timing polish later if needed.
+
+Guard:
+- Must be separate from the portrait alignment patch.
+- Do not change movement rules, only presentation.
+
+## System Candidate
+`v0.5-10 Diplomacy & Spy Scaffold`
 
 Goal:
 - Add enemy information visibility tiers.
 - Add no/partial/detailed spy information states.
 - Limit enemy resources, troops, chancellor, and governor information depending on spy level.
-- Expand faction relation UI only as needed for the scaffold.
 
 Guard:
 - Do not implement full diplomacy AI.
 - Do not implement enemy domestic AI.
 - Do not implement naval combat.
 
-## Visual Polish Target
-`Battle DOM Text Scale Up Polish`
-
-Goal:
-- Increase unit troop label readability.
-- Increase upper-right selected unit/hero info panel text.
-- Increase bottom status legend text.
-- Keep battle logic, Phaser config, DOM overlay coordinate math, and troop calculation unchanged.
-
-## Asset Pilot Target
-`Battle Asset HiDPI Pilot`
-
-Goal:
-- Test 2x hero face assets and one 2x unit sprite.
-- Keep displayed size unchanged.
-- Confirm whether higher source resolution improves visible sharpness before replacing more assets.
-
-## World Map Follow-Up
-- The final 12-city coordinate layout is applied.
-- Coordinate debug tool can still be used for later layout work.
-- Do not change route graph unless explicitly requested.
-- Do not add 건업 <-> 한성 direct route unless explicitly requested.
-- Preserve 한성/평양 no-direct-Japan rule.
+## World Map State To Preserve
+- Final 13-city coordinates are already applied.
+- `karakorum` is already implemented.
+- Land links remain logically active.
+- World map route visuals should prioritize sea routes only.
+- Current city-label banner styling is acceptable for now.
+- Do not reopen world-map label polish in the immediate next task.
 
 ## Guardrails
-- Current baseline is `v0.5-8j`.
-- Do not treat `v0.5-8i-2a`, `v0.5-8h`, or `v0.5-8d-1` as current.
-- Do not alter battle logic.
-- Do not alter domestic/trade formulas.
-- Do not alter save/load structure.
-- Do not implement diplomacy, espionage, enemy domestic AI, naval combat, or Mongol faction unless explicitly requested.
+- Do not change battle rules.
+- Do not change movement rules yet.
+- Do not change attack / skill / strategy logic.
+- Do not change troop / HP formulas.
+- Do not change Phaser config.
+- Do not change image assets.
+- Do not change world map or city labels in the next task.
+- Do not alter domestic/trade/save-load.

@@ -1,86 +1,130 @@
 # Session Log
 
-## 2026-05-15 — v0.5-8j World Map Coordinate Tool + Final 12-City Layout
+## 2026-05-15 — v0.5-9 Battle DOM Unit Visual Polish
 
 ### Summary
-- Added World Map City Drag Coordinate Debug Tool.
-- Added a `좌표 모드` toggle on the world map.
-- Used the coordinate tool workflow to finalize the 12-city layout.
-- Applied final city coordinates to `data/cities.js`.
-- Preserved the current route graph and key sea routes.
+- Continued from the Mongol / Karakorum world expansion work and moved the project to the new working baseline.
+- Finalized the 13-city world map layout and route visual direction.
+- Verified that battle unit blur was mainly a Phaser/canvas rendering problem rather than a source-image problem.
+- Implemented a narrow DOM overlay pilot for battle unit images.
+- Added the first DOM unit visual polish pass with larger images and restored idle motion.
 
-### Coordinate Tool Work
-- `좌표 모드` is OFF by default.
-- OFF state keeps normal city click/select behavior unchanged.
-- ON state makes city markers draggable.
-- ON state shows small readable labels above all city markers.
-- Label format is `city.id x,y`.
-- Labels update live while dragging.
-- Drag end prints `[CITY POS] city.id { x, y }`.
-- Drag end also prints a copy-ready object string.
-- Dragging does not save coordinates automatically.
-- Dragging does not mutate `data/cities.js`.
-- Refresh/re-render resets visual drag positions unless coordinates are manually applied.
+### World Map Expansion And Polish
+- Added Mongol faction `몽골`.
+- Added `karakorum`.
+- Added 징기스칸 / 수부타이 / 제베.
+- Expanded world map from 12 cities to 13 cities.
+- Applied final corrected 13-city coordinates.
+- Set Karakorum final position through the coordinate tool workflow.
+- User manually replaced the world map art with final `world_map_mvp.png`.
+- Changed city labels from black panels to faction-color banner labels.
+- Removed `아군 / 적군` meta text.
+- City labels now show only city names.
+- Banner label polish was attempted and is acceptable for now.
+- Future flag-style city UI can be revisited later.
 
-### Final Coordinates Applied
-- 한반도:
-  - `sabi`: x 49, y 72.
-  - `gyeongju`: x 56, y 61.
-  - `hanseong`: x 45, y 53.
-  - `pyeongyang`: x 41, y 39.
-- 중국:
-  - `chengdu`: x 14, y 84.
-  - `luoyang`: x 16, y 67.
-  - `yecheng`: x 20, y 51.
-  - `jianye`: x 27, y 91.
-- 일본:
-  - `kyushu`: x 67, y 85.
-  - `osaka`: x 78, y 81.
-  - `kyoto`: x 81, y 67.
-  - `edo`: x 89, y 59.
-
-### Verification Completed
-- `node --check js/ui/ui_render.js` passed.
-- `node --check js/ui/world_map_ui.js` passed.
-- `node --check js/main.js` passed.
-- `node --check data/cities.js` passed.
-- Static server response confirmed: `http://127.0.0.1:8000/index.html` -> 200.
-- 12 cities confirmed.
-- Final coordinates matched.
-- Existing key sea routes preserved:
+### World Route Visual Direction
+- Land roads are visually represented in the map artwork.
+- Land route graph remains logically active.
+- World map route rendering now prioritizes sea routes only.
+- Sea routes that remain visible:
   - `jianye <-> sabi`
   - `sabi <-> kyushu`
   - `gyeongju <-> kyoto`
   - `gyeongju <-> osaka`
   - `osaka <-> kyushu`
 
-### Previous Context
-- `v0.5-8i` added 백제 / 사비 and 큐슈 세력 / 큐슈.
-- `v0.5-8i-1` added 건업 <-> 사비 as the West Sea route.
-- `v0.5-8i-2` added Battle DOM Text Overlay for sharp battle text.
-- `v0.5-8i-2a` polished unit troop labels into translucent mini-labels.
+### Battle Image Sharpness Investigation
+- DOM hero panel images are sharp.
+- DOM skill-cutin overlay images are sharp because they render as DOM `<img>`.
+- Phaser canvas battle unit images were blurry.
+- Conclusion:
+  - source image quality was not the primary issue
+  - Phaser/canvas unit image rendering/scaling was the likely problem
 
-### Not Implemented
-- No diplomacy.
-- No espionage.
-- No enemy domestic AI.
-- No naval combat implementation.
-- No Mongol/northern faction implementation.
-- No new portrait or cut-in assets.
-- No battle asset HiDPI replacement.
-- No battle logic changes.
-- No domestic/trade formula changes.
-- No save/load structure rewrite.
+### Battle DOM Unit Image Overlay Pilot
+- Added `USE_DOM_BATTLE_UNIT_IMAGE_OVERLAY = true`.
+- Moved only battle unit token images and portrait badge images to the existing DOM overlay.
+- Kept Phaser responsible for:
+  - battle background
+  - grid
+  - highlights
+  - selection ring
+  - HP bars
+  - hit zones
+  - status icons
+  - facing text
+  - battle logic
+- Phaser still creates the old unit visuals but hides them with `alpha 0`.
+- Fallback remains available by turning the flag off.
+- DOM overlay uses `pointer-events: none`.
+- DOM unit images render sharply.
+- This solved the unit image blur issue.
 
-### Changed Files In This Workstream
-- `js/ui/ui_render.js`
-- `js/ui/world_map_ui.js`
-- `css/main.css`
-- `data/cities.js`
-- map asset file if currently changed in git status
+### Battle DOM Unit First Polish
+- Token images enlarged to `124px x 124px`.
+- Portrait badges enlarged to `40px x 40px`.
+- Added CSS idle animation:
+  - `battleDomUnitIdle`
+  - `1.05s ease-in-out infinite alternate`
+- Animation was applied only to the inner `.battle-dom-unit-image` so outer alignment remains safe.
+- Battle logic and Phaser config were not changed.
+
+### Verification Completed
+- `node --check data/cities.js` passed.
+- `node --check data/factions.js` passed.
+- `node --check data/heroes.js` passed.
+- `node --check data/skills.js` passed.
+- `node --check js/ui/ui_render.js` passed.
+- `node --check js/ui/battle_ui.js` passed.
+- `node --check js/phaser/battle_scene.js` passed.
+- `node --check js/main.js` passed.
+- Browser smoke tests showed 0 console errors.
+- World map rendered 13 cities.
+- Sea-route-only visual rendering worked.
+- DOM overlay rendered above Phaser canvas.
+- DOM unit images were sharp and did not block clicks.
+- Idle animation was active.
+
+### Current Observed Issues
+1. Hero portrait badges are still too small and too far from the unit.
+2. Hero portrait badge should be `70px`.
+3. Hero portrait should be placed as close as possible to the unit, near upper-side / upper-left / side.
+4. Portrait should feel attached to the unit, not floating away.
+5. Status indicators and facing indicators are too far from the unit.
+6. Status/facing indicators should be brought much closer while not covering the portrait.
+7. Enemy/player facing direction may need correction:
+   - enemy units on the left should face right
+   - player units on the right should face left
+8. Battlefield background is still slightly blurry, but do not address it yet.
+9. Unit movement still snaps like a board piece; tween animation is future work.
+
+### Important Warnings
+- Diplomacy is still not implemented.
+- Espionage is still not implemented.
+- Enemy domestic AI is still not implemented.
+- Naval combat is still not implemented.
+- Battlefield background HiDPI / DOM pass is still pending.
+- Movement tween animation is still pending.
+- City label / flag UI is acceptable for now and should not be further polished immediately.
+
+### Next Immediate Work
+`v0.5-9 Battle DOM Unit Visual Polish`
+
+Requirements:
+- Hero portrait badge size: `70px`.
+- Hero portrait position: very close to the unit, near the unit upper-side / side.
+- Status/facing indicators: move much closer to the unit, but do not cover the portrait.
+- Keep DOM unit image sharpness.
+- Keep DOM overlay non-interactive.
+- Keep Phaser hit zones and all battle logic untouched.
+- Do not change Phaser config.
+- Do not change assets.
+- Do not change world map.
+- Do not address battlefield background blur yet.
+- Do not implement movement tween animation yet.
 
 ### Next Candidate Work
-1. `v0.5-8k Northern Faction Planning / Genghis Khan Candidate`
-2. `v0.5-9 Diplomacy & Spy Scaffold`
-3. `Battle DOM Text Scale Up Polish`
-4. `Battle Asset HiDPI Pilot`
+1. `v0.5-9a Battle Background Sharpness Pass`
+2. `v0.5-9b Battle Movement Animation Pass`
+3. `v0.5-10 Diplomacy & Spy Scaffold`

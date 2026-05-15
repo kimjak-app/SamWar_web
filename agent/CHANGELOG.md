@@ -2,97 +2,75 @@
 
 ## Current Recent Flow
 
+### v0.5-9 Battle DOM Unit Visual Polish
+- Current working baseline.
+- Preserved the DOM battle unit image overlay pilot because it solved sharpness better than Phaser canvas unit rendering.
+- First polish already applied:
+  - token images enlarged to `124px x 124px`
+  - portrait badges enlarged to `40px x 40px`
+  - subtle idle animation restored with `battleDomUnitIdle`
+  - animation applied only to the inner `.battle-dom-unit-image`
+- Phaser still handles background, grid, highlights, selection ring, HP bars, hit zones, status icons, facing text, and battle logic.
+- Old Phaser unit image visuals remain behind `USE_DOM_BATTLE_UNIT_IMAGE_OVERLAY` and are hidden with `alpha 0` while the pilot is active.
+- Immediate follow-up still needed for portrait size/position and closer status/facing indicators.
+
+### v0.5-8k Mongol / Karakorum Expansion Patch
+- Expanded active world from 12 cities to 13 cities.
+- Expanded active factions from 12 to 13.
+- Added Mongol faction `몽골`.
+- Added `karakorum` between `pyeongyang` and `yecheng`.
+- Added 징기스칸, 수부타이, 제베.
+- Added placeholder skills using supported effect types only.
+- Added Karakorum battle roster placement.
+- No world-map image asset was added by code in this patch.
+
+### Final 13-City Coordinate Correction
+- Applied final corrected coordinates for all 13 cities in `data/cities.js`.
+- Set Karakorum to the final measured coordinate from the debug tool.
+- Preserved city ids, names, factions, neighbors, and non-coordinate city data.
+
+### World Route Cleanup + Sea-Route-Only Visual Direction
+- Pruned unnecessary direct land links for cleaner strategic paths.
+- Kept land route graph logically active in data.
+- Switched route rendering so only sea routes are visually drawn on the world map.
+- Preserved sea-route visibility for:
+  - `jianye <-> sabi`
+  - `sabi <-> kyushu`
+  - `gyeongju <-> kyoto`
+  - `gyeongju <-> osaka`
+  - `osaka <-> kyushu`
+- Kept land roads visually delegated to the map artwork.
+
+### World Map Label Banner Pass
+- Replaced old black city labels with faction-color banners.
+- Added contrast-aware text colors based on faction color brightness.
+- Removed `아군 / 적군` meta text.
+- Simplified labels to city-name-only banners.
+- Polished them into compact flag-like markers with softer semi-transparent faction fills.
+- Current label state is acceptable for now and intentionally paused.
+
+### Battle DOM Unit Image Overlay Pilot
+- Investigated battle image sharpness and confirmed source image quality was not the primary issue.
+- DOM hero panel images and DOM skill-cutin images were already sharp.
+- Phaser canvas battle unit images were the blur hotspot.
+- Added a DOM overlay renderer for battle unit token and portrait badge images.
+- Kept DOM overlay non-interactive with `pointer-events: none`.
+- Left Phaser fallback available behind a feature flag.
+- Did not change Phaser global config, image assets, battle logic, trade, domestic, or save/load.
+
 ### v0.5-8j World Map Coordinate Tool + Final 12-City Layout
-- Current stable handoff baseline.
-- Added a debug-only `좌표 모드` toggle to the world map.
+- Added the debug-only `좌표 모드` toggle to the world map.
 - OFF state preserves normal city click/select behavior.
 - ON state makes city markers draggable and shows `city.id x,y` labels.
-- Drag labels update live and drag end prints `[CITY POS]` plus a copy-ready object string.
-- Dragging does not save coordinates and does not mutate `data/cities.js`.
-- Applied final 12-city coordinates to `data/cities.js`.
-- Verified 12 cities, final coordinate match, key sea route preservation, and app static server response.
-
-### v0.5-8i-2a Battle DOM Text Visual Polish
-- Polished the DOM unit troop count label style.
-- Reduced the heavy dark box feel into a lighter translucent mini-label.
-- Kept a subtle background, light border, and stronger text shadow for readability.
-- Preserved player/enemy color distinction.
-- CSS/display polish only.
-- No battle logic, HP/troop calculation, DOM coordinate, Phaser config, asset, domestic, trade, world-map route, or save/load changes.
-
-### v0.5-8i-2 Battle DOM Text Overlay MVP
-- Added a DOM overlay layer above the Phaser battle canvas.
-- DOM overlay renders the battle title, battlefield name, instruction copy, bottom status legend, and unit troop count labels.
-- Phaser remains responsible for background, grid, unit sprites, highlights, and effects.
-- Kept Phaser Text fallback paths available behind the overlay flag.
-- Preserved existing displayed troop formula.
-- No Phaser config zoom/resolution/pixelArt/roundPixels changes.
-- No battle logic, skill logic, troop/HP calculation, image asset, domestic, trade, world-map route, or save/load structure changes.
-
-### v0.5-8i-1 West Sea Route Patch
-- Added 건업 <-> 사비 as a sea route.
-- Kept 건업 <-> 한성 direct route deferred.
-- Reinforced 사비 as the West Sea maritime gateway.
-- Preserved 한성/평양 no-direct-Japan rule.
-- Preserved 사비 <-> 큐슈 and 경주 <-> 교토/오사카 route roles.
-- No naval combat, diplomacy, espionage, enemy AI, asset, Phaser, battle, domestic, or trade formula changes.
-
-### v0.5-8i Baekje + Kyushu Expansion Patch
-- Expanded active world from 10 cities to 12 cities.
-- Expanded active roster from 27 heroes to about 32 active heroes.
-- Expanded active factions from 10 to 12 factions.
-- Removed 여포 from the active 조조/위 roster without deleting his data; he is reserve/inactive.
-- Added 곽가 to 업성/위 with `heavenly_stratagem`.
-- Added 백제 / 사비 with 의자왕, 계백, 흑치상지.
-- Added 큐슈 세력 / 큐슈 with 시마즈 요시히로, 고니시 유키나가.
-- Added six placeholder-style unique skill IDs; new portraits/cut-ins remain unavailable.
-
-### v0.5-8h Japan Triangle Micro Layout Patch
-- Stabilized the 10-city route layout before the Baekje/Kyushu expansion.
-- Added 업성 <-> 건업 for a clearer China tension line.
-- Rebuilt the Korean Peninsula into a 평양 / 한성 / 경주 triangle.
-- Preserved 경주 as the only Korea-to-Japan gateway at that time.
-- Rebuilt Japan into a 교토 / 오사카 / 에도 triangle.
-- No battle, domestic, trade, diplomacy, espionage, enemy AI, or asset changes.
-
-### v0.5-8f World Route Layout Cleanup
-- Cleaned up the 10-city route graph after the world expansion.
-- Removed direct 한성 / 평양 routes to Japan.
-- Made 경주 the Korea-Japan gateway with sea routes to 교토 and 오사카.
-- Repositioned 한성, Japanese cities, and China routes for a cleaner regional layout.
-- Added route type metadata for land/sea route rendering.
-- Save/load preserves canonical neighbors, route types, and coordinates from current city data.
-
-### v0.5-8e World Expansion Data Patch
-- Expanded from 4 cities to 10 cities.
-- Expanded from 8 heroes to 27 heroes.
-- Expanded to 10 active factions.
-- Added Korean, Chinese, and Japanese regional city/faction/hero data.
-- Rebuilt battle rosters for all 10 cities.
-- Added placeholder unique skills for new heroes.
-- Missing new portraits and skill cut-ins intentionally remain `null`.
-
-### v0.5-8d-1 City Detail Position + Toggle UX Patch
-- Swapped the right-side world map detail layout so `City Detail` renders before `Selected City`.
-- `Selected City` remains the main operation card.
-- `City Detail` became the auxiliary tabbed detail card.
-- Added City Detail collapse/open UI.
-- Preserved tabs: 자원 / 자국무역 / 타국무역.
-- UX/layout-only patch.
-
-### v0.5-8c Trade Goods & Control MVP
-- Added external trade goods/control scaffolding.
-- Active MVP goods: gold, rice, barley, seafood, salt, silk.
-- Deferred wood, iron, and horses.
-- Added per-city trade settings for auto/direct mode, intensity, export weights, and import priorities.
-- Added player-owned city `무역 조정` modal.
-- Direct trade settings affect external route value.
+- Dragging does not save coordinates automatically.
+- This tool was later used to finalize the 13-city layout as well.
 
 ## Older Baseline Summary
-- `v0.5-8b`: Trade relation / agreement scaffold.
-- `v0.5-8`: Inter-faction trade MVP.
-- `v0.5-7c`: Internal troop rebalance MVP.
-- `v0.5-7`: Internal trade / supply route MVP.
-- `v0.5-6`: Faction identity scaffold.
-- `v0.5-5b`: Attack/defense empty battlefield render hotfix.
-- `v0.5-5a` and earlier: troop allocation, recruitment, domestic effect, save/load, and battle UI foundation.
+- `v0.5-8i-2a`: Battle DOM troop label polish.
+- `v0.5-8i-2`: Battle DOM Text Overlay MVP.
+- `v0.5-8i-1`: West Sea route patch.
+- `v0.5-8i`: Baekje + Kyushu expansion patch.
+- `v0.5-8h`: Japan triangle micro layout patch.
+- `v0.5-8f`: World route layout cleanup.
+- `v0.5-8e`: World expansion data patch.
+- `v0.5-8d-1` and earlier: city detail UX, trade scaffolding, battle foundation, and save/load groundwork.

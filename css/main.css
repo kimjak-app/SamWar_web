@@ -1501,6 +1501,74 @@ button {
     0 0 1px rgba(255, 248, 226, 0.34);
 }
 
+.battle-dom-unit-visual {
+  position: absolute;
+  z-index: 4;
+  width: 124px;
+  height: 124px;
+  pointer-events: none;
+  transform: translate(-50%, -85%);
+}
+
+.battle-dom-unit-image {
+  display: block;
+  width: 124px;
+  height: 124px;
+  object-fit: contain;
+  image-rendering: auto;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35));
+  transform-origin: 50% 72%;
+  animation: battleDomUnitIdle 1.05s ease-in-out infinite alternate;
+}
+
+.battle-dom-unit-portrait-badge {
+  position: absolute;
+  left: -34px;
+  top: -56px;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border: 1px solid rgba(248, 215, 152, 0.22);
+  border-radius: 6px;
+  background: rgba(5, 9, 15, 0.18);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  transform: translate(-50%, -50%);
+}
+
+.battle-dom-unit-portrait-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
+}
+
+.battle-dom-unit-portrait-badge--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f8d798;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.battle-dom-unit-visual--selected .battle-dom-unit-image {
+  filter:
+    drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35))
+    drop-shadow(0 0 8px rgba(248, 215, 152, 0.24));
+}
+
+@keyframes battleDomUnitIdle {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.025);
+  }
+}
+
 .battle-dom-title {
   transform: translateY(-50%);
   font-family: var(--font-display);

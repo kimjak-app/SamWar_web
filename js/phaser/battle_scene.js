@@ -112,6 +112,7 @@ const STATUS_ICON_CONVENTION = {
 };
 const STATUS_ICON_LEGEND_TEXT = `상태: ${STATUS_ICON_CONVENTION.confusion} 혼란 · ${STATUS_ICON_CONVENTION.shake} 동요 · ${STATUS_ICON_CONVENTION.defense} 방어 · ${STATUS_ICON_CONVENTION.attackBuff} 공↑ · ${STATUS_ICON_CONVENTION.attackDebuff} 공↓ · ${STATUS_ICON_CONVENTION.stun} 기절 · ${STATUS_ICON_CONVENTION.burn} 화상 · ${STATUS_ICON_CONVENTION.poison} 중독 · ${STATUS_ICON_CONVENTION.taunt} 도발 · ${STATUS_ICON_CONVENTION.bind} 속박`;
 export const USE_DOM_BATTLE_TEXT_OVERLAY = true;
+export const USE_DOM_BATTLE_UNIT_IMAGE_OVERLAY = true;
 
 function getUnitStatusIcons(unit) {
   const icons = [];
@@ -792,6 +793,11 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const portraitBadge = this.createUnitPortraitBadge(unit);
         const statusIcons = this.createUnitStatusIcons(unit);
         const hitZone = this.add.zone(0, 8, 90, 110).setOrigin(0.5, 0.5);
+
+        if (USE_DOM_BATTLE_UNIT_IMAGE_OVERLAY) {
+          tokenSprite.setAlpha(0);
+          portraitBadge.setAlpha(0);
+        }
 
         unitGroup.add([selectionRing, tokenSprite, portraitBadge, statusIcons, facingText, hpBarTrack, hpBarFill, hitZone]);
 
