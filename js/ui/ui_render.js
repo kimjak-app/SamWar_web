@@ -1,4 +1,5 @@
 import { canAttackCity, getFactionById, isPlayerCity, isWorldUnified } from "../core/world_rules.js";
+import { renderDiplomacySpyPanel } from "./diplomacy_spy_ui.js";
 import { renderHeroDeploymentPanel, renderHeroTransferPanel } from "./hero_transfer_ui.js";
 import { renderCityDetailPanel, renderTradeControlModal } from "./resource_ui.js";
 import { renderSelectedCityPanel } from "./selected_city_ui.js";
@@ -345,8 +346,15 @@ export function renderAllWorldUI(appState, options = {}) {
         ${renderWorldDebugToolbar({ debugCityDragMode })}
         ${renderWorldHud(appState, { canEndTurn, unified })}
 
-        <aside class="hud-stack" aria-label="Selected city details">
-          <div class="selected-city-layout">
+        <aside class="hud-stack city-hud-stack" aria-label="Selected city details" data-city-hud-panel="true">
+          <div class="city-hud-dragbar" data-city-hud-drag-handle="true">
+            <span>도시 HUD 위치 이동</span>
+            <button class="city-hud-reset-button" type="button" data-city-hud-reset="true">
+              초기화
+            </button>
+          </div>
+          <div class="selected-city-layout selected-city-layout-with-intel">
+            ${renderDiplomacySpyPanel({ appState, selectedCity })}
             ${renderCityDetailPanel({ appState, selectedCity })}
             <div class="selected-city-summary-panel">
               ${renderSelectedCityPanel({

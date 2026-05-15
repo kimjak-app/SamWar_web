@@ -1,6 +1,8 @@
 import { renderAllWorldUI } from "./ui_render.js";
 
 let debugCityDragMode = false;
+const CITY_HUD_OFFSET_STORAGE_KEY = "samwar.cityHudOffset.v0.5-10b";
+const CITY_HUD_DEFAULT_OFFSET = Object.freeze({ x: -180, y: 0 });
 
 function getCityNodePosition(cityNode) {
   return {
@@ -84,6 +86,118 @@ function installCityCoordinateDrag(rootElement) {
   });
 }
 
+function readCityHudOffset() {
+  try {
+    const rawValue = window.localStorage.getItem(CITY_HUD_OFFSET_STORAGE_KEY);
+
+    if (!rawValue) {
+      return { ...CITY_HUD_DEFAULT_OFFSET };
+    }
+
+    const parsed = JSON.parse(rawValue);
+    const x = Number(parsed?.x);
+    const y = Number(parsed?.y);
+
+    return {
+      x: Number.isFinite(x) ? x : CITY_HUD_DEFAULT_OFFSET.x,
+      y: Number.isFinite(y) ? y : CITY_HUD_DEFAULT_OFFSET.y,
+    };
+  } catch {
+    return { ...CITY_HUD_DEFAULT_OFFSET };
+  }
+}
+
+function saveCityHudOffset(offset) {
+  try {
+    window.localStorage.setItem(
+      CITY_HUD_OFFSET_STORAGE_KEY,
+      JSON.stringify({
+        x: Math.round(offset.x),
+        y: Math.round(offset.y),
+      }),
+    );
+  } catch {
+    // localStorage failure should not affect gameplay.
+  }
+}
+
+function clampCityHudOffset(offset) {
+  return {
+    x: Math.max(-520, Math.min(40, Math.round(offset.x))),
+    y: Math.max(-120, Math.min(180, Math.round(offset.y))),
+  };
+}
+
+function applyCityHudOffset(panel, offset) {
+  const nextOffset = clampCityHudOffset(offset);
+
+  panel.style.setProperty("--city-hud-offset-x", `${nextOffset.x}px`);
+  panel.style.setProperty("--city-hud-offset-y", `${nextOffset.y}px`);
+
+  return nextOffset;
+}
+
+function installCityHudDrag(rootElement) {
+  const panel = rootElement.querySelector("[data-city-hud-panel='true']");
+  const handle = rootElement.querySelector("[data-city-hud-drag-handle='true']");
+  const resetButton = rootElement.querySelector("[data-city-hud-reset='true']");
+
+  if (!panel || !handle) {
+    return;
+  }
+
+  let currentOffset = applyCityHudOffset(panel, readCityHudOffset());
+
+  resetButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    currentOffset = applyCityHudOffset(panel, CITY_HUD_DEFAULT_OFFSET);
+    saveCityHudOffset(currentOffset);
+  });
+
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    handle.setPointerCapture?.(event.pointerId);
+    panel.classList.add("is-dragging");
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startOffset = { ...currentOffset };
+
+    const handlePointerMove = (moveEvent) => {
+      moveEvent.preventDefault();
+
+      currentOffset = applyCityHudOffset(panel, {
+        x: startOffset.x + (moveEvent.clientX - startX),
+        y: startOffset.y + (moveEvent.clientY - startY),
+      });
+    };
+
+    const handlePointerUp = (upEvent) => {
+      upEvent.preventDefault();
+
+      handle.releasePointerCapture?.(upEvent.pointerId);
+      panel.classList.remove("is-dragging");
+      saveCityHudOffset(currentOffset);
+
+      handle.removeEventListener("pointermove", handlePointerMove);
+      handle.removeEventListener("pointerup", handlePointerUp);
+      handle.removeEventListener("pointercancel", handlePointerUp);
+    };
+
+    handle.addEventListener("pointermove", handlePointerMove);
+    handle.addEventListener("pointerup", handlePointerUp);
+    handle.addEventListener("pointercancel", handlePointerUp);
+  });
+}
+
 export function renderWorldMap(rootElement, appState, handlers = {}) {
   const {
     onCitySelect,
@@ -112,6 +226,8 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
     onTradeControlAuto,
     onTradeControlClose,
     onCityDetailTabChange,
+    onDiplomacySpyTabChange,
+    onDiplomacySpyToggle,
     onCityDetailToggle,
     onConfirmEnemyTurnResult,
     onSaveGame,
@@ -121,6 +237,7 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
   const { pendingHeroDeployment, pendingHeroTransfer } = appState;
 
   rootElement.innerHTML = renderAllWorldUI(appState, { debugCityDragMode });
+  installCityHudDrag(rootElement);
 
   rootElement.querySelector("[data-debug-city-drag-toggle]")?.addEventListener("click", () => {
     debugCityDragMode = !debugCityDragMode;
@@ -404,6 +521,26 @@ export function renderWorldMap(rootElement, appState, handlers = {}) {
         if (tab) {
           onCityDetailTabChange(tab);
         }
+      });
+    });
+  }
+
+  if (onDiplomacySpyTabChange) {
+    rootElement.querySelectorAll("[data-diplomacy-spy-tab]").forEach((element) => {
+      element.addEventListener("click", () => {
+        const tab = element.getAttribute("data-diplomacy-spy-tab");
+
+        if (tab) {
+          onDiplomacySpyTabChange(tab);
+        }
+      });
+    });
+  }
+
+  if (onDiplomacySpyToggle) {
+    rootElement.querySelectorAll("[data-diplomacy-spy-toggle]").forEach((element) => {
+      element.addEventListener("click", () => {
+        onDiplomacySpyToggle(element.getAttribute("data-diplomacy-spy-toggle") === "open");
       });
     });
   }

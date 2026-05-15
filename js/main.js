@@ -11,7 +11,9 @@ import {
   setChancellorHeroId,
   setChancellorPolicy,
   setCityDetailOpen,
+  setDiplomacySpyOpen,
   setSelectedCityDetailTab,
+  setSelectedDiplomacySpyTab,
   setTradeRelationAction,
   setTaxLevel,
   startBattle,
@@ -1140,6 +1142,26 @@ function rerender() {
       }
 
       updateAppState((state) => setSelectedCityDetailTab(state, tab));
+      rerender();
+    },
+    onDiplomacySpyTabChange: (tab) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => setSelectedDiplomacySpyTab(state, tab));
+      rerender();
+    },
+    onDiplomacySpyToggle: (isOpen) => {
+      getAppState();
+
+      if (appState.mode !== "world") {
+        return;
+      }
+
+      updateAppState((state) => setDiplomacySpyOpen(state, isOpen));
       rerender();
     },
     onCityDetailToggle: (isOpen) => {

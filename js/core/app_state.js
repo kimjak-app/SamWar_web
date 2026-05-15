@@ -412,6 +412,8 @@ export function createInitialAppState() {
       saveMessage: "",
       tradeControlCityId: null,
       selectedCityDetailTab: "resources",
+      selectedDiplomacySpyTab: "diplomacy",
+      isDiplomacySpyOpen: true,
       isCityDetailOpen: true,
     },
     ruler: {
@@ -597,6 +599,7 @@ export function closeTradeControl(appState) {
 
 
 const CITY_DETAIL_TAB_KEYS = Object.freeze(["resources", "internal-trade", "external-trade"]);
+const DIPLOMACY_SPY_TAB_KEYS = Object.freeze(["diplomacy", "spy"]);
 
 export function setSelectedCityDetailTab(appState, tab) {
   const selectedCityDetailTab = CITY_DETAIL_TAB_KEYS.includes(tab) ? tab : "resources";
@@ -606,6 +609,28 @@ export function setSelectedCityDetailTab(appState, tab) {
     ui: {
       ...(appState.ui ?? {}),
       selectedCityDetailTab,
+    },
+  };
+}
+
+export function setSelectedDiplomacySpyTab(appState, tab) {
+  const selectedDiplomacySpyTab = DIPLOMACY_SPY_TAB_KEYS.includes(tab) ? tab : "diplomacy";
+
+  return {
+    ...appState,
+    ui: {
+      ...(appState.ui ?? {}),
+      selectedDiplomacySpyTab,
+    },
+  };
+}
+
+export function setDiplomacySpyOpen(appState, isOpen) {
+  return {
+    ...appState,
+    ui: {
+      ...(appState.ui ?? {}),
+      isDiplomacySpyOpen: Boolean(isOpen),
     },
   };
 }
