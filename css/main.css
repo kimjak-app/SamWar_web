@@ -2592,6 +2592,7 @@ button {
 }
 
 .city-hud-dragbar {
+  grid-column: 1 / -1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2609,6 +2610,10 @@ button {
   letter-spacing: 0.04em;
   user-select: none;
   touch-action: none;
+}
+
+.city-hud-dragbar {
+  display: flex !important;
 }
 
 .city-hud-stack.is-dragging .city-hud-dragbar {
@@ -2876,17 +2881,5 @@ button {
   .selected-city-summary-panel {
     min-width: 0;
     order: 2;
-  }
-}
-
-@media (max-width: 760px) {
-  .city-hud-stack {
-    width: min(380px, calc(100vw - 36px));
-    max-width: calc(100vw - 36px);
-    transform: none !important;
-  }
-
-  .city-hud-dragbar {
-    display: none;
   }
 }

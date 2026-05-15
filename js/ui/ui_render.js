@@ -347,13 +347,13 @@ export function renderAllWorldUI(appState, options = {}) {
         ${renderWorldHud(appState, { canEndTurn, unified })}
 
         <aside class="hud-stack city-hud-stack" aria-label="Selected city details" data-city-hud-panel="true">
-          <div class="city-hud-dragbar" data-city-hud-drag-handle="true">
-            <span>도시 HUD 위치 이동</span>
-            <button class="city-hud-reset-button" type="button" data-city-hud-reset="true">
-              초기화
-            </button>
-          </div>
           <div class="selected-city-layout selected-city-layout-with-intel">
+            <div class="city-hud-dragbar" data-city-hud-drag-handle="true">
+              <span>도시 HUD 위치 이동</span>
+              <button class="city-hud-reset-button" type="button" data-city-hud-reset="true">
+                초기화
+              </button>
+            </div>
             ${renderDiplomacySpyPanel({ appState, selectedCity })}
             ${renderCityDetailPanel({ appState, selectedCity })}
             <div class="selected-city-summary-panel">
