@@ -4,6 +4,102 @@ import { renderCityDetailPanel, renderTradeControlModal } from "./resource_ui.js
 import { renderSelectedCityPanel } from "./selected_city_ui.js";
 import { renderWorldHud } from "./world_hud_ui.js";
 
+function clampChannel(value) {
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+function hexToRgb(color) {
+  const normalized = color?.trim().replace("#", "");
+
+  if (!normalized || ![3, 6].includes(normalized.length)) {
+    return null;
+  }
+
+  const expanded = normalized.length === 3
+    ? normalized.split("").map((channel) => channel + channel).join("")
+    : normalized;
+
+  const value = Number.parseInt(expanded, 16);
+
+  if (Number.isNaN(value)) {
+    return null;
+  }
+
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+}
+
+function rgbToHex({ r, g, b }) {
+  return `#${[r, g, b]
+    .map((channel) => clampChannel(channel).toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function rgbToRgba({ r, g, b }, alpha = 1) {
+  const normalizedAlpha = Math.max(0, Math.min(1, alpha));
+  return `rgba(${clampChannel(r)}, ${clampChannel(g)}, ${clampChannel(b)}, ${normalizedAlpha})`;
+}
+
+function mixColors(colorA, colorB, ratio = 0.5) {
+  const weight = Math.max(0, Math.min(1, ratio));
+
+  return {
+    r: colorA.r + ((colorB.r - colorA.r) * weight),
+    g: colorA.g + ((colorB.g - colorA.g) * weight),
+    b: colorA.b + ((colorB.b - colorA.b) * weight),
+  };
+}
+
+function getRelativeLuminance({ r, g, b }) {
+  const toLinear = (channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4;
+  };
+
+  return (0.2126 * toLinear(r)) + (0.7152 * toLinear(g)) + (0.0722 * toLinear(b));
+}
+
+function getCityLabelTheme(color) {
+  const fallback = {
+    labelBg: "rgba(31, 48, 68, 0.62)",
+    labelBgStrong: "rgba(31, 48, 68, 0.68)",
+    labelText: "#f6efdf",
+    labelBorder: "rgba(12, 18, 28, 0.28)",
+    labelBorderStrong: "rgba(248, 215, 152, 0.58)",
+    labelShadow: "rgba(0, 0, 0, 0.1)",
+  };
+  const rgb = hexToRgb(color);
+
+  if (!rgb) {
+    return fallback;
+  }
+
+  const luminance = getRelativeLuminance(rgb);
+  const brightLabel = luminance > 0.42;
+  const baseColor = brightLabel
+    ? rgbToHex(mixColors(rgb, { r: 255, g: 255, b: 255 }, 0.08))
+    : rgbToHex(mixColors(rgb, { r: 0, g: 0, b: 0 }, 0.08));
+  const baseRgb = hexToRgb(baseColor) ?? rgb;
+
+  return {
+    labelBg: rgbToRgba(baseRgb, brightLabel ? 0.58 : 0.64),
+    labelBgStrong: rgbToRgba(baseRgb, brightLabel ? 0.64 : 0.7),
+    labelText: brightLabel ? "#0f1722" : "#f6efdf",
+    labelBorder: brightLabel
+      ? "rgba(12, 18, 28, 0.24)"
+      : "rgba(12, 18, 28, 0.34)",
+    labelBorderStrong: brightLabel
+      ? "rgba(12, 18, 28, 0.44)"
+      : "rgba(248, 215, 152, 0.62)",
+    labelShadow: brightLabel ? "rgba(0, 0, 0, 0.08)" : "rgba(0, 0, 0, 0.12)",
+  };
+}
+
 function buildCityMap(cities) {
   return new Map(cities.map((city) => [city.id, city]));
 }
@@ -73,6 +169,7 @@ function renderRouteLayer(cities) {
   return `
     <svg class="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       ${cityEdges
+        .filter(({ routeType }) => routeType === "sea")
         .map(({ fromId, toId, routeType }) => {
           const fromCity = cities.find((city) => city.id === fromId);
           const toCity = cities.find((city) => city.id === toId);
@@ -103,15 +200,26 @@ function renderCityLayer(world, selectedCity, { debugCityDragMode = false } = {}
         .map((city) => {
           const faction = getFactionById(world.factions, city.ownerFactionId);
           const isSelected = city.id === selectedCity.id;
-          const statusLabel = isPlayerCity(city) ? "아군" : "적군";
           const labelClass = getCityLabelClass(city.id);
+          const labelTheme = getCityLabelTheme(faction?.color);
+          const cityStyle = [
+            `left: ${city.x}%`,
+            `top: ${city.y}%`,
+            `--city-color: ${faction?.color ?? "#d3b273"}`,
+            `--city-label-bg: ${labelTheme.labelBg}`,
+            `--city-label-bg-strong: ${labelTheme.labelBgStrong}`,
+            `--city-label-text: ${labelTheme.labelText}`,
+            `--city-label-border: ${labelTheme.labelBorder}`,
+            `--city-label-border-strong: ${labelTheme.labelBorderStrong}`,
+            `--city-label-shadow: ${labelTheme.labelShadow}`,
+          ].join("; ");
 
           return `
             <button
               class="city-node ${labelClass} ${isSelected ? "is-selected" : ""} ${isPlayerCity(city) ? "is-friendly" : "is-hostile"}"
               type="button"
               data-city-id="${city.id}"
-              style="left: ${city.x}%; top: ${city.y}%; --city-color: ${faction?.color ?? "#d3b273"};"
+              style="${cityStyle}"
               aria-pressed="${isSelected}"
             >
               ${debugCityDragMode ? `
@@ -122,7 +230,6 @@ function renderCityLayer(world, selectedCity, { debugCityDragMode = false } = {}
               <span class="city-pip"></span>
               <span class="city-label">
                 <span class="city-name">${city.name}</span>
-                <span class="city-meta">${statusLabel}</span>
               </span>
             </button>
           `;

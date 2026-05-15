@@ -15,6 +15,7 @@ export const FACTION_IDS = Object.freeze({
   TOYOTOMI: "toyotomi",
   KYUSHU: "kyushu_faction",
   TOKUGAWA: "tokugawa",
+  MONGOL: "mongol_faction",
 
   // Legacy faction ids kept for old saves and migration fallback.
   LUOYANG: "luoyang_faction",
@@ -36,6 +37,7 @@ export const FACTION_HOME_CITY_IDS = Object.freeze({
   [FACTION_IDS.TOYOTOMI]: "osaka",
   [FACTION_IDS.KYUSHU]: "kyushu",
   [FACTION_IDS.TOKUGAWA]: "edo",
+  [FACTION_IDS.MONGOL]: "karakorum",
 });
 
 export const LEGACY_ENEMY_FACTION_IDS = Object.freeze([

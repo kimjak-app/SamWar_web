@@ -14,6 +14,7 @@ export const battleRosters = {
     osaka: ["toyotomi_hideyoshi", "kenshin"],
     kyushu: ["shimazu_yoshihiro", "konishi_yukinaga"],
     edo: ["tokugawa_ieyasu", "honda_masanobu", "honda_tadakatsu"],
+    karakorum: ["genghis_khan", "subutai", "jebe"],
   },
 };
 
@@ -51,4 +52,7 @@ export const battleSpawnPositions = {
   tokugawa_ieyasu: { x: 11, y: 3 },
   honda_masanobu: { x: 11, y: 4 },
   honda_tadakatsu: { x: 12, y: 3 },
+  genghis_khan: { x: 11, y: 3 },
+  subutai: { x: 11, y: 4 },
+  jebe: { x: 12, y: 3 },
 };

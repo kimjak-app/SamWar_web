@@ -145,4 +145,18 @@ export const factions = [
     chancellorPolicy: "balanced",
     isPlayer: false,
   },
+  {
+    id: FACTION_IDS.MONGOL,
+    name: "몽골",
+    nameKey: "faction.mongol.name",
+    shortName: "몽골",
+    shortNameKey: "faction.mongol.shortName",
+    region: "북방초원",
+    theme: "북방초원 / 유목 제국",
+    color: "#b8a05a",
+    capitalCityId: "karakorum",
+    chancellorHeroId: "genghis_khan",
+    chancellorPolicy: "military",
+    isPlayer: false,
+  },
 ];
