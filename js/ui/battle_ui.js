@@ -861,6 +861,21 @@ export function renderBattleUI(rootElement, appState, handlers = {}) {
       onDefend: handlers.onBattleDefend,
       onWait: handlers.onBattleWait,
       onRetreat: handlers.onBattleRetreat,
+      onBattleSceneReady: () => {
+        const wrapElement = rootElement.querySelector(".battle-phaser-host-wrap");
+
+        if (!wrapElement || wrapElement.classList.contains("is-battle-ready") || typeof window === "undefined" || !window.requestAnimationFrame) {
+          return;
+        }
+
+        window.requestAnimationFrame(() => {
+          renderBattleDomOverlay(domOverlayElement, mountElement, battleState, selectedUnit, selectedSkill);
+
+          window.requestAnimationFrame(() => {
+            wrapElement.classList.add("is-battle-ready");
+          });
+        });
+      },
     });
   }
 

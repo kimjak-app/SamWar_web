@@ -1465,6 +1465,12 @@ button {
   height: 100%;
   overflow: hidden;
   border-radius: inherit;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.battle-phaser-host-wrap.is-battle-ready {
+  opacity: 1;
 }
 
 .battle-phaser-host {

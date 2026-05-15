@@ -68,6 +68,7 @@ export function mountBattleScene(containerElement, battleState, callbacks = {}) 
     onSceneReady: (sceneInstance) => {
       currentScene = sceneInstance;
       currentScene.syncBattleState?.(pendingBattleState ?? battleState, pendingCallbacks ?? callbacks);
+      callbacks.onBattleSceneReady?.(sceneInstance);
     },
   });
 
