@@ -1,36 +1,13 @@
 # Next Tasks
 
 ## Current Baseline
-`v0.5-9 Battle DOM Unit Visual Polish`
+`v0.5-9a Battle Entry Curtain Fade Fix`
 
-## Immediate Target
-`v0.5-9 Battle DOM Unit Visual Polish`
-
-Goal:
-- Keep the DOM battle unit image overlay approach because it fixed sharpness.
-- Enlarge and reposition hero portrait badges so they feel attached to the unit.
-- Bring status and facing indicators much closer to the unit.
-
-Requirements:
-- Hero portrait badge size: `70px`.
-- Hero portrait position: very close to the unit, near the unit upper-side / upper-left / side.
-- Portrait should feel attached to the unit, not floating away.
-- Status/facing indicators should move much closer to the unit.
-- Do not let status/facing indicators cover the portrait.
-- Keep DOM unit image sharpness.
-- Keep DOM overlay non-interactive.
-- Keep Phaser hit zones, grid, highlights, HP bars, selection ring, and battle logic untouched.
-- Do not change Phaser config.
-- Do not change assets.
-- Do not change world map.
-- Do not address battlefield background blur yet.
-- Do not implement movement tween animation yet.
-
-## Next Candidate
-`v0.5-9a Battle Background Sharpness Pass`
+## Immediate Candidate
+`v0.5-9b Battle Background Sharpness Pass`
 
 Goal:
-- Investigate battlefield background blur as a separate problem from unit image sharpness.
+- Investigate battlefield background blur as a separate problem from unit image sharpness and entry transition polish.
 
 Candidate options:
 - 2x battlefield background image.
@@ -38,19 +15,20 @@ Candidate options:
 - Canvas scaling / DPR audit.
 
 Guard:
-- Do not mix this pass with portrait alignment work.
+- Do not mix this pass with movement animation work.
 - Do not start by changing Phaser global config blindly.
+- Do not touch portrait badge size/position, facing text position, or status indicator position unless the blur investigation truly requires it.
 
 ## Follow-Up Candidate
-`v0.5-9b Battle Movement Animation Pass`
+`v0.5-9c Battle Movement Animation Pass`
 
 Goal:
 - Replace snap movement with tweened movement.
 - Add small timing polish later if needed.
 
 Guard:
-- Must be separate from the portrait alignment patch.
 - Do not change movement rules, only presentation.
+- Keep battle logic untouched.
 
 ## System Candidate
 `v0.5-10 Diplomacy & Spy Scaffold`
@@ -65,13 +43,20 @@ Guard:
 - Do not implement enemy domestic AI.
 - Do not implement naval combat.
 
+## Battle State To Preserve
+- DOM unit image overlay remains the correct sharp rendering path.
+- Portrait badge size remains `70px`.
+- Portrait badge position remains attached closely to the unit.
+- Status indicator position remains as-is.
+- Facing text position remains as-is.
+- Entry transition is now handled by DOM curtain fade-out, not Phaser camera fade-in.
+
 ## World Map State To Preserve
 - Final 13-city coordinates are already applied.
 - `karakorum` is already implemented.
 - Land links remain logically active.
 - World map route visuals should prioritize sea routes only.
 - Current city-label banner styling is acceptable for now.
-- Do not reopen world-map label polish in the immediate next task.
 
 ## Guardrails
 - Do not change battle rules.

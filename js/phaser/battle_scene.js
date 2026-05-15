@@ -754,12 +754,10 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
         const displayTroops = getDisplayTroops(unit);
         const fillColor = unit.side === "player" ? 0x5bb8ff : 0xff7b7b;
         const isPlayerUnit = unit.side === "player";
-        const facingTextX = isPlayerUnit ? 34 : -34;
-        const facingTextY = -34;
+        const facingTextX = 0;
+        const facingTextY = -46;
         const statusIconsX = isPlayerUnit ? 40 : -40;
         const statusIconsY = -18;
-        const defendTextX = isPlayerUnit ? 36 : -36;
-        const defendTextY = -54;
         const defenseBuffTextX = isPlayerUnit ? 42 : -42;
         const defenseBuffTextY = -78;
         const unitGroup = this.add.container(unitPoint.x, unitPoint.y);
@@ -815,16 +813,6 @@ export function createBattleSceneDefinition({ battleState, callbacks = {}, onSce
 
         if (hpText) {
           unitGroup.add(hpText);
-        }
-
-        if (unit.isDefending) {
-          unitGroup.add(this.add.text(defendTextX, defendTextY, "방어", {
-            color: "#c7d2fe",
-            fontFamily: "Segoe UI, sans-serif",
-            fontSize: "13px",
-            fontStyle: "bold",
-            align: "center",
-          }).setOrigin(0.5, 0.5));
         }
 
         if (unit.defenseBuffTurns > 0 && unit.buffDefenseBonus > 0) {

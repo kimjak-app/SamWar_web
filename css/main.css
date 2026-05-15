@@ -1974,6 +1974,20 @@ button {
   border-radius: inherit;
 }
 
+.battle-entry-curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background: #081018;
+  opacity: 1;
+  transition: opacity 300ms ease;
+}
+
+.battle-entry-curtain.is-fading-out {
+  opacity: 0;
+}
+
 .skill-cutin-overlay::before,
 .skill-cutin-overlay::after {
   content: "";
