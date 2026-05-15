@@ -26,6 +26,7 @@
 ## Battle DOM Unit Overlay QA
 - [ ] 전투 진입 정상
 - [ ] 콘솔 에러 없음
+- [ ] AudioContext autoplay warning only if present, no real console error
 - [ ] DOM overlay가 Phaser canvas 위에 정상 표시
 - [ ] DOM unit image overlay 활성화
 - [ ] DOM unit token 이미지 선명함
@@ -69,6 +70,28 @@
 - [x] 자동전투 정상
 - [x] 수동 공격 / 특기 / 책략 정상
 - [x] 콘솔 error 없음
+
+## v0.5-9c Battle Entry Wrap Fade Test QA
+- [x] `node --check js/ui/battle_ui.js`
+- [x] `node --check js/main.js`
+- [x] `battle-phaser-host-wrap` opacity `0 -> 1` transition applied
+- [x] wrap fade works without breaking manual control
+- [x] initial double `requestAnimationFrame` timing left a remaining issue where DOM military visuals could appear before the battlefield background
+
+## v0.5-9c-1 Battle Entry Fade SceneReady Hook Fix QA
+- [x] `node --check js/phaser/phaser_battle_mount.js`
+- [x] `node --check js/ui/battle_ui.js`
+- [x] `node --check js/main.js`
+- [x] 전투 진입 fade 정상
+- [x] 전투 진입 시 wrap fade starts after Phaser scene ready
+- [x] 전장 / 부대 / 영웅 얼굴 / 병력 라벨 / 방향표시가 한 덩어리로 fade-in
+- [x] 수동 선택 정상
+- [x] 이동 tween 정상
+- [x] 방향 선택 정상
+- [x] 자동전투 정상
+- [x] 적군 이동 tween 정상
+- [x] 콘솔 error 0
+- [x] AudioContext autoplay warning is browser-policy noise only
 
 ## Regression QA
 - [ ] 내정 UI 정상

@@ -2,10 +2,23 @@
 
 ## Current Recent Flow
 
-### v0.5-9b-1 Battle Movement Tween Follow-up Fix
+### v0.5-9c-1 Battle Entry Fade SceneReady Hook Fix
 - Current working baseline.
+- Kept the wrap-level battle entry opacity fade from `v0.5-9c`.
+- Removed the early ready timing that ran immediately after `renderBattleDomOverlay()`.
+- `phaser_battle_mount.js` now forwards `onBattleSceneReady` after storing `currentScene` and syncing battle state.
+- `battle_ui.js` now waits for Phaser scene ready, reruns DOM overlay alignment once, and then starts wrap fade on the next frame.
+- Battlefield background, DOM unit, portrait badge, troop label, and facing indicators now fade in as one block.
+- Preserved `unitLayer` alpha, hit zones, battle logic, and Phaser config.
+
+### v0.5-9c Battle Entry Wrap Fade Test
+- Added `battle-phaser-host-wrap` opacity `0 -> 1` transition.
+- First timing attempt used double `requestAnimationFrame` immediately after `renderBattleDomOverlay()`.
+- That version improved full-stack fade behavior but still allowed DOM military visuals to appear before the battlefield background.
+
+### v0.5-9b-1 Battle Movement Tween Follow-up Fix
 - Fixed the rerender bug where player move presentation could appear to return to the old tile before facing selection.
-- `battle_scene.js` now renders from target position whenever a move tween should not replay.
+- `battle_scene.js` now renders from target `unitPoint` whenever a move tween should not replay.
 - Added `lastAction.presentationMove` for enemy AI movement presentation metadata only.
 - Move presentation lookup now uses `pendingMove` first and `presentationMove` as fallback.
 - Enemy AI movement now uses the same `250ms` Phaser + DOM tween path as player movement.
@@ -15,7 +28,7 @@
 - Added `250ms` tween presentation for player manual movement.
 - Phaser unit stack now moves smoothly instead of snapping.
 - DOM unit image, portrait badge, and troop label move with the same direction and duration.
-- Added a short manual-input lock during move tween playback in `main.js`.
+- Added a short `280ms` `battleTempoLocked` manual-input lock during move tween playback in `main.js`.
 - Preserved `battle_rules.js` movement logic and used existing `pendingMove` data for presentation only.
 
 ### v0.5-9a Battle Entry Curtain Fade Fix

@@ -1,5 +1,49 @@
 # Session Log
 
+## 2026-05-15 — v0.5-9c-1 Battle Entry Fade SceneReady Hook Fix
+
+### Summary
+- Continued from the wrap-level battle entry fade test.
+- Moved `is-battle-ready` timing from early DOM-overlay render timing to Phaser scene ready timing.
+- Preserved battle logic, hit zones, `unitLayer` alpha, and Phaser config.
+
+### Scene Ready Hook Connection
+- In `js/phaser/phaser_battle_mount.js`, `mountBattleScene()` now forwards `callbacks.onBattleSceneReady?.(sceneInstance)` immediately after:
+  - storing `currentScene`
+  - syncing pending/current battle state into the live scene
+- In `js/ui/battle_ui.js`, the old early double `requestAnimationFrame` ready class addition was removed.
+- `battle_ui.js` now passes `onBattleSceneReady` into `mountBattleScene(...)`.
+- After Phaser scene ready:
+  - DOM overlay is aligned one more time
+  - next frame adds `.is-battle-ready`
+  - wrap-level opacity fade begins
+
+### Resulting Entry Behavior
+- `battle-phaser-host-wrap` remains the single fade surface for mixed Phaser + DOM battle entry.
+- Battlefield background, DOM unit images, portrait badges, troop labels, and facing indicators now enter together as one faded-in block.
+- This avoids the earlier timing issue where DOM military visuals could appear before the battlefield background.
+
+### Verification Completed
+- `node --check js/phaser/phaser_battle_mount.js` passed.
+- `node --check js/ui/battle_ui.js` passed.
+- `node --check js/main.js` passed.
+- Browser QA confirmed:
+  - battle entry fade works
+  - manual selection works
+  - movement tween still works
+  - facing selection still works
+  - auto battle still works
+  - enemy movement tween still works
+  - console error count remained zero
+- `AudioContext` autoplay warning remained browser-policy noise only and unrelated to the patch.
+
+### Next Candidate Work
+1. `v0.5-10 Diplomacy & Spy Scaffold`
+2. `v0.5-10+ Diplomacy Action Effects`
+3. `v0.5-10+ Spy Action Success / Failure System`
+4. `Battle Dust FX`
+5. `Movement Cancel Tween`
+
 ## 2026-05-15 — v0.5-9b-1 Battle Movement Tween Follow-up Fix
 
 ### Summary

@@ -1,47 +1,54 @@
 # Next Tasks
 
 ## Current Baseline
-`v0.5-9b-1 Battle Movement Tween Follow-up Fix`
+`v0.5-9c-1 Battle Entry Fade SceneReady Hook Fix`
 
 ## Immediate Candidate
-`v0.5-9c Battle Background Sharpness Pass`
-
-Goal:
-- Investigate battlefield background blur as a separate problem from unit image sharpness and entry transition polish.
-
-Candidate options:
-- 2x battlefield background image.
-- DOM background layer.
-- Canvas scaling / DPR audit.
-
-Guard:
-- Do not mix this pass with movement animation work.
-- Do not start by changing Phaser global config blindly.
-- Do not touch portrait badge size/position, facing text position, or status indicator position unless the blur investigation truly requires it.
-
-## Follow-Up Candidate
-`v0.5-9d Battle Movement Cancel Tween / Dust FX`
-
-Goal:
-- Add move-cancel tween back to origin.
-- Add lightweight dust / contact FX if presentation quality needs it.
-
-Guard:
-- Do not change movement rules, only presentation.
-- Keep battle logic untouched.
-
-## System Candidate
 `v0.5-10 Diplomacy & Spy Scaffold`
 
 Goal:
-- Add enemy information visibility tiers.
-- Add no/partial/detailed spy information states.
-- Limit enemy resources, troops, chancellor, and governor information depending on spy level.
+- Add a diplomacy / espionage scaffold to the city detail flow.
+- Add a left-side diplomacy / espionage panel.
+- Add `[외교]` and `[첩보]` tabs.
+- Add relation value, relation state, and basic diplomacy action buttons.
+- Add spy level, reconnaissance, rumor, and internal-collusion scaffold actions.
 
 Guard:
 - Do not implement full diplomacy AI.
 - Do not implement enemy domestic AI.
 - Do not implement naval combat.
+- Keep this as scaffold/UI/data-flow work first.
+
+## Follow-Up Candidate
+`v0.5-10+ Diplomacy Action Effects`
+
+Goal:
+- Resolve actual diplomacy action effects and state changes.
+
+Guard:
+- Keep the initial scaffold simple before adding AI/system depth.
+
+## System Candidate
+`v0.5-10+ Spy Action Success / Failure System`
+
+Goal:
+- Add spy success/failure resolution.
+- Add no/partial/detailed enemy information tiers.
+- Limit enemy resources, troops, chancellor, and governor information by spy level.
+
+Guard:
+- Do not expand into full diplomacy AI yet.
+
+## Presentation Follow-Up
+`Battle Dust FX` / `Movement Cancel Tween`
+
+Goal:
+- Add lightweight battle movement polish after diplomacy scaffold work.
+- Add cancel tween back to origin and optional dust/contact FX.
+
+Guard:
+- Do not change movement rules, only presentation.
+- Keep battle logic untouched.
 
 ## Battle State To Preserve
 - DOM unit image overlay remains the correct sharp rendering path.
@@ -51,6 +58,8 @@ Guard:
 - Facing text position remains as-is.
 - Phaser and DOM battle movement both use `250ms` tween presentation.
 - AI move tween uses `lastAction.presentationMove` as presentation metadata only.
+- Battle entry now uses wrap-level fade tied to Phaser scene ready.
+- `is-battle-ready` must be added after scene ready, not via early double `requestAnimationFrame`.
 
 ## World Map State To Preserve
 - Final 13-city coordinates are already applied.

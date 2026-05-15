@@ -1,7 +1,7 @@
 # SamWar_web Handoff
 
 ## Current Baseline
-`v0.5-9b-1 Battle Movement Tween Follow-up Fix`
+`v0.5-9c-1 Battle Entry Fade SceneReady Hook Fix`
 
 Next session should start from this baseline. Before starting new work, read these six agent documents:
 - `agent/HANDOFF_TO_CHATCOACH.md`
@@ -63,12 +63,13 @@ Next session should start from this baseline. Before starting new work, read the
 - Added `250ms` battle movement tween for player manual movement.
 - Phaser `unitGroup` movement, HP bar, facing text, status icons, and hit zone now move together.
 - DOM unit token image, portrait badge, and troop label move together with the Phaser tween.
-- `main.js` applies a short manual-control lock during move tween playback.
+- `main.js` applies a short `280ms` `battleTempoLocked` manual-control lock during move tween playback.
 - `battle_rules.js` movement rules were not changed.
+- `pendingMove.fromX/fromY` drives presentation only, so units visually move from old tile to current tile without changing movement rules.
 
 ## v0.5-9b-1 Completed State
 - Fixed the post-move rerender bug where selection ring / HP bar / facing text could appear to snap back to the old tile.
-- `battle_scene.js` now uses target position for `unitGroup` creation whenever the tween should not replay.
+- `battle_scene.js` now uses target `unitPoint` for `unitGroup` creation whenever `shouldTweenMove` is false.
 - Added `lastAction.presentationMove` metadata for AI move presentation only.
 - Move presentation priority is now:
   - `pendingMove` first
@@ -76,20 +77,37 @@ Next session should start from this baseline. Before starting new work, read the
 - Enemy AI movement now uses the same `250ms` Phaser + DOM tween path as player movement.
 - Phaser battle rules remain unchanged; `presentationMove` is presentation-only metadata.
 
+## v0.5-9c Completed State
+- Added `battle-phaser-host-wrap` opacity `0 -> 1` fade as a full-stack entry transition test.
+- The initial double `requestAnimationFrame` ready timing was too early.
+- That version could allow DOM unit / portrait visuals to appear before the Phaser battlefield background.
+
+## v0.5-9c-1 Completed State
+- `battle-phaser-host-wrap` full opacity fade remains the active entry transition.
+- `is-battle-ready` is now applied only after Phaser scene ready.
+- Phaser scene ready then triggers one more DOM overlay alignment pass, and the next frame starts the wrap fade.
+- Battlefield background, DOM unit, portrait badge, troop label, and facing indicators now enter as one visual block.
+- `unitLayer` alpha, hit zones, battle logic, and Phaser global config were not changed.
+
 ## Verification Already Completed
 - `node --check js/core/battle_rules.js` passed.
+- `node --check js/phaser/phaser_battle_mount.js` passed.
 - `node --check js/ui/battle_ui.js` passed.
 - `node --check js/phaser/battle_scene.js` passed.
 - `node --check js/main.js` passed.
 - App loaded with no console errors during battle smoke tests.
 - World map still renders normally.
 - Battle entry still works.
+- Battle entry fade works.
 - DOM overlay remains non-interactive.
 - Portrait badge remains `70px`.
+- Manual unit selection works.
 - Player movement tween works.
+- Facing selection works.
 - Enemy AI movement tween works.
 - Manual attack / skill / strategy still work.
 - Auto battle still works.
+- Browser `AudioContext` autoplay warning is policy noise and unrelated to the patch.
 
 ## Important Warnings
 - Diplomacy is still not implemented.
@@ -100,16 +118,19 @@ Next session should start from this baseline. Before starting new work, read the
 - Do not change Phaser global config as the first response to battle presentation issues.
 
 ## Next Candidate Targets
-1. `v0.5-9c Battle Background Sharpness Pass`
-   - Investigate battlefield background blur separately.
-   - Candidate options: 2x battlefield image, DOM background layer, canvas scaling audit.
-2. `v0.5-9d Battle Movement Cancel Tween / Dust FX`
-   - Consider move-cancel tween back to origin.
-   - Consider lightweight dust / footstep FX without touching battle rules.
-3. `v0.5-10 Diplomacy & Spy Scaffold`
-   - Add enemy information visibility tiers.
-   - Add no/partial/detailed spy information states.
-   - Limit enemy resources, troops, chancellor, and governor information by spy level.
+1. `v0.5-10 Diplomacy & Spy Scaffold`
+   - Add a diplomacy / espionage panel on the left side of city detail.
+   - Add `[외교]` and `[첩보]` tabs.
+   - Scaffold relation value, relation state, and basic diplomacy action buttons.
+   - Scaffold spy level, reconnaissance, rumor, and internal-collusion actions.
+2. `v0.5-10+ Diplomacy Action Effects`
+   - Resolve actual diplomacy action results and state changes.
+3. `v0.5-10+ Spy Action Success / Failure System`
+   - Add success rates, failure outcomes, and spy information tiers.
+4. `Battle Dust FX`
+   - Add lightweight movement dust / contact polish without touching battle rules.
+5. `Movement Cancel Tween`
+   - Add presentation-only cancel tween back to origin.
 
 ## Scope Guard
 - Do not change battle rules.

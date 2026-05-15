@@ -1,7 +1,7 @@
 # Current State
 
 ## Current Baseline
-`v0.5-9b-1 Battle Movement Tween Follow-up Fix`
+`v0.5-9c-1 Battle Entry Fade SceneReady Hook Fix`
 
 This is the current stable working baseline. Do not treat `v0.5-9`, `v0.5-8k`, `v0.5-8j`, or earlier versions as the active handoff baseline unless explicitly requested.
 
@@ -68,11 +68,12 @@ This is the current stable working baseline. Do not treat `v0.5-9`, `v0.5-8k`, `
 - Player manual move uses `250ms` tween presentation.
 - Phaser unit stack and DOM overlay stack move together.
 - Movement rules in `battle_rules.js` were not changed.
-- `main.js` applies a short manual input lock during the move tween.
+- `main.js` applies a short `280ms` `battleTempoLocked` manual input lock during the move tween.
+- `pendingMove.fromX/fromY` is used for presentation only so units appear to travel from previous tile to current tile.
 
 ## v0.5-9b-1 Battle Movement Tween Follow-up Fix State
 - Fixed the rerender regression where player move presentation could appear to snap back before facing selection.
-- `shouldTweenMove === false` now renders from current target position, not old origin position.
+- `shouldTweenMove === false` now renders from current target `unitPoint`, not old origin position.
 - Added AI move `lastAction.presentationMove` metadata for presentation only.
 - Move presentation lookup now uses:
   - `pendingMove` first
@@ -80,10 +81,22 @@ This is the current stable working baseline. Do not treat `v0.5-9`, `v0.5-8k`, `
 - Enemy AI movement now uses the same `250ms` Phaser + DOM tween presentation path.
 - `battle_rules.js` combat rules were not changed; only presentation metadata was added.
 
+## v0.5-9c Battle Entry Wrap Fade Test State
+- Added `battle-phaser-host-wrap` opacity `0 -> 1` transition as a mixed Phaser + DOM entry fade.
+- The initial double `requestAnimationFrame` ready timing was too early.
+- That version could still show DOM military visuals before the battlefield background.
+
+## v0.5-9c-1 Battle Entry Fade SceneReady Hook Fix State
+- Wrap fade remains the active battle entry presentation path.
+- `is-battle-ready` is now added only after Phaser scene ready.
+- Phaser scene ready then triggers one more DOM overlay alignment pass, and the next frame begins wrap fade-in.
+- Battlefield, unit visuals, portrait badges, troop labels, and facing indicators now appear as one faded-in block.
+- `unitLayer` alpha, hit zones, battle logic, and Phaser config were not changed.
+
 ## Immediate Problems To Solve Next
-1. Battlefield background is still slightly blurry and needs a dedicated pass.
-2. Move cancel still snaps back instantly and has no dust / impact polish.
-3. Diplomacy / espionage scaffold is still unimplemented.
+1. Diplomacy / espionage scaffold is still unimplemented.
+2. Diplomacy action effects and spy success / failure systems are still unimplemented.
+3. Move cancel still snaps back instantly and has no dust / impact polish.
 
 ## Important Warnings
 - Diplomacy is still not implemented.
@@ -94,6 +107,8 @@ This is the current stable working baseline. Do not treat `v0.5-9`, `v0.5-8k`, `
 - City label / flag UI is acceptable for now and should not be re-polished immediately.
 
 ## Recommended Next Targets
-1. `v0.5-9c Battle Background Sharpness Pass`
-2. `v0.5-9d Battle Movement Cancel Tween / Dust FX`
-3. `v0.5-10 Diplomacy & Spy Scaffold`
+1. `v0.5-10 Diplomacy & Spy Scaffold`
+2. `v0.5-10+ Diplomacy Action Effects`
+3. `v0.5-10+ Spy Action Success / Failure System`
+4. `Battle Dust FX`
+5. `Movement Cancel Tween`
