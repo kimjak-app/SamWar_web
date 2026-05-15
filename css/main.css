@@ -2856,16 +2856,6 @@ button {
     width: min(380px, calc(100vw - 36px));
   }
 
-  .city-hud-stack {
-    width: min(380px, calc(100vw - 36px));
-    max-width: calc(100vw - 36px);
-    transform: none !important;
-  }
-
-  .city-hud-dragbar {
-    display: none;
-  }
-
   .selected-city-layout {
     grid-template-columns: 1fr;
   }
@@ -2886,5 +2876,17 @@ button {
   .selected-city-summary-panel {
     min-width: 0;
     order: 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .city-hud-stack {
+    width: min(380px, calc(100vw - 36px));
+    max-width: calc(100vw - 36px);
+    transform: none !important;
+  }
+
+  .city-hud-dragbar {
+    display: none;
   }
 }

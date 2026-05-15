@@ -187,14 +187,14 @@ function installCityHudDrag(rootElement) {
       panel.classList.remove("is-dragging");
       saveCityHudOffset(currentOffset);
 
-      handle.removeEventListener("pointermove", handlePointerMove);
-      handle.removeEventListener("pointerup", handlePointerUp);
-      handle.removeEventListener("pointercancel", handlePointerUp);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
     };
 
-    handle.addEventListener("pointermove", handlePointerMove);
-    handle.addEventListener("pointerup", handlePointerUp);
-    handle.addEventListener("pointercancel", handlePointerUp);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
   });
 }
 
