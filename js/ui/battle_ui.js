@@ -200,24 +200,6 @@ function getBattleUnitPortraitImage(unit) {
   return unit?.battlefieldPortraitImage ?? unit?.portraitImage ?? null;
 }
 
-function fadeOutBattleEntryCurtain(rootElement) {
-  const curtain = rootElement?.querySelector("[data-battle-entry-curtain]");
-
-  if (!curtain || curtain.dataset.fadingStarted === "true") {
-    return;
-  }
-
-  curtain.dataset.fadingStarted = "true";
-
-  requestAnimationFrame(() => {
-    curtain.classList.add("is-fading-out");
-
-    window.setTimeout(() => {
-      curtain.remove();
-    }, 340);
-  });
-}
-
 function getBattleUnitVisualFacingClass(unit) {
   if (unit?.facing === "right") {
     return "battle-dom-unit-visual--facing-right";
@@ -343,8 +325,6 @@ function renderBattleDomOverlay(overlayElement, mountElement, battleState, selec
     }
     ${unitLabels}
   `;
-
-  fadeOutBattleEntryCurtain(overlayElement.closest(".battle-screen"));
 }
 
 function renderUnitCard(unit, sideLabel, { isSelected = false, selectable = false } = {}) {
@@ -402,7 +382,6 @@ function renderBattleShell(battleState) {
                 <div class="battle-phaser-host" data-battle-mount></div>
                 <div class="battle-dom-overlay" data-battle-dom-overlay aria-hidden="true"></div>
                 <div class="battle-board-overlay-layer" data-battle-overlay-layer></div>
-                <div class="battle-entry-curtain" data-battle-entry-curtain aria-hidden="true"></div>
               </div>
             </div>
           </div>
